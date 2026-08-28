@@ -1,5 +1,5 @@
-import CreateEventContent from "@/components/features/admin/CreateEventContent";
+import { DynamicCreateEventContent } from "@/components/features/admin";
 
 export default function CreateEventPage() {
-  return <CreateEventContent />;
+  return <DynamicCreateEventContent />;
 }

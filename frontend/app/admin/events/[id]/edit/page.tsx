@@ -1,5 +1,5 @@
-import EditEventContent from "@/components/features/admin/EditEventContent";
+import { DynamicEditEventContent } from "@/components/features/admin";
 
 export default function EditEventPage() {
-  return <EditEventContent />;
+  return <DynamicEditEventContent />;
 }

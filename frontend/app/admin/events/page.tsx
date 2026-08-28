@@ -1,5 +1,5 @@
-import AdminEventsContent from "@/components/features/admin/AdminEventsContent";
+import { DynamicEventsContent } from "@/components/features/admin";
 
 export default function AdminEventsPage() {
-  return <AdminEventsContent />;
+  return <DynamicEventsContent />;
 }

@@ -1,5 +1,5 @@
-import DashboardContent from "@/components/features/admin/DashboardContent";
+import { DynamicDashboardContent } from "@/components/features/admin";
 
 export default function AdminDashboardPage() {
-  return <DashboardContent />;
+  return <DynamicDashboardContent />;
 }
