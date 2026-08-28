@@ -22,7 +22,7 @@ const features = [
 export default function AboutSection() {
   return (
     <section className="bg-[#1a5c2a] text-white py-16">
-      <div className="container">
+      <div className="container px-4">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
           {/* Text Content */}
           <div className="space-y-6">

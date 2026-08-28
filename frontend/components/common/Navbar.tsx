@@ -20,7 +20,7 @@ export default function Navbar() {
 
   return (
     <header className="sticky top-0 z-50 w-full border-b bg-white">
-      <div className="container flex h-16 items-center justify-between">
+      <div className="container px-4 flex h-16 items-center justify-between">
         <Logo />
 
         {/* Desktop Navigation */}
@@ -124,7 +124,7 @@ export default function Navbar() {
       {/* Mobile Menu */}
       {isMobileMenuOpen && (
         <div className="md:hidden border-t bg-white">
-          <div className="container py-4 space-y-4">
+          <div className="container px-4 py-4 space-y-4">
             <nav className="flex flex-col space-y-3">
               <Link href="/" onClick={() => setIsMobileMenuOpen(false)}>Home</Link>
               <Link href="/events" onClick={() => setIsMobileMenuOpen(false)}>Events</Link>

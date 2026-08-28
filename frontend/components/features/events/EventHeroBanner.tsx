@@ -11,7 +11,7 @@ export default function EventHeroBanner() {
       />
       <div className="absolute inset-0 bg-black/40" />
       <div className="absolute inset-0 flex items-center">
-        <div className="container text-white space-y-4">
+        <div className="container px-4 text-white space-y-4">
           <h1 className="text-4xl md:text-5xl font-bold max-w-lg">
             Join Events That Match Your Interests
           </h1>

@@ -4,7 +4,7 @@ import FindUsCard from "@/components/features/contact/FindUsCard";
 
 export default function ContactPage() {
   return (
-    <div className="container py-12">
+    <div className="container px-4 py-12">
       <div className="text-center mb-12">
         <h1 className="text-4xl font-bold">
           Send a Message ✈

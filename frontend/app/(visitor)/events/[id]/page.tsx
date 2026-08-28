@@ -36,7 +36,7 @@ export default async function EventDetailPage({
     <>
       <EventDetailHero title={event.title} imageUrl={event.imageUrl} />
 
-      <div className="container py-12">
+      <div className="container px-4 py-12">
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           {/* Main Content */}
           <div className="lg:col-span-2 space-y-8">

@@ -70,7 +70,7 @@ export default function EventsPage() {
   return (
     <>
       <EventHeroBanner />
-      <div className="container py-12">
+      <div className="container px-4 py-12">
         <h1 className="text-3xl font-bold mb-6">Events</h1>
         <EventFilters selected={selectedCategory} onSelect={setSelectedCategory} />
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-8">

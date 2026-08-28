@@ -29,7 +29,7 @@ const steps = [
 
 export default function HowItWorksSection() {
   return (
-    <section className="container py-16">
+    <section className="container px-4 py-16">
       <div className="text-center mb-12">
         <h2 className="text-3xl font-bold">How Registration Works</h2>
         <p className="text-muted-foreground mt-2">
