@@ -65,4 +65,28 @@ export const authService = {
     );
     return response.data;
   },
+
+  forgotPassword: async (email: string) => {
+    const response = await axiosInstance.post<ApiResponse>(
+      API_ENDPOINTS.AUTH.FORGOT_PASSWORD,
+      { email }
+    );
+    return response.data;
+  },
+
+  changePassword: async (currentPassword: string, newPassword: string) => {
+    const response = await axiosInstance.put<ApiResponse>(
+      API_ENDPOINTS.AUTH.CHANGE_PASSWORD,
+      { currentPassword, newPassword }
+    );
+    return response.data;
+  },
+
+  updateProfile: async (data: { name?: string; email?: string; phone?: string; imageBase64?: string }) => {
+    const response = await axiosInstance.put<ApiResponse<{ user: User }>>(
+      API_ENDPOINTS.AUTH.UPDATE_PROFILE,
+      data
+    );
+    return response.data;
+  },
 };

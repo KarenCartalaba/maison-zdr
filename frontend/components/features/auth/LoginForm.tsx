@@ -2,26 +2,45 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import { Controller, useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod";
 import { useAuth } from "@/context/AuthContext";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Field, FieldError, FieldGroup, FieldLabel } from "@/components/ui/field";
 import { Loader2 } from "lucide-react";
+
+const loginFormSchema = z.object({
+  email: z.string().min(1, "Email is required").email("Invalid email address"),
+  password: z.string().min(1, "Password is required"),
+});
+
+type LoginFormValues = z.infer<typeof loginFormSchema>;
 
 export default function LoginForm() {
   const { login } = useAuth();
   const [isLoading, setIsLoading] = useState(false);
-  const [formData, setFormData] = useState({
-    email: "",
-    password: "",
+
+  const form = useForm<LoginFormValues>({
+    resolver: zodResolver(loginFormSchema),
+    defaultValues: { email: "", password: "" },
+    mode: "onBlur",
   });
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleSubmit = async (data: LoginFormValues) => {
     setIsLoading(true);
     try {
-      await login(formData);
-    } catch (error) {
-      // Error handled by AuthContext
+      await login(data);
+    } catch (error: any) {
+      if (error.errors) {
+        error.errors.forEach((err: { path: string; message: string }) => {
+          const fieldName = err.path.replace("body.", "") as keyof LoginFormValues;
+          if (fieldName in form.getValues()) {
+            form.setError(fieldName, { type: "server", message: err.message });
+          }
+        });
+      }
     } finally {
       setIsLoading(false);
     }
@@ -40,27 +59,49 @@ export default function LoginForm() {
           <p className="text-sm text-muted-foreground">Please fill in your details</p>
         </div>
 
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <Input
-            type="email"
-            placeholder="Email"
-            value={formData.email}
-            onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-            required
-          />
-          <Input
-            type="password"
-            placeholder="Password"
-            value={formData.password}
-            onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-            required
-          />
+        <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4" noValidate>
+          <FieldGroup>
+            <Controller
+              name="email"
+              control={form.control}
+              render={({ field, fieldState }) => (
+                <Field data-invalid={fieldState.invalid}>
+                  <FieldLabel htmlFor="login-email">Email</FieldLabel>
+                  <Input
+                    {...field}
+                    id="login-email"
+                    type="email"
+                    placeholder="Email"
+                    autoComplete="email"
+                    aria-invalid={fieldState.invalid}
+                  />
+                  {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
+                </Field>
+              )}
+            />
+
+            <Controller
+              name="password"
+              control={form.control}
+              render={({ field, fieldState }) => (
+                <Field data-invalid={fieldState.invalid}>
+                  <FieldLabel htmlFor="login-password">Password</FieldLabel>
+                  <Input
+                    {...field}
+                    id="login-password"
+                    type="password"
+                    placeholder="Password"
+                    autoComplete="current-password"
+                    aria-invalid={fieldState.invalid}
+                  />
+                  {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
+                </Field>
+              )}
+            />
+          </FieldGroup>
 
           <div className="text-center">
-            <Link
-              href="/forgot-password"
-              className="text-sm text-muted-foreground hover:text-foreground"
-            >
+            <Link href="/forgot-password" className="text-sm text-muted-foreground hover:text-foreground">
               Forgot Password?
             </Link>
           </div>

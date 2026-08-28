@@ -1,9 +1,17 @@
 "use client";
 
 import { useState } from "react";
+import { Controller, useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod";
+import { reviewService } from "@/services/review.service";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { Star, Pencil, Trash2 } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { Field, FieldError, FieldGroup, FieldLabel } from "@/components/ui/field";
+import { Star, Pencil, Trash2, Loader2 } from "lucide-react";
+import { toast } from "sonner";
 
 interface PendingReview {
   id: string;
@@ -61,11 +69,30 @@ const MOCK_REVIEWS: UserReview[] = [
   },
 ];
 
+const reviewSchema = z.object({
+  rating: z.number().min(1, "Please select a rating").max(5, "Rating must be at most 5"),
+  title: z.string().optional(),
+  comment: z.string().min(20, "Review must be at least 20 characters").max(1000, "Review must be at most 1000 characters"),
+});
+
+type ReviewValues = z.infer<typeof reviewSchema>;
+
 export default function MyReviewsTab() {
   const [activeFilter, setActiveFilter] = useState<"all" | "5stars">("all");
   const [showWriteModal, setShowWriteModal] = useState(false);
   const [selectedPending, setSelectedPending] = useState<PendingReview | null>(null);
   const [showSuccessAlert, setShowSuccessAlert] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const form = useForm<ReviewValues>({
+    resolver: zodResolver(reviewSchema),
+    defaultValues: {
+      rating: 0,
+      title: "",
+      comment: "",
+    },
+    mode: "onChange",
+  });
 
   const filteredReviews = activeFilter === "5stars"
     ? MOCK_REVIEWS.filter((r) => r.rating === 5)
@@ -73,14 +100,39 @@ export default function MyReviewsTab() {
 
   const handleWriteReview = (pending: PendingReview) => {
     setSelectedPending(pending);
+    form.reset({ rating: 0, title: "", comment: "" });
     setShowWriteModal(true);
   };
 
-  const handleSubmitReview = () => {
-    setShowWriteModal(false);
-    setSelectedPending(null);
-    setShowSuccessAlert(true);
-    setTimeout(() => setShowSuccessAlert(false), 3000);
+  const handleSubmitReview = async (data: ReviewValues) => {
+    if (!selectedPending) return;
+    setIsSubmitting(true);
+    try {
+      await reviewService.create({
+        eventId: selectedPending.id,
+        rating: data.rating,
+        title: data.title,
+        comment: data.comment,
+      });
+      setShowWriteModal(false);
+      setSelectedPending(null);
+      setShowSuccessAlert(true);
+      setTimeout(() => setShowSuccessAlert(false), 3000);
+      toast.success("Review submitted successfully!");
+    } catch (error: any) {
+      if (error.errors) {
+        error.errors.forEach((err: { path: string; message: string }) => {
+          const fieldName = err.path.replace("body.", "") as keyof ReviewValues;
+          if (fieldName in form.getValues()) {
+            form.setError(fieldName, { type: "server", message: err.message });
+          }
+        });
+      } else {
+        toast.error(error.message || "Failed to submit review");
+      }
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -208,35 +260,87 @@ export default function MyReviewsTab() {
                 </Button>
               </div>
 
-              <div className="space-y-4">
-                <div>
-                  <h4 className="font-semibold mb-2">How would you rate your experience?</h4>
-                  <div className="flex items-center gap-2">
-                    <div className="flex gap-1">
-                      {[1, 2, 3, 4, 5].map((star) => (
-                        <button key={star} className="text-yellow-400 hover:text-yellow-500">
-                          <Star className="h-6 w-6 fill-current" />
-                        </button>
-                      ))}
-                    </div>
-                    <span className="text-sm text-muted-foreground">Tap to rate</span>
-                  </div>
-                </div>
-
-                <div>
-                  <h4 className="font-semibold mb-2">Tell us about your experience</h4>
-                  <textarea
-                    className="w-full min-h-[120px] rounded-md border border-input bg-background px-3 py-2 text-sm"
-                    placeholder="Share your experience..."
+              <form onSubmit={form.handleSubmit(handleSubmitReview)} noValidate>
+                <FieldGroup>
+                  {/* Star Rating */}
+                  <Controller
+                    name="rating"
+                    control={form.control}
+                    render={({ field, fieldState }) => (
+                      <Field data-invalid={fieldState.invalid}>
+                        <FieldLabel>How would you rate your experience?</FieldLabel>
+                        <div className="flex items-center gap-2">
+                          <div className="flex gap-1">
+                            {[1, 2, 3, 4, 5].map((star) => (
+                              <button
+                                key={star}
+                                type="button"
+                                onClick={() => field.onChange(star)}
+                                className={`hover:text-yellow-500 ${
+                                  star <= field.value ? "text-yellow-400" : "text-muted"
+                                }`}
+                              >
+                                <Star className="h-6 w-6 fill-current" />
+                              </button>
+                            ))}
+                          </div>
+                          <span className="text-sm text-muted-foreground">Tap to rate</span>
+                        </div>
+                        {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
+                      </Field>
+                    )}
                   />
-                  <p className="text-xs text-muted-foreground mt-1">Reviews need to be at least 20 characters.</p>
-                </div>
-              </div>
 
-              <div className="flex justify-end gap-4">
-                <Button variant="outline" onClick={() => setShowWriteModal(false)}>Back</Button>
-                <Button className="bg-[#1a5c2a] hover:bg-[#144a22]" onClick={handleSubmitReview}>Post Review</Button>
-              </div>
+                  {/* Title (optional) */}
+                  <Controller
+                    name="title"
+                    control={form.control}
+                    render={({ field, fieldState }) => (
+                      <Field data-invalid={fieldState.invalid}>
+                        <FieldLabel htmlFor="review-title">Title (optional)</FieldLabel>
+                        <Input
+                          {...field}
+                          id="review-title"
+                          placeholder="Summarize your experience"
+                          aria-invalid={fieldState.invalid}
+                        />
+                        {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
+                      </Field>
+                    )}
+                  />
+
+                  {/* Comment */}
+                  <Controller
+                    name="comment"
+                    control={form.control}
+                    render={({ field, fieldState }) => (
+                      <Field data-invalid={fieldState.invalid}>
+                        <FieldLabel htmlFor="review-comment">Tell us about your experience</FieldLabel>
+                        <Textarea
+                          {...field}
+                          id="review-comment"
+                          placeholder="Share your experience..."
+                          rows={4}
+                          aria-invalid={fieldState.invalid}
+                        />
+                        <p className="text-xs text-muted-foreground mt-1">Reviews need to be at least 20 characters.</p>
+                        {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
+                      </Field>
+                    )}
+                  />
+                </FieldGroup>
+
+                <div className="flex justify-end gap-4 mt-6">
+                  <Button type="button" variant="outline" onClick={() => setShowWriteModal(false)}>Back</Button>
+                  <Button type="submit" className="bg-[#1a5c2a] hover:bg-[#144a22]" disabled={isSubmitting}>
+                    {isSubmitting ? (
+                      <><Loader2 className="mr-2 h-4 w-4 animate-spin" />Submitting...</>
+                    ) : (
+                      "Post Review"
+                    )}
+                  </Button>
+                </div>
+              </form>
             </CardContent>
           </Card>
         </div>

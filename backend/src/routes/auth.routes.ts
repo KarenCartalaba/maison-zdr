@@ -1,7 +1,7 @@
 import { Router } from "express";
 import { AuthController } from "@/controllers/auth.controller";
 import { validateSchema } from "@/middlewares/validate-schema";
-import { signupSchema, loginSchema, verifyEmailSchema, resendVerificationSchema, refreshTokenSchema } from "@/schema/auth";
+import { signupSchema, loginSchema, verifyEmailSchema, resendVerificationSchema, refreshTokenSchema, forgotPasswordSchema, changePasswordSchema } from "@/schema/auth";
 import { AuthMiddleware } from "@/middlewares/auth-middleware";
 
 const router = Router();
@@ -16,5 +16,7 @@ router.post("/v1/refresh-token", validateSchema(refreshTokenSchema), authControl
 router.post("/v1/logout", authController.logout);
 router.get("/v1/me", authMiddleware.execute, authController.me);
 router.put("/v1/update-profile", authMiddleware.execute, authController.updateProfile);
+router.post("/v1/forgot-password", validateSchema(forgotPasswordSchema), authController.forgotPassword);
+router.put("/v1/change-password", authMiddleware.execute, validateSchema(changePasswordSchema), authController.changePassword);
 
 export default router;

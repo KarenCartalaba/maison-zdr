@@ -50,4 +50,8 @@ export class AuthRepository {
   public revokeAllUserTokens = async (userId: string) => {
     return prisma.token.updateMany({ where: { userId }, data: { revokedAt: new Date() } });
   };
+
+  public updateUserPassword = async (id: string, hashedPassword: string) => {
+    return prisma.user.update({ where: { id }, data: { password: hashedPassword } });
+  };
 }

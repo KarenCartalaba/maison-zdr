@@ -34,6 +34,15 @@ export const API_ENDPOINTS = {
     VERIFY_EMAIL: "/api/auth/v1/verify-email",
     RESEND_VERIFICATION: "/api/auth/v1/resend-email-verification",
     ME: "/api/auth/v1/me",
+    FORGOT_PASSWORD: "/api/auth/v1/forgot-password",
+    CHANGE_PASSWORD: "/api/auth/v1/change-password",
+    UPDATE_PROFILE: "/api/auth/v1/update-profile",
+  },
+  CONTACT: {
+    SEND: "/api/contact/v1/send",
+  },
+  REVIEWS: {
+    CREATE: "/api/reviews/v1/create",
   },
   EVENTS: {
     LIST: "/api/events/v1/all",

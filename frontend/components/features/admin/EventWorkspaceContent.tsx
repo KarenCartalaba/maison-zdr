@@ -2,14 +2,21 @@
 
 import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
+import { Controller, useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Field, FieldError, FieldGroup, FieldLabel } from "@/components/ui/field";
 import { ArrowLeft, Loader2, Pencil, Trash2, Calendar, MapPin, Users, Clock } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { eventService } from "@/services/event.service";
 import type { Event } from "@/types";
+import { toast } from "sonner";
 
 type Tab = "overview" | "participants" | "reviews" | "highlights" | "settings";
 
@@ -322,21 +329,57 @@ function HighlightsTab({ event }: { event: Event }) {
 
 // ==================== Settings Tab ====================
 
+const eventSettingsSchema = z.object({
+  title: z.string().min(1, "Title is required"),
+  description: z.string().min(1, "Description is required"),
+  location: z.string().min(1, "Location is required"),
+  maxParticipants: z.number().min(1, "Must be at least 1"),
+  isCancelled: z.boolean(),
+});
+
+type EventSettingsValues = z.infer<typeof eventSettingsSchema>;
+
 function SettingsTab({ event }: { event: Event }) {
   const [isUpdating, setIsUpdating] = useState(false);
-  const [formData, setFormData] = useState({
-    title: event.title,
-    description: event.description,
-    location: event.location,
-    maxParticipants: event.maxParticipants,
-    isCancelled: event.isCancelled,
+
+  const form = useForm<EventSettingsValues>({
+    resolver: zodResolver(eventSettingsSchema),
+    defaultValues: {
+      title: event.title,
+      description: event.description,
+      location: event.location,
+      maxParticipants: event.maxParticipants,
+      isCancelled: event.isCancelled,
+    },
+    mode: "onBlur",
   });
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleSubmit = async (data: EventSettingsValues) => {
     setIsUpdating(true);
-    // TODO: Call API to update event
-    setTimeout(() => setIsUpdating(false), 1000);
+    try {
+      await eventService.update({
+        id: event.id,
+        title: data.title,
+        description: data.description,
+        location: data.location,
+        maxParticipants: data.maxParticipants,
+        isCancelled: data.isCancelled,
+      });
+      toast.success("Event updated successfully");
+    } catch (error: any) {
+      if (error.errors) {
+        error.errors.forEach((err: { path: string; message: string }) => {
+          const fieldName = err.path.replace("body.", "") as keyof EventSettingsValues;
+          if (fieldName in form.getValues()) {
+            form.setError(fieldName, { type: "server", message: err.message });
+          }
+        });
+      } else {
+        toast.error(error.message || "Failed to update event");
+      }
+    } finally {
+      setIsUpdating(false);
+    }
   };
 
   return (
@@ -345,53 +388,76 @@ function SettingsTab({ event }: { event: Event }) {
         <CardTitle className="text-base">Event Settings</CardTitle>
       </CardHeader>
       <CardContent>
-        <form onSubmit={handleSubmit} className="space-y-4 max-w-xl">
-          <div>
-            <label className="text-sm font-medium">Title</label>
-            <input
-              type="text"
-              value={formData.title}
-              onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-              className="w-full mt-1 px-3 py-2 border rounded-lg text-sm"
+        <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4 max-w-xl" noValidate>
+          <FieldGroup>
+            <Controller
+              name="title"
+              control={form.control}
+              render={({ field, fieldState }) => (
+                <Field data-invalid={fieldState.invalid}>
+                  <FieldLabel htmlFor="event-title">Title</FieldLabel>
+                  <Input {...field} id="event-title" aria-invalid={fieldState.invalid} />
+                  {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
+                </Field>
+              )}
             />
-          </div>
-          <div>
-            <label className="text-sm font-medium">Description</label>
-            <textarea
-              value={formData.description}
-              onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-              rows={4}
-              className="w-full mt-1 px-3 py-2 border rounded-lg text-sm"
+            <Controller
+              name="description"
+              control={form.control}
+              render={({ field, fieldState }) => (
+                <Field data-invalid={fieldState.invalid}>
+                  <FieldLabel htmlFor="event-description">Description</FieldLabel>
+                  <Textarea {...field} id="event-description" rows={4} aria-invalid={fieldState.invalid} />
+                  {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
+                </Field>
+              )}
             />
-          </div>
-          <div>
-            <label className="text-sm font-medium">Location</label>
-            <input
-              type="text"
-              value={formData.location}
-              onChange={(e) => setFormData({ ...formData, location: e.target.value })}
-              className="w-full mt-1 px-3 py-2 border rounded-lg text-sm"
+            <Controller
+              name="location"
+              control={form.control}
+              render={({ field, fieldState }) => (
+                <Field data-invalid={fieldState.invalid}>
+                  <FieldLabel htmlFor="event-location">Location</FieldLabel>
+                  <Input {...field} id="event-location" aria-invalid={fieldState.invalid} />
+                  {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
+                </Field>
+              )}
             />
-          </div>
-          <div>
-            <label className="text-sm font-medium">Max Participants</label>
-            <input
-              type="number"
-              value={formData.maxParticipants}
-              onChange={(e) => setFormData({ ...formData, maxParticipants: Number(e.target.value) })}
-              className="w-full mt-1 px-3 py-2 border rounded-lg text-sm"
+            <Controller
+              name="maxParticipants"
+              control={form.control}
+              render={({ field, fieldState }) => (
+                <Field data-invalid={fieldState.invalid}>
+                  <FieldLabel htmlFor="event-maxParticipants">Max Participants</FieldLabel>
+                  <Input
+                    {...field}
+                    id="event-maxParticipants"
+                    type="number"
+                    onChange={(e) => field.onChange(Number(e.target.value))}
+                    aria-invalid={fieldState.invalid}
+                  />
+                  {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
+                </Field>
+              )}
             />
-          </div>
-          <div className="flex items-center gap-2">
-            <input
-              type="checkbox"
-              id="cancelled"
-              checked={formData.isCancelled}
-              onChange={(e) => setFormData({ ...formData, isCancelled: e.target.checked })}
-              className="rounded"
+            <Controller
+              name="isCancelled"
+              control={form.control}
+              render={({ field }) => (
+                <Field>
+                  <label className="flex items-center gap-2 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={field.value}
+                      onChange={field.onChange}
+                      className="rounded"
+                    />
+                    <span className="text-sm">Mark as cancelled</span>
+                  </label>
+                </Field>
+              )}
             />
-            <label htmlFor="cancelled" className="text-sm">Mark as cancelled</label>
-          </div>
+          </FieldGroup>
           <div className="flex gap-2">
             <Button type="submit" disabled={isUpdating} className="bg-[#1a5c2a] hover:bg-[#144a22]">
               {isUpdating ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : null}

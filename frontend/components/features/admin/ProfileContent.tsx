@@ -1,13 +1,68 @@
 "use client";
 
+import { useState } from "react";
+import { Controller, useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod";
 import { useAuth } from "@/context/AuthContext";
+import { authService } from "@/services/auth.service";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { User, Mail, Shield, Calendar, Save } from "lucide-react";
+import { Field, FieldError, FieldGroup, FieldLabel } from "@/components/ui/field";
+import { User, Mail, Shield, Loader2 } from "lucide-react";
+import { toast } from "sonner";
+
+const profileSchema = z.object({
+  firstName: z.string().min(1, "First name is required"),
+  lastName: z.string().min(1, "Last name is required"),
+  email: z.string().email("Invalid email address"),
+  phone: z.string().optional(),
+});
+
+type ProfileValues = z.infer<typeof profileSchema>;
 
 export default function ProfileContent() {
-  const { user } = useAuth();
+  const { user, refreshUser } = useAuth();
+  const [isSaving, setIsSaving] = useState(false);
+
+  const form = useForm<ProfileValues>({
+    resolver: zodResolver(profileSchema),
+    defaultValues: {
+      firstName: user?.name?.split(" ")[0] || "",
+      lastName: user?.name?.split(" ").slice(1).join(" ") || "",
+      email: user?.email || "",
+      phone: "",
+    },
+    mode: "onBlur",
+  });
+
+  const handleSave = async (data: ProfileValues) => {
+    setIsSaving(true);
+    try {
+      await authService.updateProfile({
+        name: `${data.firstName} ${data.lastName}`,
+        email: data.email,
+        phone: data.phone,
+      });
+      await refreshUser();
+      toast.success("Profile updated successfully");
+    } catch (error: any) {
+      if (error.errors) {
+        error.errors.forEach((err: { path: string; message: string }) => {
+          const fieldName = err.path.replace("body.", "") as keyof ProfileValues;
+          if (fieldName in form.getValues()) {
+            form.setError(fieldName, { type: "server", message: err.message });
+          }
+        });
+      } else {
+        toast.error(error.message || "Failed to update profile");
+      }
+    } finally {
+      setIsSaving(false);
+    }
+  };
 
   return (
     <div>
@@ -44,44 +99,61 @@ export default function ProfileContent() {
             <CardTitle className="text-base">Edit Profile</CardTitle>
           </CardHeader>
           <CardContent>
-            <form className="space-y-4">
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="text-sm font-medium">First Name</label>
-                  <input
-                    type="text"
-                    defaultValue="Aurel"
-                    className="w-full mt-1 px-3 py-2 border rounded-lg text-sm"
+            <form onSubmit={form.handleSubmit(handleSave)} className="space-y-4" noValidate>
+              <FieldGroup>
+                <div className="grid grid-cols-2 gap-4">
+                  <Controller
+                    name="firstName"
+                    control={form.control}
+                    render={({ field, fieldState }) => (
+                      <Field data-invalid={fieldState.invalid}>
+                        <FieldLabel htmlFor="admin-firstName">First Name</FieldLabel>
+                        <Input {...field} id="admin-firstName" aria-invalid={fieldState.invalid} />
+                        {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
+                      </Field>
+                    )}
+                  />
+                  <Controller
+                    name="lastName"
+                    control={form.control}
+                    render={({ field, fieldState }) => (
+                      <Field data-invalid={fieldState.invalid}>
+                        <FieldLabel htmlFor="admin-lastName">Last Name</FieldLabel>
+                        <Input {...field} id="admin-lastName" aria-invalid={fieldState.invalid} />
+                        {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
+                      </Field>
+                    )}
                   />
                 </div>
-                <div>
-                  <label className="text-sm font-medium">Last Name</label>
-                  <input
-                    type="text"
-                    defaultValue="Baz"
-                    className="w-full mt-1 px-3 py-2 border rounded-lg text-sm"
-                  />
-                </div>
-              </div>
-              <div>
-                <label className="text-sm font-medium">Email</label>
-                <input
-                  type="email"
-                  defaultValue="aurel@maisonzdr.com"
-                  className="w-full mt-1 px-3 py-2 border rounded-lg text-sm"
+                <Controller
+                  name="email"
+                  control={form.control}
+                  render={({ field, fieldState }) => (
+                    <Field data-invalid={fieldState.invalid}>
+                      <FieldLabel htmlFor="admin-email">Email</FieldLabel>
+                      <Input {...field} id="admin-email" type="email" disabled aria-invalid={fieldState.invalid} />
+                      {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
+                    </Field>
+                  )}
                 />
-              </div>
-              <div>
-                <label className="text-sm font-medium">Phone</label>
-                <input
-                  type="tel"
-                  defaultValue="+33 6 12 34 56 78"
-                  className="w-full mt-1 px-3 py-2 border rounded-lg text-sm"
+                <Controller
+                  name="phone"
+                  control={form.control}
+                  render={({ field, fieldState }) => (
+                    <Field data-invalid={fieldState.invalid}>
+                      <FieldLabel htmlFor="admin-phone">Phone</FieldLabel>
+                      <Input {...field} id="admin-phone" type="tel" placeholder="+33 6 12 34 56 78" aria-invalid={fieldState.invalid} />
+                      {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
+                    </Field>
+                  )}
                 />
-              </div>
-              <Button type="button" className="bg-[#1a5c2a] hover:bg-[#144a22]">
-                <Save className="h-4 w-4 mr-2" />
-                Save Changes
+              </FieldGroup>
+              <Button type="submit" className="bg-[#1a5c2a] hover:bg-[#144a22]" disabled={isSaving}>
+                {isSaving ? (
+                  <><Loader2 className="h-4 w-4 mr-2 animate-spin" />Saving...</>
+                ) : (
+                  "Save Changes"
+                )}
               </Button>
             </form>
           </CardContent>
