@@ -1,75 +1,84 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { eventService } from "@/services/event.service";
+import { useState } from "react";
+import EventHeroBanner from "@/components/features/events/EventHeroBanner";
+import EventFilters from "@/components/features/events/EventFilters";
 import EventCard from "@/components/features/events/EventCard";
 import type { Event } from "@/types";
-import { Loader2 } from "lucide-react";
+
+// TODO: Replace with actual API call
+const MOCK_EVENTS: Event[] = [
+  {
+    id: "1",
+    slug: "acoustic-fridays",
+    title: "Acoustic Fridays",
+    description: "A night of live acoustic music and drinks.",
+    location: "9 Rue du Commerce, 35140 Saint-Hilaire-des-Landes",
+    eventDate: new Date().toISOString(),
+    deadline: new Date(Date.now() + 86400000).toISOString(),
+    minParticipants: 5,
+    maxParticipants: 20,
+    isCancelled: false,
+    gallery: [],
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
+    authorId: "1",
+    author: { id: "1", name: "Maison ZDR Events Team", email: "events@maisonzdr.com" },
+    _count: { registrations: 8 },
+  },
+  {
+    id: "2",
+    slug: "cocktail-night",
+    title: "Cocktail Night",
+    description: "Enjoy handcrafted cocktails in a relaxed atmosphere.",
+    location: "9 Rue du Commerce, 35140 Saint-Hilaire-des-Landes",
+    eventDate: new Date().toISOString(),
+    deadline: new Date(Date.now() + 86400000).toISOString(),
+    minParticipants: 5,
+    maxParticipants: 20,
+    isCancelled: false,
+    gallery: [],
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
+    authorId: "1",
+    author: { id: "1", name: "Maison ZDR Events Team", email: "events@maisonzdr.com" },
+    _count: { registrations: 8 },
+  },
+  {
+    id: "3",
+    slug: "trivia-hour",
+    title: "Trivia Hour",
+    description: "Test your knowledge with fun trivia questions.",
+    location: "9 Rue du Commerce, 35140 Saint-Hilaire-des-Landes",
+    eventDate: new Date().toISOString(),
+    deadline: new Date(Date.now() + 86400000).toISOString(),
+    minParticipants: 5,
+    maxParticipants: 20,
+    isCancelled: false,
+    gallery: [],
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
+    authorId: "1",
+    author: { id: "1", name: "Maison ZDR Events Team", email: "events@maisonzdr.com" },
+    _count: { registrations: 8 },
+  },
+];
 
 export default function EventsPage() {
-  const [events, setEvents] = useState<Event[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-
-  useEffect(() => {
-    const fetchEvents = async () => {
-      try {
-        const response = await eventService.getAll();
-        if (response.code === 200 && response.data) {
-          setEvents(response.data.events);
-        } else {
-          setError(response.message);
-        }
-      } catch (err: any) {
-        setError(err.response?.data?.message || "Failed to fetch events");
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    fetchEvents();
-  }, []);
-
-  if (isLoading) {
-    return (
-      <div className="container mx-auto px-4 py-16">
-        <div className="flex items-center justify-center">
-          <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
-        </div>
-      </div>
-    );
-  }
-
-  if (error) {
-    return (
-      <div className="container mx-auto px-4 py-16">
-        <div className="text-center">
-          <p className="text-destructive">{error}</p>
-        </div>
-      </div>
-    );
-  }
+  const [selectedCategory, setSelectedCategory] = useState("All Events");
 
   return (
-    <div className="container mx-auto px-4 py-8">
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold">Events</h1>
-        <p className="text-muted-foreground mt-2">
-          Browse and register for upcoming events
-        </p>
-      </div>
-
-      {events.length === 0 ? (
-        <div className="text-center py-16">
-          <p className="text-muted-foreground">No events available at the moment.</p>
-        </div>
-      ) : (
-        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {events.map((event) => (
+    <>
+      <EventHeroBanner />
+      <div className="container py-12">
+        <h1 className="text-3xl font-bold mb-6">Events</h1>
+        <EventFilters selected={selectedCategory} onSelect={setSelectedCategory} />
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-8">
+          {MOCK_EVENTS.map((event) => (
             <EventCard key={event.id} event={event} />
           ))}
         </div>
-      )}
-    </div>
+      </div>
+    </>
   );
 }

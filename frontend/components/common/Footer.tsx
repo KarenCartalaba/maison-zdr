@@ -1,71 +1,55 @@
 import Link from "next/link";
-import { ROUTES } from "@/constants";
+import Logo from "@/components/common/Logo";
 
 export default function Footer() {
   return (
-    <footer className="border-t bg-background">
-      <div className="container py-8 md:py-12">
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
-          <div className="col-span-2 md:col-span-1">
-            <Link href={ROUTES.HOME} className="font-bold text-lg">
-              Zone de Rassemblement
-            </Link>
-            <p className="text-sm text-muted-foreground mt-2">
-              Your centralized platform for event registration and management.
+    <footer className="bg-[#1a5c2a] text-white">
+      <div className="container py-12">
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
+          {/* Brand */}
+          <div className="space-y-4">
+            <Logo className="[&_div]:text-white [&_span]:text-white" />
+            <p className="text-sm text-white/80">
+              A Modern Event Registration website designed for seamless event experiences.
             </p>
           </div>
 
+          {/* Navigations */}
           <div>
-            <h3 className="font-semibold mb-4">Quick Links</h3>
-            <ul className="space-y-2 text-sm text-muted-foreground">
-              <li>
-                <Link href={ROUTES.HOME} className="hover:text-foreground">
-                  Home
-                </Link>
-              </li>
-              <li>
-                <Link href={ROUTES.EVENTS} className="hover:text-foreground">
-                  Events
-                </Link>
-              </li>
-              <li>
-                <Link href={ROUTES.GALLERY} className="hover:text-foreground">
-                  Gallery
-                </Link>
-              </li>
+            <h3 className="font-semibold mb-4">Navigations</h3>
+            <ul className="space-y-2 text-sm text-white/80">
+              <li><Link href="/" className="hover:text-white">Home</Link></li>
+              <li><Link href="/events" className="hover:text-white">Events</Link></li>
+              <li><Link href="/contact" className="hover:text-white">Contacts</Link></li>
             </ul>
           </div>
 
+          {/* Legal */}
           <div>
-            <h3 className="font-semibold mb-4">Account</h3>
-            <ul className="space-y-2 text-sm text-muted-foreground">
-              <li>
-                <Link href={ROUTES.LOGIN} className="hover:text-foreground">
-                  Login
-                </Link>
-              </li>
-              <li>
-                <Link href={ROUTES.SIGNUP} className="hover:text-foreground">
-                  Sign Up
-                </Link>
-              </li>
+            <h3 className="font-semibold mb-4">Legal</h3>
+            <ul className="space-y-2 text-sm text-white/80">
+              <li><Link href="/privacy" className="hover:text-white">Privacy Policy</Link></li>
+              <li><Link href="/terms" className="hover:text-white">Terms and Conditions</Link></li>
             </ul>
           </div>
 
+          {/* Visit Us */}
           <div>
-            <h3 className="font-semibold mb-4">Contact</h3>
-            <ul className="space-y-2 text-sm text-muted-foreground">
-              <li>
-                <Link href={ROUTES.CONTACT} className="hover:text-foreground">
-                  Contact Us
-                </Link>
-              </li>
+            <h3 className="font-semibold mb-4">Visit Us</h3>
+            <ul className="space-y-2 text-sm text-white/80">
+              <li>9 Rue du Commerce, 35140</li>
+              <li>Saint-Hilaire-des-Landes</li>
+              <li className="pt-2">hello@maisonzdr.com</li>
+              <li>+32 2 555 0184</li>
             </ul>
           </div>
         </div>
+      </div>
 
-        <div className="mt-8 pt-8 border-t text-center text-sm text-muted-foreground">
-          <p>&copy; {new Date().getFullYear()} Zone de Rassemblement. All rights reserved.</p>
+      {/* Copyright */}
+      <div className="border-t border-white/20">
+        <div className="container py-6 text-center text-sm text-white/60">
+          &copy; 2026 Zone de Rassemblement. All rights reserved.
         </div>
       </div>
     </footer>

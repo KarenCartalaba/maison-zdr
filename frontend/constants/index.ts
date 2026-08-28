@@ -3,6 +3,7 @@ export const ROUTES = {
   LOGIN: "/login",
   SIGNUP: "/signup",
   VERIFY_EMAIL: "/verify-email",
+  FORGOT_PASSWORD: "/forgot-password",
   EVENTS: "/events",
   EVENT_DETAIL: (id: string) => `/events/${id}`,
   EVENT_REGISTER: (id: string) => `/events/${id}/register`,

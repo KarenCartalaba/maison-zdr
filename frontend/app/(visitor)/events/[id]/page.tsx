@@ -1,213 +1,122 @@
-"use client";
+import EventDetailHero from "@/components/features/events/EventDetailHero";
+import RegistrationSidebar from "@/components/features/events/RegistrationSidebar";
+import GalleryGrid from "@/components/features/events/GalleryGrid";
+import ReviewSection from "@/components/features/events/ReviewSection";
 
-import { useEffect, useState } from "react";
-import { useParams } from "next/navigation";
-import Link from "next/link";
-import { useAuth } from "@/context/AuthContext";
-import { eventService } from "@/services/event.service";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Calendar, MapPin, Users, Clock, ArrowLeft, Lock } from "lucide-react";
-import { Loader2 } from "lucide-react";
-import type { Event } from "@/types";
+// TODO: Fetch event data from API based on params.id
+// This is a placeholder for now
+async function getEvent(id: string) {
+  return {
+    id,
+    title: "Cocktail Night",
+    description:
+      "A Cocktail Night is a social event where people gather to enjoy drinks (cocktails or mocktails), music, food, and conversation in a relaxed, elegant atmosphere. It's often held for networking, celebrating, or simply spending time with friends and colleagues.",
+    location: "9 Rue du Commerce, 35140 Saint-Hilaire-des-Landes",
+    eventDate: new Date().toISOString(),
+    deadline: new Date(Date.now() + 86400000).toISOString(),
+    maxParticipants: 20,
+    imageUrl: "/images/event-2.jpg",
+    isCancelled: false,
+    status: "Ongoing",
+    author: { id: "1", name: "Maison ZDR Events Team" },
+    _count: { registrations: 17 },
+  };
+}
 
-export default function EventDetailPage() {
-  const params = useParams();
-  const { isAuthenticated, isVerified } = useAuth();
-  const [event, setEvent] = useState<Event | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-
-  useEffect(() => {
-    const fetchEvent = async () => {
-      try {
-        const response = await eventService.getById(params.id as string);
-        if (response.code === 200 && response.data) {
-          setEvent(response.data.event);
-        } else {
-          setError(response.message);
-        }
-      } catch (err: any) {
-        setError(err.response?.data?.message || "Failed to fetch event");
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    fetchEvent();
-  }, [params.id]);
-
-  if (isLoading) {
-    return (
-      <div className="container mx-auto px-4 py-16">
-        <div className="flex items-center justify-center">
-          <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
-        </div>
-      </div>
-    );
-  }
-
-  if (error || !event) {
-    return (
-      <div className="container mx-auto px-4 py-16">
-        <div className="text-center">
-          <p className="text-destructive">{error || "Event not found"}</p>
-          <Link href="/events" className="mt-4 inline-block">
-            <Button variant="outline">Back to Events</Button>
-          </Link>
-        </div>
-      </div>
-    );
-  }
-
-  const registrationCount = event._count?.registrations || 0;
-  const capacityPercentage = (registrationCount / event.maxParticipants) * 100;
+export default async function EventDetailPage({
+  params,
+}: {
+  params: Promise<{ id: string }>;
+}) {
+  const { id } = await params;
+  const event = await getEvent(id);
   const isDeadlinePassed = new Date(event.deadline) < new Date();
 
-  // Determine button state based on user verification status
-  const getRegisterButton = () => {
-    if (event.isCancelled) {
-      return (
-        <Button size="lg" disabled>
-          Event Cancelled
-        </Button>
-      );
-    }
-    if (isDeadlinePassed) {
-      return (
-        <Button size="lg" disabled>
-          Registration Closed
-        </Button>
-      );
-    }
-    if (!isAuthenticated) {
-      return (
-        <Link href="/login">
-          <Button size="lg">
-            Login to Register
-          </Button>
-        </Link>
-      );
-    }
-    if (!isVerified) {
-      return (
-        <div className="space-y-2">
-          <Link href="/verify-email">
-            <Button size="lg" variant="outline" className="w-full">
-              <Lock className="h-4 w-4 mr-2" />
-              Verify Email to Register
-            </Button>
-          </Link>
-          <p className="text-sm text-muted-foreground text-center">
-            You must verify your email to register for events
-          </p>
-        </div>
-      );
-    }
-    return (
-      <Link href={`/events/${event.id}/register`}>
-        <Button size="lg">
-          Register Now
-        </Button>
-      </Link>
-    );
-  };
-
   return (
-    <div className="container mx-auto px-4 py-8">
-      <Link href="/events" className="inline-flex items-center text-muted-foreground hover:text-foreground mb-6">
-        <ArrowLeft className="h-4 w-4 mr-2" />
-        Back to Events
-      </Link>
+    <>
+      <EventDetailHero title={event.title} imageUrl={event.imageUrl} />
 
-      <div className="max-w-4xl">
-        <div className="mb-6">
-          <h1 className="text-3xl font-bold">{event.title}</h1>
-          <p className="text-muted-foreground mt-2">
-            Organized by {event.author.name}
-          </p>
-        </div>
-
-        <Card className="mb-6">
-          <CardHeader>
-            <CardTitle>Event Details</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="flex items-center gap-3">
-              <Calendar className="h-5 w-5 text-muted-foreground" />
-              <div>
-                <p className="font-medium">Date & Time</p>
-                <p className="text-sm text-muted-foreground">
+      <div className="container py-12">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+          {/* Main Content */}
+          <div className="lg:col-span-2 space-y-8">
+            {/* Date, Time, Venue pills */}
+            <div className="flex flex-wrap gap-3">
+              <div className="flex items-center gap-2 rounded-full border px-4 py-2 text-sm">
+                <span className="text-muted-foreground">Date</span>
+                <span className="font-medium">
                   {new Date(event.eventDate).toLocaleDateString("en-US", {
-                    weekday: "long",
-                    year: "numeric",
                     month: "long",
                     day: "numeric",
-                    hour: "2-digit",
-                    minute: "2-digit",
-                  })}
-                </p>
-              </div>
-            </div>
-
-            <div className="flex items-center gap-3">
-              <MapPin className="h-5 w-5 text-muted-foreground" />
-              <div>
-                <p className="font-medium">Location</p>
-                <p className="text-sm text-muted-foreground">{event.location}</p>
-              </div>
-            </div>
-
-            <div className="flex items-center gap-3">
-              <Clock className="h-5 w-5 text-muted-foreground" />
-              <div>
-                <p className="font-medium">Registration Deadline</p>
-                <p className="text-sm text-muted-foreground">
-                  {new Date(event.deadline).toLocaleDateString("en-US", {
-                    weekday: "long",
                     year: "numeric",
+                  })}
+                </span>
+              </div>
+              <div className="flex items-center gap-2 rounded-full border px-4 py-2 text-sm">
+                <span className="text-muted-foreground">Time</span>
+                <span className="font-medium">
+                  {new Date(event.eventDate).toLocaleDateString("en-US", {
                     month: "long",
                     day: "numeric",
-                    hour: "2-digit",
-                    minute: "2-digit",
+                    year: "numeric",
                   })}
-                </p>
+                </span>
+              </div>
+              <div className="flex items-center gap-2 rounded-full border px-4 py-2 text-sm">
+                <span className="text-muted-foreground">Venue</span>
+                <span className="font-medium">
+                  {new Date(event.eventDate).toLocaleDateString("en-US", {
+                    month: "long",
+                    day: "numeric",
+                    year: "numeric",
+                  })}
+                </span>
               </div>
             </div>
 
-            <div className="flex items-center gap-3">
-              <Users className="h-5 w-5 text-muted-foreground" />
-              <div>
-                <p className="font-medium">Capacity</p>
-                <p className="text-sm text-muted-foreground">
-                  {registrationCount} / {event.maxParticipants} registered
-                </p>
-                <div className="mt-2 h-2 w-full rounded-full bg-secondary">
-                  <div
-                    className="h-full rounded-full bg-primary"
-                    style={{ width: `${Math.min(capacityPercentage, 100)}%` }}
-                  />
+            {/* About */}
+            <div>
+              <h2 className="text-2xl font-bold mb-4">About this Event</h2>
+              <p className="text-muted-foreground leading-relaxed">
+                {event.description}
+              </p>
+            </div>
+
+            {/* Organizer */}
+            <div className="flex items-center justify-between rounded-lg border p-4">
+              <div className="flex items-center gap-3">
+                <div className="flex h-10 w-10 items-center justify-center rounded-full bg-muted">
+                  <span className="text-sm font-medium">O</span>
+                </div>
+                <div>
+                  <p className="text-xs text-muted-foreground">Organizer</p>
+                  <p className="font-medium">{event.author.name}</p>
                 </div>
               </div>
+              <span className="text-sm text-muted-foreground">Official Event Organizer</span>
             </div>
-          </CardContent>
-        </Card>
 
-        <Card className="mb-6">
-          <CardHeader>
-            <CardTitle>Description</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="whitespace-pre-wrap text-muted-foreground">
-              {event.description}
-            </p>
-          </CardContent>
-        </Card>
+            {/* Gallery */}
+            <GalleryGrid />
 
-        <div className="flex gap-4">
-          {getRegisterButton()}
+            {/* Reviews */}
+            <ReviewSection />
+          </div>
+
+          {/* Sidebar */}
+          <div className="lg:col-span-1">
+            <div className="sticky top-24">
+              <RegistrationSidebar
+                eventId={event.id}
+                maxParticipants={event.maxParticipants}
+                registeredCount={event._count.registrations}
+                status={event.status}
+                isDeadlinePassed={isDeadlinePassed}
+              />
+            </div>
+          </div>
         </div>
       </div>
-    </div>
+    </>
   );
 }

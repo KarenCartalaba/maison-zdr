@@ -2,10 +2,10 @@
 
 import Link from "next/link";
 import { useAuth } from "@/context/AuthContext";
-import { Card, CardContent, CardFooter } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Calendar, MapPin, Users, Lock } from "lucide-react";
+import { Calendar, MapPin } from "lucide-react";
 import type { Event } from "@/types";
 
 interface EventCardProps {
@@ -18,93 +18,66 @@ export default function EventCard({ event }: EventCardProps) {
   const capacityPercentage = (registrationCount / event.maxParticipants) * 100;
   const isDeadlinePassed = new Date(event.deadline) < new Date();
 
-  // Determine button text and state based on user status
   const getButtonState = () => {
-    if (event.isCancelled) {
-      return { text: "Event Cancelled", disabled: true };
-    }
-    if (isDeadlinePassed) {
-      return { text: "Registration Closed", disabled: true };
-    }
-    if (!isAuthenticated) {
-      return { text: "Login to Register", disabled: false, href: "/login" };
-    }
-    if (!isVerified) {
-      return { text: "Verify Email to Register", disabled: false, href: "/verify-email" };
-    }
-    return { text: "Register Now", disabled: false };
+    if (event.isCancelled) return { text: "Event Cancelled", disabled: true };
+    if (isDeadlinePassed) return { text: "Registration Closed", disabled: true };
+    if (!isAuthenticated) return { text: "View Details", disabled: false };
+    if (!isVerified) return { text: "View Details", disabled: false };
+    return { text: "View Details", disabled: false };
   };
 
   const buttonState = getButtonState();
 
   return (
-    <Card className="flex flex-col">
-      <CardContent className="flex-1 p-6">
-        <div className="flex items-start justify-between mb-2">
-          <h3 className="font-semibold text-lg line-clamp-1">{event.title}</h3>
-          {event.isCancelled && (
-            <Badge variant="destructive">Cancelled</Badge>
-          )}
+    <Card className="overflow-hidden border-none shadow-md">
+      {/* TODO: Replace placeholder with actual event image from event.imageUrl */}
+      <div className="relative h-48 bg-muted">
+        {/* TODO: Replace with actual event image */}
+        <img
+          src={`/images/event-${event.id}.jpg`}
+          alt={event.title}
+          className="w-full h-full object-cover"
+        />
+        <Badge className="absolute top-3 right-3 bg-[#1a5c2a] hover:bg-[#144a22]">
+          {event.isCancelled ? "Cancelled" : "Ongoing"}
+        </Badge>
+      </div>
+      <CardContent className="p-5 space-y-3">
+        <h3 className="font-semibold text-lg">{event.title}</h3>
+        <div className="flex items-center gap-2 text-sm text-muted-foreground">
+          <Calendar className="h-4 w-4" />
+          <span>
+            {new Date(event.eventDate).toLocaleDateString("en-US", {
+              weekday: "long",
+              hour: "2-digit",
+              minute: "2-digit",
+            })}
+          </span>
         </div>
-
-        <p className="text-sm text-muted-foreground line-clamp-2 mb-4">
-          {event.description}
-        </p>
-
-        <div className="space-y-2 text-sm text-muted-foreground">
-          <div className="flex items-center gap-2">
-            <Calendar className="h-4 w-4" />
-            <span>
-              {new Date(event.eventDate).toLocaleDateString("en-US", {
-                month: "short",
-                day: "numeric",
-                year: "numeric",
-              })}
+        <div className="flex items-center gap-2 text-sm text-muted-foreground">
+          <MapPin className="h-4 w-4" />
+          <span className="line-clamp-1">{event.location}</span>
+        </div>
+        <div className="space-y-1">
+          <div className="flex items-center justify-between text-sm">
+            <span className="text-muted-foreground">Registration availability</span>
+            <span className="text-muted-foreground">
+              {registrationCount}/{event.maxParticipants} slot left
             </span>
           </div>
-
-          <div className="flex items-center gap-2">
-            <MapPin className="h-4 w-4" />
-            <span className="line-clamp-1">{event.location}</span>
-          </div>
-
-          <div className="flex items-center gap-2">
-            <Users className="h-4 w-4" />
-            <span>
-              {registrationCount} / {event.maxParticipants}
-            </span>
-          </div>
-        </div>
-
-        <div className="mt-4">
-          <div className="h-2 w-full rounded-full bg-secondary">
+          <div className="h-2 w-full rounded-full bg-muted">
             <div
-              className="h-full rounded-full bg-primary"
-              style={{ width: `${Math.min(capacityPercentage, 100)}%` }}
+              className="h-full rounded-full bg-[#1a5c2a]"
+              style={{ width: `${capacityPercentage}%` }}
             />
           </div>
         </div>
+        <Link href={`/events/${event.id}`}>
+          <Button className="w-full bg-[#1a5c2a] hover:bg-[#144a22]">
+            {buttonState.text}
+          </Button>
+        </Link>
       </CardContent>
-
-      <CardFooter className="p-6 pt-0">
-        {buttonState.href ? (
-          <Link href={buttonState.href} className="w-full">
-            <Button className="w-full" variant="outline">
-              {buttonState.text}
-            </Button>
-          </Link>
-        ) : (
-          <Link href={`/events/${event.id}`} className="w-full">
-            <Button
-              className="w-full"
-              variant={buttonState.disabled ? "secondary" : "default"}
-              disabled={buttonState.disabled}
-            >
-              {buttonState.text}
-            </Button>
-          </Link>
-        )}
-      </CardFooter>
     </Card>
   );
 }
