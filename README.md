@@ -57,18 +57,32 @@ The system provides:
 
 ## ✨ Features
 
-### 👤 User Features
+### 👤 Visitor Features (No Account)
 
 * Browse available events
 * View event details
+* View event capacity/progress
+* Create an account
+
+### 🔒 Unverified User Features
+
+* All Visitor features
+* Login to their account
+* Update profile information
+* Verify email address
+
+### ✅ Verified User Features
+
+* All Unverified User features
 * Register for events
 * Cancel event registration
 * Add a **plus-one guest**
-* View event capacity/progress
-* Receive email notifications for registration and cancellation
+* View my registrations
+* Receive email notifications
 
 ### 🛠️ Admin Features
 
+* All Verified User features
 * Create and manage events
 * Set registration deadlines
 * Set minimum and maximum participant limits
@@ -130,19 +144,18 @@ The system provides email notifications for important event activities, includin
 ```text
                     ZONE DE RASSEMBLEMENT
                              │
-             ┌───────────────┴───────────────┐
-             │                               │
-           USER                            ADMIN
-             │                               │
-      ┌──────┴──────┐                ┌───────┴────────┐
-      │             │                │                │
-   View Events   Register        Manage Events    Manage Users
-      │             │                │                │
-      │        Plus-One Guest      Monitor         Gallery
-      │             │             Participants       │
-      └─────────────┴────────────────┴────────────────┘
+         ┌───────────┬───────┴───────┬───────────┐
+         │           │               │           │
+       VISITOR   UNVERIFIED     VERIFIED      ADMIN
+         │        USER            USER          │
+         │           │               │          │
+    View Events  View Events   View Events  Manage Events
+    View Gallery Update Profile Register     Manage Users
+    Contact      Verify Email  My Regs      Gallery
+         │           │               │          │
+         └───────────┴───────┬───────┴──────────┘
                              │
-                    Email Notifications
+                     Email Notifications
                              │
                          PostgreSQL
                            (Neon)
@@ -152,10 +165,10 @@ The system provides email notifications for important event activities, includin
 
 ## 🔄 Registration Process
 
-1. User browses available events.
+1. Visitor or user browses available events.
 2. User selects an event.
 3. User views the event details and available capacity.
-4. User registers for the event.
+4. **Verified users** can register for the event.
 5. User may add a plus-one guest when allowed.
 6. The system records the registration.
 7. The user receives an email confirmation.
@@ -188,21 +201,32 @@ The design focuses on:
 
 ## 🔐 System Roles
 
-### User
-
-Users can:
+### 👤 Visitor (No Account)
 
 * View available events
 * View event information
+* Create an account
+
+### 🔒 Unverified User
+
+* All Visitor capabilities
+* Login to their account
+* Update profile information
+* Verify email address
+* **Cannot** register for events until verified
+
+### ✅ Verified User
+
+* All Unverified User capabilities
 * Register for events
-* Add eligible guests
 * Cancel registrations
+* Add eligible guests
+* View my registrations
 * Receive event notifications
 
-### Administrator
+### 🛠️ Administrator
 
-Administrators can:
-
+* All Verified User capabilities
 * Manage events
 * Manage users
 * Monitor registrations

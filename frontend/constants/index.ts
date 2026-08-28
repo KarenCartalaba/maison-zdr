@@ -1,0 +1,46 @@
+export const ROUTES = {
+  HOME: "/",
+  LOGIN: "/login",
+  SIGNUP: "/signup",
+  VERIFY_EMAIL: "/verify-email",
+  FORGOT_PASSWORD: "/forgot-password",
+  EVENTS: "/events",
+  EVENT_DETAIL: (id: string) => `/events/${id}`,
+  EVENT_REGISTER: (id: string) => `/events/${id}/register`,
+  GALLERY: "/gallery",
+  CONTACT: "/contact",
+  MY_REGISTRATIONS: "/my-registrations",
+  PROFILE: "/profile",
+  ADMIN: "/admin",
+  ADMIN_EVENTS: "/admin/events",
+  ADMIN_EVENTS_CREATE: "/admin/events/create",
+  ADMIN_EVENTS_EDIT: (id: string) => `/admin/events/${id}/edit`,
+  ADMIN_USERS: "/admin/users",
+  ADMIN_GALLERY: "/admin/gallery",
+  ADMIN_SETTINGS: "/admin/settings",
+} as const;
+
+export const API_ENDPOINTS = {
+  AUTH: {
+    LOGIN: "/api/auth/v1/login",
+    SIGNUP: "/api/auth/v1/signup",
+    LOGOUT: "/api/auth/v1/logout",
+    REFRESH_TOKEN: "/api/auth/v1/refresh-token",
+    VERIFY_EMAIL: "/api/auth/v1/verify-email",
+    RESEND_VERIFICATION: "/api/auth/v1/resend-email-verification",
+    ME: "/api/auth/v1/me",
+  },
+  EVENTS: {
+    LIST: "/api/events/v1/all",
+    GET: (id: string) => `/api/events/v1/${id}`,
+    CREATE: "/api/events/v1/create",
+    UPDATE: "/api/events/v1/update",
+    DELETE: "/api/events/v1/delete",
+  },
+  REGISTRATIONS: {
+    REGISTER: "/api/registrations/v1/register",
+    CANCEL: "/api/registrations/v1/cancel",
+    BY_USER: (userId: string) => `/api/registrations/v1/user/${userId}`,
+    BY_EVENT: (eventId: string) => `/api/registrations/v1/event/${eventId}`,
+  },
+} as const;
