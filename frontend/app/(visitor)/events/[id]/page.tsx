@@ -3,15 +3,17 @@
 import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 import Link from "next/link";
+import { useAuth } from "@/context/AuthContext";
 import { eventService } from "@/services/event.service";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Calendar, MapPin, Users, Clock, ArrowLeft } from "lucide-react";
+import { Calendar, MapPin, Users, Clock, ArrowLeft, Lock } from "lucide-react";
 import { Loader2 } from "lucide-react";
 import type { Event } from "@/types";
 
 export default function EventDetailPage() {
   const params = useParams();
+  const { isAuthenticated, isVerified } = useAuth();
   const [event, setEvent] = useState<Event | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -61,6 +63,55 @@ export default function EventDetailPage() {
   const registrationCount = event._count?.registrations || 0;
   const capacityPercentage = (registrationCount / event.maxParticipants) * 100;
   const isDeadlinePassed = new Date(event.deadline) < new Date();
+
+  // Determine button state based on user verification status
+  const getRegisterButton = () => {
+    if (event.isCancelled) {
+      return (
+        <Button size="lg" disabled>
+          Event Cancelled
+        </Button>
+      );
+    }
+    if (isDeadlinePassed) {
+      return (
+        <Button size="lg" disabled>
+          Registration Closed
+        </Button>
+      );
+    }
+    if (!isAuthenticated) {
+      return (
+        <Link href="/login">
+          <Button size="lg">
+            Login to Register
+          </Button>
+        </Link>
+      );
+    }
+    if (!isVerified) {
+      return (
+        <div className="space-y-2">
+          <Link href="/verify-email">
+            <Button size="lg" variant="outline" className="w-full">
+              <Lock className="h-4 w-4 mr-2" />
+              Verify Email to Register
+            </Button>
+          </Link>
+          <p className="text-sm text-muted-foreground text-center">
+            You must verify your email to register for events
+          </p>
+        </div>
+      );
+    }
+    return (
+      <Link href={`/events/${event.id}/register`}>
+        <Button size="lg">
+          Register Now
+        </Button>
+      </Link>
+    );
+  };
 
   return (
     <div className="container mx-auto px-4 py-8">
@@ -154,15 +205,7 @@ export default function EventDetailPage() {
         </Card>
 
         <div className="flex gap-4">
-          <Link href={`/events/${event.id}/register`}>
-            <Button size="lg" disabled={isDeadlinePassed || event.isCancelled}>
-              {isDeadlinePassed
-                ? "Registration Closed"
-                : event.isCancelled
-                ? "Event Cancelled"
-                : "Register Now"}
-            </Button>
-          </Link>
+          {getRegisterButton()}
         </div>
       </div>
     </div>

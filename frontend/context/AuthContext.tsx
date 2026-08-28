@@ -12,8 +12,10 @@ interface AuthContextType {
   login: (data: LoginInput) => Promise<void>;
   signup: (data: SignupInput) => Promise<void>;
   logout: () => Promise<void>;
+  refreshUser: () => Promise<void>;
   isAuthenticated: boolean;
   isAdmin: boolean;
+  isVerified: boolean;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -53,6 +55,18 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     initializeAuth();
   }, []);
+
+  const refreshUser = async () => {
+    try {
+      const response = await authService.getMe();
+      if (response.code === 200 && response.data) {
+        setUser(response.data.user);
+        localStorage.setItem("user", JSON.stringify(response.data.user));
+      }
+    } catch (e: any) {
+      console.error("Failed to refresh user:", e);
+    }
+  };
 
   const login = async (data: LoginInput) => {
     try {
@@ -114,8 +128,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         login,
         signup,
         logout,
+        refreshUser,
         isAuthenticated: !!user,
         isAdmin: user?.role?.toUpperCase() === "ADMIN",
+        isVerified: !!user?.emailVerified,
       }}
     >
       {children}

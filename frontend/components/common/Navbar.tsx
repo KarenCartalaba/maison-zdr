@@ -10,12 +10,12 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { User, LogOut, LayoutDashboard, CalendarDays, Menu, X } from "lucide-react";
+import { User, LogOut, LayoutDashboard, CalendarDays, Menu, X, MailWarning } from "lucide-react";
 import { useState } from "react";
 import { ROUTES } from "@/constants";
 
 export default function Navbar() {
-  const { user, isAuthenticated, isAdmin, logout } = useAuth();
+  const { user, isAuthenticated, isAdmin, isVerified, logout } = useAuth();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   return (
@@ -44,7 +44,50 @@ export default function Navbar() {
         <div className="flex flex-1 items-center justify-end space-x-2">
           {/* Desktop Auth Buttons */}
           <div className="hidden md:flex items-center space-x-2">
-            {isAuthenticated ? (
+            {/* Visitor (Not Logged In) */}
+            {!isAuthenticated && (
+              <>
+                <Link href={ROUTES.LOGIN}>
+                  <Button variant="ghost" size="sm">
+                    Login
+                  </Button>
+                </Link>
+                <Link href={ROUTES.SIGNUP}>
+                  <Button size="sm">Sign Up</Button>
+                </Link>
+              </>
+            )}
+
+            {/* Unverified User (Logged in but email not verified) */}
+            {isAuthenticated && !isVerified && (
+              <>
+                <Link href={ROUTES.VERIFY_EMAIL}>
+                  <Button variant="outline" size="sm" className="text-amber-600 border-amber-600 hover:bg-amber-50">
+                    <MailWarning className="h-4 w-4 mr-2" />
+                    Verify Email
+                  </Button>
+                </Link>
+                <DropdownMenu>
+                  <DropdownMenuTrigger render={<Button variant="ghost" size="sm" />}>
+                    <User className="h-4 w-4 mr-2" />
+                    {user?.name}
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end">
+                    <DropdownMenuItem render={<Link href={ROUTES.PROFILE} />}>
+                      Profile
+                    </DropdownMenuItem>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem onClick={() => logout()}>
+                      <LogOut className="h-4 w-4 mr-2" />
+                      Logout
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              </>
+            )}
+
+            {/* Verified User (Full Access) */}
+            {isAuthenticated && isVerified && (
               <>
                 {isAdmin && (
                   <Link href={ROUTES.ADMIN}>
@@ -74,17 +117,6 @@ export default function Navbar() {
                     </DropdownMenuItem>
                   </DropdownMenuContent>
                 </DropdownMenu>
-              </>
-            ) : (
-              <>
-                <Link href={ROUTES.LOGIN}>
-                  <Button variant="ghost" size="sm">
-                    Login
-                  </Button>
-                </Link>
-                <Link href={ROUTES.SIGNUP}>
-                  <Button size="sm">Sign Up</Button>
-                </Link>
               </>
             )}
           </div>
@@ -138,7 +170,48 @@ export default function Navbar() {
               </Link>
             </nav>
             <div className="flex flex-col space-y-2">
-              {isAuthenticated ? (
+              {/* Visitor */}
+              {!isAuthenticated && (
+                <>
+                  <Link href={ROUTES.LOGIN} onClick={() => setIsMobileMenuOpen(false)}>
+                    <Button variant="ghost" className="w-full">
+                      Login
+                    </Button>
+                  </Link>
+                  <Link href={ROUTES.SIGNUP} onClick={() => setIsMobileMenuOpen(false)}>
+                    <Button className="w-full">Sign Up</Button>
+                  </Link>
+                </>
+              )}
+
+              {/* Unverified User */}
+              {isAuthenticated && !isVerified && (
+                <>
+                  <Link href={ROUTES.VERIFY_EMAIL} onClick={() => setIsMobileMenuOpen(false)}>
+                    <Button variant="outline" className="w-full text-amber-600 border-amber-600">
+                      Verify Email
+                    </Button>
+                  </Link>
+                  <Link href={ROUTES.PROFILE} onClick={() => setIsMobileMenuOpen(false)}>
+                    <Button variant="ghost" className="w-full justify-start">
+                      Profile
+                    </Button>
+                  </Link>
+                  <Button
+                    variant="ghost"
+                    className="w-full justify-start"
+                    onClick={() => {
+                      logout();
+                      setIsMobileMenuOpen(false);
+                    }}
+                  >
+                    Logout
+                  </Button>
+                </>
+              )}
+
+              {/* Verified User */}
+              {isAuthenticated && isVerified && (
                 <>
                   <Link href={ROUTES.PROFILE} onClick={() => setIsMobileMenuOpen(false)}>
                     <Button variant="ghost" className="w-full justify-start">
@@ -167,17 +240,6 @@ export default function Navbar() {
                   >
                     Logout
                   </Button>
-                </>
-              ) : (
-                <>
-                  <Link href={ROUTES.LOGIN} onClick={() => setIsMobileMenuOpen(false)}>
-                    <Button variant="ghost" className="w-full">
-                      Login
-                    </Button>
-                  </Link>
-                  <Link href={ROUTES.SIGNUP} onClick={() => setIsMobileMenuOpen(false)}>
-                    <Button className="w-full">Sign Up</Button>
-                  </Link>
                 </>
               )}
             </div>
