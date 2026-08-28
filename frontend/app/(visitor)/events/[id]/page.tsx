@@ -55,22 +55,21 @@ export default async function EventDetailPage({
               <div className="flex items-center gap-2 rounded-full border px-4 py-2 text-sm">
                 <span className="text-muted-foreground">Time</span>
                 <span className="font-medium">
-                  {new Date(event.eventDate).toLocaleDateString("en-US", {
-                    month: "long",
-                    day: "numeric",
-                    year: "numeric",
+                  {new Date(event.eventDate).toLocaleTimeString("en-US", {
+                    hour: "numeric",
+                    minute: "2-digit",
+                    hour12: true,
+                  })}{" "}–{" "}
+                  {new Date(new Date(event.eventDate).getTime() + 3 * 60 * 60 * 1000).toLocaleTimeString("en-US", {
+                    hour: "numeric",
+                    minute: "2-digit",
+                    hour12: true,
                   })}
                 </span>
               </div>
               <div className="flex items-center gap-2 rounded-full border px-4 py-2 text-sm">
                 <span className="text-muted-foreground">Venue</span>
-                <span className="font-medium">
-                  {new Date(event.eventDate).toLocaleDateString("en-US", {
-                    month: "long",
-                    day: "numeric",
-                    year: "numeric",
-                  })}
-                </span>
+                <span className="font-medium">{event.location}</span>
               </div>
             </div>
 

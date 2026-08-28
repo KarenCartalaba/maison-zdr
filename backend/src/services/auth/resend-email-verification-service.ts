@@ -1,7 +1,9 @@
 import crypto from "crypto";
-import * as authRepo from "@/repositories/auth.repository";
+import { AuthRepository } from "@/repositories/auth.repository";
 import { renderTemplate } from "@/utils/template";
 import { sendEmail } from "@/lib/nodemailer";
+
+const authRepo = new AuthRepository();
 
 export async function ResendEmailVerificationService(email: string) {
   try {
@@ -14,7 +16,7 @@ export async function ResendEmailVerificationService(email: string) {
       return { code: 200, status: "success", message: "Email already verified" };
     }
 
-    const previousToken = await authRepo.findToken(user.id, "EMAIL_VERIFY");
+    const previousToken = await authRepo.findTokenByUser(user.id, "EMAIL_VERIFY");
     if (previousToken && previousToken.consumedAt) {
       return { code: 400, status: "error", message: "Verification link already used" };
     }

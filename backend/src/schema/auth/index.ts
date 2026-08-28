@@ -1,42 +1,14 @@
-import { z } from "zod";
-
-const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[\W_]).+$/;
-
-export const signupSchema = z.object({
-  body: z.object({
-    name: z.string().min(2, "Name must be at least 2 characters"),
-    email: z.string().email("Invalid email address"),
-    password: z
-      .string()
-      .min(8, "Password must be at least 8 characters")
-      .regex(
-        passwordRegex,
-        "Password must include uppercase, lowercase, number, and special character"
-      ),
-  }),
-});
-
-export const loginSchema = z.object({
-  body: z.object({
-    email: z.string().email("Invalid email address"),
-    password: z.string().min(1, "Password is required"),
-  }),
-});
-
-export const verifyEmailSchema = z.object({
-  query: z.object({
-    token: z.string().min(1, "Token is required"),
-  }),
-});
-
-export const resendVerificationSchema = z.object({
-  body: z.object({
-    email: z.string().email("Invalid email address"),
-  }),
-});
-
-export const refreshTokenSchema = z.object({
-  body: z.object({
-    refreshToken: z.string().optional(),
-  }),
-});
+export { signupSchema } from "./signup-schema";
+export type { SignupInput } from "./signup-schema";
+export { loginSchema } from "./login-schema";
+export type { LoginInput } from "./login-schema";
+export { verifyEmailSchema } from "./verify-email-schema";
+export type { VerifyEmailInput } from "./verify-email-schema";
+export { resendVerificationSchema } from "./resend-verification-schema";
+export type { ResendVerificationInput } from "./resend-verification-schema";
+export { refreshTokenSchema } from "./refresh-token-schema";
+export type { RefreshTokenInput } from "./refresh-token-schema";
+export { forgotPasswordSchema } from "./forgot-password-schema";
+export type { ForgotPasswordInput } from "./forgot-password-schema";
+export { changePasswordSchema } from "./change-password-schema";
+export type { ChangePasswordInput } from "./change-password-schema";

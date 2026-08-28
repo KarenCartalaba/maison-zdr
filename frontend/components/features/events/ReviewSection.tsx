@@ -7,6 +7,7 @@ const MOCK_REVIEWS = [
     name: "Jellie Anne",
     date: "July 27, 2026",
     rating: 5,
+    title: "Warm atmosphere, terrific music",
     comment: "Warm atmosphere, terrific music, and the staff made everyone feel welcome.",
   },
   {
@@ -14,6 +15,7 @@ const MOCK_REVIEWS = [
     name: "Karen Jean",
     date: "July 27, 2026",
     rating: 5,
+    title: "Warm atmosphere, terrific music",
     comment: "Warm atmosphere, terrific music, and the staff made everyone feel welcome.",
   },
   {
@@ -21,6 +23,7 @@ const MOCK_REVIEWS = [
     name: "Jack Tura",
     date: "July 27, 2026",
     rating: 5,
+    title: "Warm atmosphere, terrific music",
     comment: "Warm atmosphere, terrific music, and the staff made everyone feel welcome.",
   },
 ];

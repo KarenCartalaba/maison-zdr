@@ -3,14 +3,7 @@
 import Link from "next/link";
 import { useAuth } from "@/context/AuthContext";
 import { Button } from "@/components/ui/button";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import { User, LogOut, LayoutDashboard, CalendarDays, Menu, X, MailWarning } from "lucide-react";
+import { Bell, LogOut, LayoutDashboard, Menu, X, MailWarning } from "lucide-react";
 import { useState } from "react";
 import Logo from "@/components/common/Logo";
 
@@ -55,34 +48,8 @@ export default function Navbar() {
               </>
             )}
 
-            {/* Unverified User */}
-            {isAuthenticated && !isVerified && (
-              <>
-                <Link href="/verify-email">
-                  <Button variant="outline" size="sm" className="text-amber-600 border-amber-600 hover:bg-amber-50">
-                    <MailWarning className="h-4 w-4 mr-2" />
-                    Verify Email
-                  </Button>
-                </Link>
-                <DropdownMenu>
-                  <DropdownMenuTrigger render={<Button variant="ghost" size="sm" />}>
-                    <User className="h-4 w-4 mr-2" />
-                    {user?.name}
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end">
-                    <DropdownMenuItem render={<Link href="/profile" />}>Profile</DropdownMenuItem>
-                    <DropdownMenuSeparator />
-                    <DropdownMenuItem onClick={() => logout()}>
-                      <LogOut className="h-4 w-4 mr-2" />
-                      Logout
-                    </DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu>
-              </>
-            )}
-
-            {/* Verified User */}
-            {isAuthenticated && isVerified && (
+            {/* Logged In Users (Unverified + Verified) */}
+            {isAuthenticated && (
               <>
                 {isAdmin && (
                   <Link href="/admin">
@@ -92,24 +59,32 @@ export default function Navbar() {
                     </Button>
                   </Link>
                 )}
-                <DropdownMenu>
-                  <DropdownMenuTrigger render={<Button variant="ghost" size="sm" />}>
-                    <User className="h-4 w-4 mr-2" />
-                    {user?.name}
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end">
-                    <DropdownMenuItem render={<Link href="/profile" />}>Profile</DropdownMenuItem>
-                    <DropdownMenuItem render={<Link href="/my-registrations" />}>
-                      <CalendarDays className="h-4 w-4 mr-2" />
-                      My Registrations
-                    </DropdownMenuItem>
-                    <DropdownMenuSeparator />
-                    <DropdownMenuItem onClick={() => logout()}>
-                      <LogOut className="h-4 w-4 mr-2" />
-                      Logout
-                    </DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu>
+
+                {/* Notification Bell */}
+                <Button variant="ghost" size="icon" className="relative">
+                  <Bell className="h-5 w-5" />
+                </Button>
+
+                {/* User Avatar */}
+                <Link href="/profile">
+                  {/* TODO: Replace with actual user profile photo */}
+                  <div className="h-8 w-8 rounded-full bg-muted overflow-hidden">
+                    <img
+                      src="/images/profile-placeholder.jpg"
+                      alt={user?.name || "Profile"}
+                      className="h-full w-full object-cover"
+                    />
+                  </div>
+                </Link>
+
+                {/* Logout Button */}
+                <Button
+                  size="sm"
+                  className="rounded-full px-6 bg-[#1a5c2a] hover:bg-[#144a22]"
+                  onClick={() => logout()}
+                >
+                  Logout
+                </Button>
               </>
             )}
           </div>
@@ -141,27 +116,16 @@ export default function Navbar() {
                   </Link>
                 </>
               )}
-              {isAuthenticated && !isVerified && (
-                <>
-                  <Link href="/verify-email" onClick={() => setIsMobileMenuOpen(false)}>
-                    <Button variant="outline" className="w-full text-amber-600 border-amber-600">Verify Email</Button>
-                  </Link>
-                  <Link href="/profile" onClick={() => setIsMobileMenuOpen(false)}>
-                    <Button variant="ghost" className="w-full justify-start">Profile</Button>
-                  </Link>
-                  <Button variant="ghost" className="w-full justify-start" onClick={() => { logout(); setIsMobileMenuOpen(false); }}>
-                    Logout
-                  </Button>
-                </>
-              )}
-              {isAuthenticated && isVerified && (
+              {isAuthenticated && (
                 <>
                   <Link href="/profile" onClick={() => setIsMobileMenuOpen(false)}>
                     <Button variant="ghost" className="w-full justify-start">Profile</Button>
                   </Link>
-                  <Link href="/my-registrations" onClick={() => setIsMobileMenuOpen(false)}>
-                    <Button variant="ghost" className="w-full justify-start">My Registrations</Button>
-                  </Link>
+                  {isVerified && (
+                    <Link href="/my-registrations" onClick={() => setIsMobileMenuOpen(false)}>
+                      <Button variant="ghost" className="w-full justify-start">My Registrations</Button>
+                    </Link>
+                  )}
                   {isAdmin && (
                     <Link href="/admin" onClick={() => setIsMobileMenuOpen(false)}>
                       <Button variant="ghost" className="w-full justify-start">Admin Dashboard</Button>

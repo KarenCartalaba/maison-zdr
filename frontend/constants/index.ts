@@ -15,9 +15,14 @@ export const ROUTES = {
   ADMIN_EVENTS: "/admin/events",
   ADMIN_EVENTS_CREATE: "/admin/events/create",
   ADMIN_EVENTS_EDIT: (id: string) => `/admin/events/${id}/edit`,
+  ADMIN_EVENT_WORKSPACE: (id: string) => `/admin/events/${id}`,
+  ADMIN_REGISTRATIONS: "/admin/registrations",
+  ADMIN_CHECKINS: "/admin/check-ins",
+  ADMIN_REVIEWS: "/admin/reviews",
   ADMIN_USERS: "/admin/users",
-  ADMIN_GALLERY: "/admin/gallery",
+  ADMIN_ANALYTICS: "/admin/analytics",
   ADMIN_SETTINGS: "/admin/settings",
+  ADMIN_PROFILE: "/admin/profile",
 } as const;
 
 export const API_ENDPOINTS = {
@@ -29,6 +34,15 @@ export const API_ENDPOINTS = {
     VERIFY_EMAIL: "/api/auth/v1/verify-email",
     RESEND_VERIFICATION: "/api/auth/v1/resend-email-verification",
     ME: "/api/auth/v1/me",
+    FORGOT_PASSWORD: "/api/auth/v1/forgot-password",
+    CHANGE_PASSWORD: "/api/auth/v1/change-password",
+    UPDATE_PROFILE: "/api/auth/v1/update-profile",
+  },
+  CONTACT: {
+    SEND: "/api/contact/v1/send",
+  },
+  REVIEWS: {
+    CREATE: "/api/reviews/v1/create",
   },
   EVENTS: {
     LIST: "/api/events/v1/all",
@@ -42,5 +56,26 @@ export const API_ENDPOINTS = {
     CANCEL: "/api/registrations/v1/cancel",
     BY_USER: (userId: string) => `/api/registrations/v1/user/${userId}`,
     BY_EVENT: (eventId: string) => `/api/registrations/v1/event/${eventId}`,
+  },
+  ADMIN: {
+    REGISTRATIONS: "/api/admin/v1/registrations",
+    REGISTRATION_STATUS: (id: string) => `/api/admin/v1/registrations/${id}/status`,
+    CHECKIN_EVENTS: "/api/admin/v1/checkins/events",
+    CHECKIN_EVENT: (id: string) => `/api/admin/v1/checkins/events/${id}`,
+    CHECKIN: (id: string) => `/api/admin/v1/checkins/${id}`,
+    REVIEWS: "/api/admin/v1/reviews",
+    REVIEW_STATUS: (id: string) => `/api/admin/v1/reviews/${id}/status`,
+    REVIEW_REPLY: (id: string) => `/api/admin/v1/reviews/${id}/reply`,
+    USERS: "/api/admin/v1/users",
+    USER_ROLE: (id: string) => `/api/admin/v1/users/${id}/role`,
+    ANALYTICS: "/api/admin/v1/analytics/overview",
+    DASHBOARD_STATS: "/api/admin/v1/dashboard/stats",
+    DASHBOARD_REG_TREND: "/api/admin/v1/dashboard/registration-trend",
+    DASHBOARD_REG_STATUS: "/api/admin/v1/dashboard/registration-status",
+    DASHBOARD_ATTENDANCE: "/api/admin/v1/dashboard/attendance-trend",
+    DASHBOARD_CATEGORIES: "/api/admin/v1/dashboard/top-categories",
+    DASHBOARD_UPCOMING: "/api/admin/v1/dashboard/upcoming-events",
+    DASHBOARD_RECENT: "/api/admin/v1/dashboard/recent-registrations",
+    DASHBOARD_TOP: "/api/admin/v1/dashboard/top-events",
   },
 } as const;

@@ -19,7 +19,7 @@ export default function GalleryGrid({ images }: GalleryGridProps) {
 
   return (
     <div>
-      <h2 className="text-2xl font-bold mb-6">Gallery</h2>
+      <h2 className="text-2xl font-bold mb-6">Event Highlights</h2>
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         {displayImages.map((image, index) => (
           <div

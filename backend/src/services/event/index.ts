@@ -1,5 +1,14 @@
-import * as eventRepo from "@/repositories/event.repository";
+import { EventRepository } from "@/repositories/event.repository";
 import { generateSlug } from "@/utils/slug";
+import { cacheGet, cacheSet, cacheInvalidate, cacheInvalidatePattern } from "@/lib/redis";
+
+const eventRepo = new EventRepository();
+
+// Cache keys
+const EVENT_BY_ID = (id: string) => `event:${id}`;
+const EVENT_BY_SLUG = (slug: string) => `event:slug:${slug}`;
+const EVENTS_ALL = "events:all";
+const EVENTS_TTL = 300; // 5 min
 
 export async function CreateEventService(data: {
   title: string;
@@ -29,6 +38,9 @@ export async function CreateEventService(data: {
     }
 
     const event = await eventRepo.createEvent({ ...data, slug });
+
+    // Invalidate events list cache
+    await cacheInvalidatePattern("events:*");
 
     return {
       code: 201,
@@ -73,6 +85,11 @@ export async function UpdateEventService(data: {
 
     const event = await eventRepo.updateEvent(data.id, updateData);
 
+    // Invalidate this event + list cache
+    await cacheInvalidate(EVENT_BY_ID(data.id));
+    if (existing.slug) await cacheInvalidate(EVENT_BY_SLUG(existing.slug));
+    await cacheInvalidatePattern("events:*");
+
     return {
       code: 200,
       status: "success",
@@ -94,6 +111,11 @@ export async function DeleteEventService(id: string) {
 
     await eventRepo.deleteEvent(id);
 
+    // Invalidate this event + all event caches
+    await cacheInvalidate(EVENT_BY_ID(id));
+    if (existing.slug) await cacheInvalidate(EVENT_BY_SLUG(existing.slug));
+    await cacheInvalidatePattern("events:*");
+
     return {
       code: 200,
       status: "success",
@@ -107,10 +129,19 @@ export async function DeleteEventService(id: string) {
 
 export async function GetEventService(id: string) {
   try {
+    // Check cache first
+    const cached = await cacheGet<any>(EVENT_BY_ID(id));
+    if (cached) {
+      return { code: 200, status: "success", data: { event: cached } };
+    }
+
     const event = await eventRepo.findEventById(id);
     if (!event) {
       return { code: 404, status: "error", message: "Event not found" };
     }
+
+    // Cache the result
+    await cacheSet(EVENT_BY_ID(id), event, EVENTS_TTL);
 
     return {
       code: 200,
@@ -125,7 +156,16 @@ export async function GetEventService(id: string) {
 
 export async function GetAllEventsService() {
   try {
+    // Check cache first
+    const cached = await cacheGet<any[]>(EVENTS_ALL);
+    if (cached) {
+      return { code: 200, status: "success", data: { events: cached } };
+    }
+
     const events = await eventRepo.findAllEvents();
+
+    // Cache the result
+    await cacheSet(EVENTS_ALL, events, EVENTS_TTL);
 
     return {
       code: 200,

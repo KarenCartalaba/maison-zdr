@@ -2,37 +2,59 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import { Controller, useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod";
 import { useAuth } from "@/context/AuthContext";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Field, FieldError, FieldGroup, FieldLabel } from "@/components/ui/field";
 import { Loader2 } from "lucide-react";
+import { toast } from "sonner";
+
+const signupFormSchema = z.object({
+  name: z.string().min(2, "Name must be at least 2 characters"),
+  email: z.string().min(1, "Email is required").email("Invalid email address"),
+  password: z
+    .string()
+    .min(8, "Password must be at least 8 characters")
+    .regex(/[A-Z]/, "Must contain at least one uppercase letter")
+    .regex(/[a-z]/, "Must contain at least one lowercase letter")
+    .regex(/[0-9]/, "Must contain at least one number")
+    .regex(/[\W_]/, "Must contain at least one special character"),
+  confirmPassword: z.string().min(1, "Please confirm your password"),
+}).refine((data) => data.password === data.confirmPassword, {
+  message: "Passwords do not match",
+  path: ["confirmPassword"],
+});
+
+type SignupFormValues = z.infer<typeof signupFormSchema>;
 
 export default function SignupForm() {
   const { signup } = useAuth();
   const [isLoading, setIsLoading] = useState(false);
-  const [formData, setFormData] = useState({
-    name: "",
-    email: "",
-    password: "",
-    confirmPassword: "",
+
+  const form = useForm<SignupFormValues>({
+    resolver: zodResolver(signupFormSchema),
+    defaultValues: { name: "", email: "", password: "", confirmPassword: "" },
+    mode: "onBlur",
   });
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-
-    if (formData.password !== formData.confirmPassword) {
-      return;
-    }
-
+  const handleSubmit = async (data: SignupFormValues) => {
     setIsLoading(true);
     try {
-      await signup({
-        name: formData.name,
-        email: formData.email,
-        password: formData.password,
-      });
-    } catch (error) {
-      // Error handled by AuthContext
+      await signup({ name: data.name, email: data.email, password: data.password });
+    } catch (error: any) {
+      if (error.errors?.length) {
+        error.errors.forEach((err: { path: string; message: string }) => {
+          const fieldName = err.path.replace("body.", "") as keyof SignupFormValues;
+          if (fieldName in form.getValues()) {
+            form.setError(fieldName, { type: "server", message: err.message });
+          }
+        });
+      } else {
+        toast.error(error.message || "Signup failed");
+      }
     } finally {
       setIsLoading(false);
     }
@@ -51,35 +73,84 @@ export default function SignupForm() {
           <p className="text-sm text-muted-foreground">Please fill in your details</p>
         </div>
 
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <Input
-            type="text"
-            placeholder="Full Name"
-            value={formData.name}
-            onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-            required
-          />
-          <Input
-            type="email"
-            placeholder="Email"
-            value={formData.email}
-            onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-            required
-          />
-          <Input
-            type="password"
-            placeholder="Password"
-            value={formData.password}
-            onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-            required
-          />
-          <Input
-            type="password"
-            placeholder="Confirm Password"
-            value={formData.confirmPassword}
-            onChange={(e) => setFormData({ ...formData, confirmPassword: e.target.value })}
-            required
-          />
+        <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4" noValidate>
+          <FieldGroup>
+            <Controller
+              name="name"
+              control={form.control}
+              render={({ field, fieldState }) => (
+                <Field data-invalid={fieldState.invalid}>
+                  <FieldLabel htmlFor="signup-name">Full Name</FieldLabel>
+                  <Input
+                    {...field}
+                    id="signup-name"
+                    type="text"
+                    placeholder="Full Name"
+                    autoComplete="name"
+                    aria-invalid={fieldState.invalid}
+                  />
+                  {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
+                </Field>
+              )}
+            />
+
+            <Controller
+              name="email"
+              control={form.control}
+              render={({ field, fieldState }) => (
+                <Field data-invalid={fieldState.invalid}>
+                  <FieldLabel htmlFor="signup-email">Email</FieldLabel>
+                  <Input
+                    {...field}
+                    id="signup-email"
+                    type="email"
+                    placeholder="Email"
+                    autoComplete="email"
+                    aria-invalid={fieldState.invalid}
+                  />
+                  {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
+                </Field>
+              )}
+            />
+
+            <Controller
+              name="password"
+              control={form.control}
+              render={({ field, fieldState }) => (
+                <Field data-invalid={fieldState.invalid}>
+                  <FieldLabel htmlFor="signup-password">Password</FieldLabel>
+                  <Input
+                    {...field}
+                    id="signup-password"
+                    type="password"
+                    placeholder="Password"
+                    autoComplete="new-password"
+                    aria-invalid={fieldState.invalid}
+                  />
+                  {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
+                </Field>
+              )}
+            />
+
+            <Controller
+              name="confirmPassword"
+              control={form.control}
+              render={({ field, fieldState }) => (
+                <Field data-invalid={fieldState.invalid}>
+                  <FieldLabel htmlFor="signup-confirm">Confirm Password</FieldLabel>
+                  <Input
+                    {...field}
+                    id="signup-confirm"
+                    type="password"
+                    placeholder="Confirm Password"
+                    autoComplete="new-password"
+                    aria-invalid={fieldState.invalid}
+                  />
+                  {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
+                </Field>
+              )}
+            />
+          </FieldGroup>
 
           <Button
             type="submit"

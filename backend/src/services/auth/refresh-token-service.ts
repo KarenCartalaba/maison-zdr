@@ -1,5 +1,7 @@
-import * as authRepo from "@/repositories/auth.repository";
+import { AuthRepository } from "@/repositories/auth.repository";
 import { signAccessToken, signRefreshToken, TokenExpiry, verifyRefreshToken } from "@/lib/jwt";
+
+const authRepo = new AuthRepository();
 
 export async function RefreshTokenService(refreshToken?: string) {
   const payload = verifyRefreshToken(refreshToken!);

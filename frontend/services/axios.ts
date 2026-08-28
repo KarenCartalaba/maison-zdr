@@ -66,6 +66,14 @@ axiosInstance.interceptors.response.use(
       }
     }
 
+    // Attach validation errors for easy access in form catch blocks.
+    // Backend returns { errors: [{ path, message }] } on 400.
+    // Forms check error.errors — so we flatten it here.
+    if (status === 400 && error.response?.data?.errors) {
+      error.errors = error.response.data.errors;
+      error.message = error.response.data.message || error.message;
+    }
+
     return Promise.reject(error);
   }
 );

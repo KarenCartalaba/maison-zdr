@@ -1,8 +1,18 @@
-import * as registrationRepo from "@/repositories/registration.repository";
-import * as eventRepo from "@/repositories/event.repository";
-import * as authRepo from "@/repositories/auth.repository";
+import { RegistrationRepository } from "@/repositories/registration.repository";
+import { EventRepository } from "@/repositories/event.repository";
+import { AuthRepository } from "@/repositories/auth.repository";
 import { renderTemplate } from "@/utils/template";
 import { sendEmail } from "@/lib/nodemailer";
+import { cacheGet, cacheSet, cacheInvalidate, cacheInvalidatePattern } from "@/lib/redis";
+
+const registrationRepo = new RegistrationRepository();
+const eventRepo = new EventRepository();
+const authRepo = new AuthRepository();
+
+// Cache keys
+const REG_BY_EVENT = (eventId: string) => `registrations:event:${eventId}`;
+const REG_BY_USER = (userId: string) => `registrations:user:${userId}`;
+const REG_TTL = 120; // 2 min — registration counts change frequently
 
 export async function RegisterForEventService(
   userId: string,
@@ -47,6 +57,12 @@ export async function RegisterForEventService(
       guestName,
     });
 
+    // Invalidate registration caches + event cache (counts changed)
+    await cacheInvalidate(REG_BY_EVENT(eventId));
+    await cacheInvalidate(REG_BY_USER(userId));
+    await cacheInvalidatePattern("event:*");
+    await cacheInvalidatePattern("admin:*");
+
     const user = await authRepo.findUserById(userId);
     if (user?.email) {
       const html = renderTemplate("event-registration.html", {
@@ -90,6 +106,12 @@ export async function CancelRegistrationService(userId: string, eventId: string)
 
     await registrationRepo.cancelRegistration(userId, eventId);
 
+    // Invalidate registration caches + event cache
+    await cacheInvalidate(REG_BY_EVENT(eventId));
+    await cacheInvalidate(REG_BY_USER(userId));
+    await cacheInvalidatePattern("event:*");
+    await cacheInvalidatePattern("admin:*");
+
     const event = await eventRepo.findEventById(eventId);
     const user = await authRepo.findUserById(userId);
 
@@ -119,6 +141,12 @@ export async function CancelRegistrationService(userId: string, eventId: string)
 
 export async function GetRegistrationsByEventService(eventId: string) {
   try {
+    // Check cache
+    const cached = await cacheGet<any>(REG_BY_EVENT(eventId));
+    if (cached) {
+      return { code: 200, status: "success", data: cached };
+    }
+
     const event = await eventRepo.findEventById(eventId);
     if (!event) {
       return { code: 404, status: "error", message: "Event not found" };
@@ -127,15 +155,19 @@ export async function GetRegistrationsByEventService(eventId: string) {
     const registrations = await registrationRepo.findRegistrationsByEvent(eventId);
     const confirmedCount = await registrationRepo.countConfirmedRegistrations(eventId);
 
+    const data = {
+      registrations,
+      confirmedCount,
+      maxParticipants: event.maxParticipants,
+      minParticipants: event.minParticipants,
+    };
+
+    await cacheSet(REG_BY_EVENT(eventId), data, REG_TTL);
+
     return {
       code: 200,
       status: "success",
-      data: {
-        registrations,
-        confirmedCount,
-        maxParticipants: event.maxParticipants,
-        minParticipants: event.minParticipants,
-      },
+      data,
     };
   } catch (error) {
     console.error("GetRegistrationsByEventService error", error);
@@ -145,12 +177,21 @@ export async function GetRegistrationsByEventService(eventId: string) {
 
 export async function GetRegistrationsByUserService(userId: string) {
   try {
+    // Check cache
+    const cached = await cacheGet<any>(REG_BY_USER(userId));
+    if (cached) {
+      return { code: 200, status: "success", data: cached };
+    }
+
     const registrations = await registrationRepo.findRegistrationsByUser(userId);
+
+    const data = { registrations };
+    await cacheSet(REG_BY_USER(userId), data, REG_TTL);
 
     return {
       code: 200,
       status: "success",
-      data: { registrations },
+      data,
     };
   } catch (error) {
     console.error("GetRegistrationsByUserService error", error);

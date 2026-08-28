@@ -82,12 +82,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           router.push("/");
         }
       } else {
-        toast.error(response.message || "Login failed");
+        const error: any = new Error(response.message || "Login failed");
+        error.message = response.message;
+        throw error;
       }
     } catch (error: any) {
-      const message = error.response?.data?.message || "An unexpected error occurred";
-      toast.error(message);
-      throw error;
+      const serverErrors = error.response?.data?.errors;
+      const message = error.response?.data?.message || error.message || "An unexpected error occurred";
+      const authError: any = new Error(message);
+      authError.message = message;
+      authError.errors = serverErrors;
+      throw authError;
     }
   };
 
@@ -98,12 +103,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         toast.success("Account created! Please verify your email.");
         router.push("/login");
       } else {
-        toast.error(response.message || "Signup failed");
+        const error: any = new Error(response.message || "Signup failed");
+        error.message = response.message;
+        throw error;
       }
     } catch (error: any) {
-      const message = error.response?.data?.message || "An unexpected error occurred";
-      toast.error(message);
-      throw error;
+      const serverErrors = error.response?.data?.errors;
+      const message = error.response?.data?.message || error.message || "An unexpected error occurred";
+      const authError: any = new Error(message);
+      authError.message = message;
+      authError.errors = serverErrors;
+      throw authError;
     }
   };
 
