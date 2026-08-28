@@ -1,18 +1,8 @@
 import { prisma } from "@/lib/prisma";
+import type { CreateEventInput, UpdateEventInput } from "@/schema/event";
 
 export class EventRepository {
-  public createEvent = async (data: {
-    title: string;
-    slug: string;
-    description: string;
-    location: string;
-    eventDate: Date;
-    deadline: Date;
-    minParticipants: number;
-    maxParticipants: number;
-    authorId: string;
-    gallery?: string[];
-  }) => {
+  public createEvent = async (data: CreateEventInput & { slug: string; authorId: string }) => {
     return prisma.event.create({ data });
   };
 
@@ -40,21 +30,7 @@ export class EventRepository {
     });
   };
 
-  public updateEvent = async (
-    id: string,
-    data: Partial<{
-      title: string;
-      slug: string;
-      description: string;
-      location: string;
-      eventDate: Date;
-      deadline: Date;
-      minParticipants: number;
-      maxParticipants: number;
-      isCancelled: boolean;
-      gallery: string[];
-    }>
-  ) => {
+  public updateEvent = async (id: string, data: Partial<UpdateEventInput> & { slug?: string }) => {
     return prisma.event.update({ where: { id }, data });
   };
 

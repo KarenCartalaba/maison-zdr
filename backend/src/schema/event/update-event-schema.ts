@@ -14,3 +14,5 @@ export const updateEventSchema = z.object({
     gallery: z.array(z.string()).optional(),
   }),
 });
+
+export type UpdateEventInput = z.infer<typeof updateEventSchema>["body"];

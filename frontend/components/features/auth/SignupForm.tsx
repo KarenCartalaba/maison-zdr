@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Field, FieldError, FieldGroup, FieldLabel } from "@/components/ui/field";
 import { Loader2 } from "lucide-react";
+import { toast } from "sonner";
 
 const signupFormSchema = z.object({
   name: z.string().min(2, "Name must be at least 2 characters"),
@@ -44,13 +45,15 @@ export default function SignupForm() {
     try {
       await signup({ name: data.name, email: data.email, password: data.password });
     } catch (error: any) {
-      if (error.errors) {
+      if (error.errors?.length) {
         error.errors.forEach((err: { path: string; message: string }) => {
           const fieldName = err.path.replace("body.", "") as keyof SignupFormValues;
           if (fieldName in form.getValues()) {
             form.setError(fieldName, { type: "server", message: err.message });
           }
         });
+      } else {
+        toast.error(error.message || "Signup failed");
       }
     } finally {
       setIsLoading(false);

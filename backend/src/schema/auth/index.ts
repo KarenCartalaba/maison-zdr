@@ -1,7 +1,14 @@
 export { signupSchema } from "./signup-schema";
+export type { SignupInput } from "./signup-schema";
 export { loginSchema } from "./login-schema";
+export type { LoginInput } from "./login-schema";
 export { verifyEmailSchema } from "./verify-email-schema";
+export type { VerifyEmailInput } from "./verify-email-schema";
 export { resendVerificationSchema } from "./resend-verification-schema";
+export type { ResendVerificationInput } from "./resend-verification-schema";
 export { refreshTokenSchema } from "./refresh-token-schema";
+export type { RefreshTokenInput } from "./refresh-token-schema";
 export { forgotPasswordSchema } from "./forgot-password-schema";
+export type { ForgotPasswordInput } from "./forgot-password-schema";
 export { changePasswordSchema } from "./change-password-schema";
+export type { ChangePasswordInput } from "./change-password-schema";

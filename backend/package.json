@@ -4,10 +4,10 @@
   "type": "module",
   "main": "index.js",
   "scripts": {
-    "build": "tsdown src/server.ts --format esm --clean --minify",
+    "build": "tsdown",
     "dev": "tsx watch src/server.ts",
     "start": "node dist/server.mjs",
-    "db:generate": "prisma generate",
+    "db:generate": "prisma generate && node scripts/patch-prisma.mjs",
     "db:migrate": "prisma migrate dev",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix"
@@ -43,6 +43,7 @@
     "@typescript-eslint/parser": "^8.59.0",
     "eslint": "^10.4.0",
     "prisma": "^7.8.0",
+    "tsc-alias": "^1.9.2",
     "tsdown": "^0.21.10",
     "tsx": "^4.21.0",
     "typescript": "^6.0.2",

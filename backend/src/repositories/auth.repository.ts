@@ -1,5 +1,6 @@
 import { prisma } from "@/lib/prisma";
 import { Role } from "@/generated/prisma/enums";
+import type { SignupInput } from "@/schema/auth";
 
 export class AuthRepository {
   public findUserByEmail = async (email: string) => {
@@ -10,7 +11,7 @@ export class AuthRepository {
     return prisma.user.findUnique({ where: { id } });
   };
 
-  public createUser = async (data: { name: string; email: string; password: string; role?: Role }) => {
+  public createUser = async (data: SignupInput & { role?: Role }) => {
     return prisma.user.create({ data });
   };
 

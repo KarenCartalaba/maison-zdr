@@ -12,3 +12,5 @@ export const createEventSchema = z.object({
     gallery: z.array(z.string()).optional(),
   }),
 });
+
+export type CreateEventInput = z.infer<typeof createEventSchema>["body"];

@@ -7,3 +7,5 @@ export const registerSchema = z.object({
     guestName: z.string().min(1, "Guest name is required").optional(),
   }),
 });
+
+export type RegisterInput = z.infer<typeof registerSchema>["body"];

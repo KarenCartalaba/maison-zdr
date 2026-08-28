@@ -43,7 +43,7 @@ export class AdminRepository {
       select: { createdAt: true },
     });
 
-    registrations.forEach((r) => {
+    registrations.forEach((r: { createdAt: Date }) => {
       const month = months[r.createdAt.getMonth()];
       if (month in monthlyData) monthlyData[month]++;
     });
@@ -58,7 +58,7 @@ export class AdminRepository {
     });
 
     const statusMap: Record<string, number> = {};
-    counts.forEach((c) => { statusMap[c.status] = c._count; });
+    counts.forEach((c: { status: string; _count: number }) => { statusMap[c.status] = c._count; });
 
     return [
       { name: "Confirmed", value: statusMap["CONFIRMED"] || 0, fill: "#1a5c2a" },
@@ -83,7 +83,7 @@ export class AdminRepository {
       select: { createdAt: true, status: true },
     });
 
-    registrations.forEach((r) => {
+    registrations.forEach((r: { createdAt: Date; status: string }) => {
       const month = months[r.createdAt.getMonth()];
       if (month in monthlyData) {
         monthlyData[month].registered++;
@@ -106,7 +106,7 @@ export class AdminRepository {
       "Private Event": 0,
     };
 
-    events.forEach((e) => {
+    events.forEach((e: { title: string }) => {
       const title = e.title.toLowerCase();
       if (title.includes("music") || title.includes("acoustic") || title.includes("concert")) categories["Live Music"]++;
       else if (title.includes("night") || title.includes("party") || title.includes("lounge")) categories["Nightlife"]++;
@@ -151,13 +151,13 @@ export class AdminRepository {
     });
 
     return events
-      .map((e) => ({
+      .map((e: { title: string; _count: { registrations: number }; maxParticipants: number }) => ({
         title: e.title,
         registrations: e._count.registrations,
         fillRate: Math.round((e._count.registrations / e.maxParticipants) * 100),
         rating: 4.5 + Math.random() * 0.5,
       }))
-      .sort((a, b) => b.registrations - a.registrations)
+      .sort((a: { registrations: number }, b: { registrations: number }) => b.registrations - a.registrations)
       .slice(0, limit);
   };
 
@@ -350,7 +350,7 @@ export class AdminRepository {
       where: { createdAt: { gte: new Date(now.getFullYear(), now.getMonth() - 6, 1) } },
       select: { createdAt: true, status: true },
     });
-    regs.forEach((r) => {
+    regs.forEach((r: { createdAt: Date; status: string; checkedIn: boolean }) => {
       const month = months[r.createdAt.getMonth()];
       if (month in monthlyData) {
         monthlyData[month].registered++;
@@ -364,9 +364,9 @@ export class AdminRepository {
       orderBy: { createdAt: "desc" },
       take: 10,
     });
-    const eventPerformance = events.map((e) => {
+    const eventPerformance = events.map((e: { title: string; _count: { registrations: number }; maxParticipants: number; reviews: { rating: number }[] }) => {
       const avgRating = e.reviews.length > 0
-        ? Math.round((e.reviews.reduce((sum, r) => sum + r.rating, 0) / e.reviews.length) * 10) / 10
+        ? Math.round((e.reviews.reduce((sum: number, r: { rating: number }) => sum + r.rating, 0) / e.reviews.length) * 10) / 10
         : 0;
       return {
         title: e.title,

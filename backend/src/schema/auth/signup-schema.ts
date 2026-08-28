@@ -15,3 +15,5 @@ export const signupSchema = z.object({
       ),
   }),
 });
+
+export type SignupInput = z.infer<typeof signupSchema>["body"];

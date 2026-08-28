@@ -5,3 +5,5 @@ export const refreshTokenSchema = z.object({
     refreshToken: z.string().optional(),
   }),
 });
+
+export type RefreshTokenInput = z.infer<typeof refreshTokenSchema>["body"];

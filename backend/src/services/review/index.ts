@@ -1,4 +1,4 @@
-import { ReviewRepository } from "@/repositories/review";
+import { ReviewRepository } from "@/repositories/review.repository";
 import { cacheInvalidatePattern } from "@/lib/redis";
 
 const reviewRepo = new ReviewRepository();

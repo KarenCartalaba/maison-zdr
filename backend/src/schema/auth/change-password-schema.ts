@@ -12,3 +12,5 @@ export const changePasswordSchema = z.object({
       ),
   }),
 });
+
+export type ChangePasswordInput = z.infer<typeof changePasswordSchema>["body"];

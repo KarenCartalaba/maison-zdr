@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Field, FieldError, FieldGroup, FieldLabel } from "@/components/ui/field";
 import { Loader2 } from "lucide-react";
+import { toast } from "sonner";
 
 const loginFormSchema = z.object({
   email: z.string().min(1, "Email is required").email("Invalid email address"),
@@ -33,13 +34,15 @@ export default function LoginForm() {
     try {
       await login(data);
     } catch (error: any) {
-      if (error.errors) {
+      if (error.errors?.length) {
         error.errors.forEach((err: { path: string; message: string }) => {
           const fieldName = err.path.replace("body.", "") as keyof LoginFormValues;
           if (fieldName in form.getValues()) {
             form.setError(fieldName, { type: "server", message: err.message });
           }
         });
+      } else {
+        toast.error(error.message || "Login failed");
       }
     } finally {
       setIsLoading(false);

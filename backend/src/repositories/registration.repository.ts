@@ -1,13 +1,9 @@
 import { prisma } from "@/lib/prisma";
 import { RegistrationStatus } from "@/generated/prisma/enums";
+import type { RegisterInput } from "@/schema/registration";
 
 export class RegistrationRepository {
-  public createRegistration = async (data: {
-    userId: string;
-    eventId: string;
-    hasPlusOne?: boolean;
-    guestName?: string;
-  }) => {
+  public createRegistration = async (data: RegisterInput & { userId: string }) => {
     return prisma.registration.create({ data });
   };
 

@@ -309,7 +309,7 @@ export async function GetEventCheckInService(eventId: string) {
     const event = await adminRepo.getEventForCheckIn(eventId);
     if (!event) return { code: 404, status: "error", message: "Event not found" };
 
-    const checkedInCount = event.registrations.filter((r) => r.checkedIn).length;
+    const checkedInCount = event.registrations.filter((r: { checkedIn: boolean }) => r.checkedIn).length;
     const data = { event, checkedInCount, totalCount: event._count.registrations };
     return { code: 200, status: "success", message: "Event check-in data retrieved", data };
   } catch (error) {

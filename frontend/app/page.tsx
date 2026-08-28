@@ -1,3 +1,4 @@
+import Navbar from "@/components/common/Navbar"
 import AboutSection from "@/components/features/home/AboutSection"
 import HeroSection from "@/components/features/home/HeroSection"
 import HowItWorksSection from "@/components/features/home/HowItWorksSection"
@@ -7,6 +8,7 @@ import UpcomingEventsSection from "@/components/features/home/UpcomingEventsSect
 export default function Page() {
   return (
     <>
+      <Navbar />
       <HeroSection />
       <OngoingEventsSection />
       <UpcomingEventsSection />

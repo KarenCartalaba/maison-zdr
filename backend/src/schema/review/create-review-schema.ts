@@ -8,3 +8,5 @@ export const createReviewSchema = z.object({
     comment: z.string().min(10, "Comment must be at least 10 characters").max(1000, "Comment must be at most 1000 characters"),
   }),
 });
+
+export type CreateReviewInput = z.infer<typeof createReviewSchema>["body"];

@@ -78,25 +78,25 @@ export class AdminController {
   // ==================== Event Workspace ====================
 
   public getEventWorkspace = async (req: Request, res: Response) => {
-    const { id } = req.params;
+    const { id } = req.params as { id: string };
     const result = await GetEventWorkspaceService(id);
     return res.status(result.code).json(result);
   };
 
   public getEventParticipants = async (req: Request, res: Response) => {
-    const { id } = req.params;
+    const { id } = req.params as { id: string };
     const result = await GetEventParticipantsService(id);
     return res.status(result.code).json(result);
   };
 
   public getEventReviews = async (req: Request, res: Response) => {
-    const { id } = req.params;
+    const { id } = req.params as { id: string };
     const result = await GetEventReviewsService(id);
     return res.status(result.code).json(result);
   };
 
   public updateEvent = async (req: Request, res: Response) => {
-    const { id } = req.params;
+    const { id } = req.params as { id: string };
     const { title, description, location, eventDate, maxParticipants, isCancelled } = req.body ?? {};
     const result = await UpdateEventService(id, {
       title,
@@ -118,7 +118,7 @@ export class AdminController {
   };
 
   public updateRegistrationStatus = async (req: Request, res: Response) => {
-    const { id } = req.params;
+    const { id } = req.params as { id: string };
     const { status } = req.body ?? {};
     const result = await UpdateRegistrationStatusService(id, status);
     return res.status(result.code).json(result);
@@ -132,13 +132,13 @@ export class AdminController {
   };
 
   public getEventCheckIn = async (req: Request, res: Response) => {
-    const { id } = req.params;
+    const { id } = req.params as { id: string };
     const result = await GetEventCheckInService(id);
     return res.status(result.code).json(result);
   };
 
   public checkInRegistration = async (req: Request, res: Response) => {
-    const { id } = req.params;
+    const { id } = req.params as { id: string };
     const result = await CheckInRegistrationService(id);
     return res.status(result.code).json(result);
   };
@@ -152,14 +152,14 @@ export class AdminController {
   };
 
   public updateReviewStatus = async (req: Request, res: Response) => {
-    const { id } = req.params;
+    const { id } = req.params as { id: string };
     const { status } = req.body ?? {};
     const result = await UpdateReviewStatusService(id, status);
     return res.status(result.code).json(result);
   };
 
   public replyToReview = async (req: Request, res: Response) => {
-    const { id } = req.params;
+    const { id } = req.params as { id: string };
     const { reply } = req.body ?? {};
     const result = await ReplyToReviewService(id, reply);
     return res.status(result.code).json(result);
@@ -174,7 +174,7 @@ export class AdminController {
   };
 
   public updateUserRole = async (req: Request, res: Response) => {
-    const { id } = req.params;
+    const { id } = req.params as { id: string };
     const { role } = req.body ?? {};
     const result = await UpdateUserRoleService(id, role);
     return res.status(result.code).json(result);
