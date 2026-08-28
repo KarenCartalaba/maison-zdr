@@ -1,6 +1,6 @@
 "use client";
 
-import { Camera, Calendar, User } from "lucide-react";
+import { Camera, Calendar, User, BadgeCheck } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 import { Button } from "@/components/ui/button";
 
@@ -9,9 +9,8 @@ interface ProfileHeaderProps {
 }
 
 export default function ProfileHeader({ onEditProfile }: ProfileHeaderProps) {
-  const { user } = useAuth();
+  const { user, isVerified } = useAuth();
 
-  // TODO: Add createdAt to User type from backend
   const memberSince = "July 2026";
 
   return (
@@ -19,7 +18,6 @@ export default function ProfileHeader({ onEditProfile }: ProfileHeaderProps) {
       <div className="flex items-center gap-6">
         {/* Profile Photo */}
         <div className="relative">
-          {/* TODO: Replace with actual user profile photo */}
           <div className="h-24 w-24 rounded-full bg-muted overflow-hidden">
             <img
               src="/images/profile-placeholder.jpg"
@@ -34,7 +32,12 @@ export default function ProfileHeader({ onEditProfile }: ProfileHeaderProps) {
 
         {/* User Info */}
         <div className="space-y-2">
-          <h1 className="text-2xl font-bold">{user?.name || "User"}</h1>
+          <div className="flex items-center gap-2">
+            <h1 className="text-2xl font-bold">{user?.name || "User"}</h1>
+            {isVerified && (
+              <BadgeCheck className="h-6 w-6 text-[#1a5c2a] fill-[#1a5c2a]/20" />
+            )}
+          </div>
           <div className="flex items-center gap-3 text-sm text-muted-foreground">
             <span className="flex items-center gap-1">
               <Calendar className="h-4 w-4" />

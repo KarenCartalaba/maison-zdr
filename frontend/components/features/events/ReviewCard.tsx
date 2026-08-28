@@ -4,10 +4,11 @@ interface ReviewCardProps {
   name: string;
   date: string;
   rating: number;
+  title?: string;
   comment: string;
 }
 
-export default function ReviewCard({ name, date, rating, comment }: ReviewCardProps) {
+export default function ReviewCard({ name, date, rating, title, comment }: ReviewCardProps) {
   return (
     <div className="rounded-lg border p-5 space-y-3">
       <div className="flex items-center justify-between">
@@ -24,6 +25,7 @@ export default function ReviewCard({ name, date, rating, comment }: ReviewCardPr
           />
         ))}
       </div>
+      {title && <h5 className="font-medium">{title}</h5>}
       <p className="text-sm text-muted-foreground">{comment}</p>
     </div>
   );

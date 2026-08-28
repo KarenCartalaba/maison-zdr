@@ -3,28 +3,64 @@
 import { useState } from "react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
-import { CalendarDays } from "lucide-react";
+import { CalendarDays, Grid, List } from "lucide-react";
 
 const FILTERS = ["All", "Upcoming", "Attended", "Cancelled"];
 
+const MOCK_EVENTS = [
+  {
+    id: "1",
+    title: "Cocktail Night",
+    date: "Wednesday 7:00 pm - 10:00pm",
+    location: "9 Rue du Commerce, 35140 Saint-Hilaire-des-Landes",
+    imageUrl: "/images/event-2.jpg",
+  },
+  {
+    id: "2",
+    title: "Acoustic Friday",
+    date: "Wednesday 7:00 pm - 10:00pm",
+    location: "9 Rue du Commerce, 35140 Saint-Hilaire-des-Landes",
+    imageUrl: "/images/event-1.jpg",
+  },
+  {
+    id: "3",
+    title: "Trivia Hour",
+    date: "Wednesday 7:00 pm - 10:00pm",
+    location: "9 Rue du Commerce, 35140 Saint-Hilaire-des-Landes",
+    imageUrl: "/images/event-3.jpg",
+  },
+  {
+    id: "4",
+    title: "Food Night",
+    date: "Wednesday 7:00 pm - 10:00pm",
+    location: "9 Rue du Commerce, 35140 Saint-Hilaire-des-Landes",
+    imageUrl: "/images/event-4.jpg",
+  },
+  {
+    id: "5",
+    title: "Game Day",
+    date: "Wednesday 7:00 pm - 10:00pm",
+    location: "9 Rue du Commerce, 35140 Saint-Hilaire-des-Landes",
+    imageUrl: "/images/event-5.jpg",
+  },
+];
+
 export default function MyEventsTab() {
   const [selectedFilter, setSelectedFilter] = useState("All");
+  const [viewMode, setViewMode] = useState<"list" | "grid">("list");
 
-  // TODO: Fetch user's registered events from API
-  const events: never[] = [];
+  return (
+    <div>
+      <div className="mb-6">
+        <h2 className="text-2xl font-bold">My Events</h2>
+        <p className="text-sm text-muted-foreground mt-1">
+          Track your registration, attendance, and event history.
+        </p>
+      </div>
 
-  if (events.length === 0) {
-    return (
-      <div>
-        <div className="mb-6">
-          <h2 className="text-2xl font-bold">My Events</h2>
-          <p className="text-sm text-muted-foreground mt-1">
-            Track your registration, attendance, and event history.
-          </p>
-        </div>
-
-        {/* Filter tabs */}
-        <div className="flex gap-4 mb-8 border-b">
+      {/* Filter tabs + View toggle */}
+      <div className="flex items-center justify-between mb-8 border-b">
+        <div className="flex gap-4">
           {FILTERS.map((filter) => (
             <button
               key={filter}
@@ -39,51 +75,46 @@ export default function MyEventsTab() {
             </button>
           ))}
         </div>
-
-        {/* Empty state */}
-        <div className="flex flex-col items-center justify-center py-16 text-center">
-          <CalendarDays className="h-12 w-12 text-muted-foreground mb-4" />
-          <h3 className="text-lg font-semibold mb-2">No events joined yet</h3>
-          <p className="text-muted-foreground max-w-md">
-            You haven&apos;t registered for any events. Explore what&apos;s happening in Zone de Rassemblement
-          </p>
-          <Link href="/events" className="mt-6">
-            <Button className="bg-[#1a5c2a] hover:bg-[#144a22]">Browse Events</Button>
-          </Link>
+        <div className="flex gap-1">
+          <button
+            onClick={() => setViewMode("list")}
+            className={`p-2 rounded ${viewMode === "list" ? "bg-muted" : "hover:bg-muted/50"}`}
+          >
+            <List className="h-4 w-4" />
+          </button>
+          <button
+            onClick={() => setViewMode("grid")}
+            className={`p-2 rounded ${viewMode === "grid" ? "bg-muted" : "hover:bg-muted/50"}`}
+          >
+            <Grid className="h-4 w-4" />
+          </button>
         </div>
       </div>
-    );
-  }
 
-  return (
-    <div>
-      <div className="mb-6">
-        <h2 className="text-2xl font-bold">My Events</h2>
-        <p className="text-sm text-muted-foreground mt-1">
-          Track your registration, attendance, and event history.
-        </p>
-      </div>
-
-      {/* Filter tabs */}
-      <div className="flex gap-4 mb-8 border-b">
-        {FILTERS.map((filter) => (
-          <button
-            key={filter}
-            onClick={() => setSelectedFilter(filter)}
-            className={`pb-3 text-sm font-medium border-b-2 transition-colors ${
-              selectedFilter === filter
-                ? "border-foreground text-foreground"
-                : "border-transparent text-muted-foreground hover:text-foreground"
-            }`}
-          >
-            {filter}
-          </button>
+      {/* Events list */}
+      <div className="space-y-4">
+        {MOCK_EVENTS.map((event) => (
+          <div key={event.id} className="flex items-center gap-4 rounded-lg border p-4 hover:shadow-sm transition-shadow">
+            <div className="h-20 w-28 rounded-lg overflow-hidden bg-muted shrink-0">
+              <img src={event.imageUrl} alt={event.title} className="h-full w-full object-cover" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <h3 className="font-semibold text-lg">{event.title}</h3>
+              <div className="flex items-center gap-4 mt-1 text-sm text-muted-foreground">
+                <span className="flex items-center gap-1">
+                  <CalendarDays className="h-4 w-4" />
+                  {event.date}
+                </span>
+              </div>
+              <p className="text-sm text-muted-foreground mt-1">{event.location}</p>
+            </div>
+            <Link href={`/events/${event.id}`}>
+              <Button variant="outline" size="sm">
+                View Details →
+              </Button>
+            </Link>
+          </div>
         ))}
-      </div>
-
-      {/* TODO: Render EventCard list when events are loaded */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {/* Events will be rendered here */}
       </div>
     </div>
   );

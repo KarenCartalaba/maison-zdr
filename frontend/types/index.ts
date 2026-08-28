@@ -74,3 +74,22 @@ export interface RegistrationData {
   maxParticipants: number;
   minParticipants: number;
 }
+
+export interface Review {
+  id: string;
+  rating: number;
+  comment: string;
+  createdAt: string;
+  user: {
+    id: string;
+    name: string;
+  };
+  event: {
+    id: string;
+    title: string;
+  };
+}
+
+export interface GuestInfo {
+  name: string;
+}
