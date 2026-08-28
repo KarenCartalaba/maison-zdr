@@ -15,9 +15,14 @@ export const ROUTES = {
   ADMIN_EVENTS: "/admin/events",
   ADMIN_EVENTS_CREATE: "/admin/events/create",
   ADMIN_EVENTS_EDIT: (id: string) => `/admin/events/${id}/edit`,
+  ADMIN_EVENT_WORKSPACE: (id: string) => `/admin/events/${id}`,
+  ADMIN_REGISTRATIONS: "/admin/registrations",
+  ADMIN_CHECKINS: "/admin/check-ins",
+  ADMIN_REVIEWS: "/admin/reviews",
   ADMIN_USERS: "/admin/users",
-  ADMIN_GALLERY: "/admin/gallery",
+  ADMIN_ANALYTICS: "/admin/analytics",
   ADMIN_SETTINGS: "/admin/settings",
+  ADMIN_PROFILE: "/admin/profile",
 } as const;
 
 export const API_ENDPOINTS = {
