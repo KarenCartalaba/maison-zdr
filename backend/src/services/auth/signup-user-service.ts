@@ -1,8 +1,10 @@
 import crypto from "crypto";
-import * as authRepo from "@/repositories/auth.repository";
+import { AuthRepository } from "@/repositories/auth.repository";
 import { hashPassword } from "@/utils/password";
 import { renderTemplate } from "@/utils/template";
 import { sendEmail } from "@/lib/nodemailer";
+
+const authRepo = new AuthRepository();
 
 export async function SignupUserService(name: string, email: string, password: string) {
   try {

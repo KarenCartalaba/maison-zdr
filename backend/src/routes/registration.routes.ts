@@ -13,6 +13,6 @@ const authMiddleware = new AuthMiddleware();
 router.post("/v1/register", authMiddleware.execute, validateSchema(registerSchema), registrationController.register);
 router.post("/v1/cancel", authMiddleware.execute, validateSchema(cancelRegistrationSchema), registrationController.cancel);
 router.get("/v1/event/:eventId", authMiddleware.execute, permittedRole([Role.ADMIN]), registrationController.getByEvent);
-router.get("/v1/user/:userId", authMiddleware.execute, registrationController.getByUser);
+router.get("/v1/user/:userId", authMiddleware.execute, permittedRole([Role.ADMIN]), registrationController.getByUser);
 
 export default router;

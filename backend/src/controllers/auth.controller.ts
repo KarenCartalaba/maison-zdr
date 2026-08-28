@@ -1,5 +1,5 @@
 import { Request, Response } from "express";
-import { SignupUserService, LoginCredentialsService, VerifyEmailService, RefreshTokenService, ResendEmailVerificationService, GetMeService } from "@/services/auth";
+import { SignupUserService, LoginCredentialsService, VerifyEmailService, RefreshTokenService, ResendEmailVerificationService, GetMeService, UpdateProfileService } from "@/services/auth";
 import { TokenExpiry, toMilliseconds } from "@/lib/jwt";
 import { ENV } from "@/config/env";
 
@@ -71,6 +71,13 @@ export class AuthController {
   public me = async (req: Request, res: Response) => {
     const userId = (req as any).user?.sub;
     const result = await GetMeService(userId);
+    return res.status(result.code).json(result);
+  };
+
+  public updateProfile = async (req: Request, res: Response) => {
+    const userId = (req as any).user?.sub;
+    const { name, email, phone, imageBase64 } = req.body ?? {};
+    const result = await UpdateProfileService(userId, { name, email, phone }, imageBase64);
     return res.status(result.code).json(result);
   };
 }

@@ -21,7 +21,15 @@ enum TokenType {
 
 enum RegistrationStatus {
   CONFIRMED
+  PENDING
+  WAITLISTED
   CANCELLED
+}
+
+enum ReviewStatus {
+  PENDING
+  APPROVED
+  REJECTED
 }
 
 // Models
@@ -31,6 +39,8 @@ model User {
   password      String
   name          String
   emailVerified DateTime? @map("email_verified")
+  profilePic    String?   @map("profile_pic")
+  phone         String?
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
 
@@ -38,6 +48,7 @@ model User {
   tokens        Token[]
   events        Event[]
   registrations Registration[]
+  reviews       Review[]
 }
 
 model Event {
@@ -58,6 +69,7 @@ model Event {
   authorId        String   @map("author_id")
   author          User     @relation(fields: [authorId], references: [id], onDelete: Cascade)
   registrations   Registration[]
+  reviews         Review[]
 
   @@index([slug])
 }
@@ -67,6 +79,8 @@ model Registration {
   status      RegistrationStatus @default(CONFIRMED)
   hasPlusOne  Boolean            @default(false) @map("has_plus_one")
   guestName   String?            @map("guest_name")
+  checkedIn   Boolean            @default(false)
+  checkedInAt DateTime?          @map("checked_in_at")
   createdAt   DateTime           @default(now())
   updatedAt   DateTime           @updatedAt
 
@@ -79,6 +93,27 @@ model Registration {
   @@unique([userId, eventId])
   @@index([eventId])
   @@index([userId])
+}
+
+model Review {
+  id        String       @id @default(uuid())
+  rating    Int
+  title     String?
+  comment   String       @db.Text
+  status    ReviewStatus @default(PENDING)
+  reply     String?      @db.Text
+  createdAt DateTime     @default(now())
+  updatedAt DateTime     @updatedAt
+
+  userId    String
+  user      User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  eventId   String
+  event     Event        @relation(fields: [eventId], references: [id], onDelete: Cascade)
+
+  @@index([eventId])
+  @@index([userId])
+  @@index([status])
 }
 
 model Token {

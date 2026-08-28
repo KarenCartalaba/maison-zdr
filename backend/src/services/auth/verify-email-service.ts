@@ -1,4 +1,6 @@
-import * as authRepo from "@/repositories/auth.repository";
+import { AuthRepository } from "@/repositories/auth.repository";
+
+const authRepo = new AuthRepository();
 
 export async function VerifyEmailService(token: string) {
   try {

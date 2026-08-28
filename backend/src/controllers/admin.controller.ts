@@ -12,6 +12,17 @@ import {
   GetEventParticipantsService,
   GetEventReviewsService,
   UpdateEventService,
+  GetAllRegistrationsService,
+  UpdateRegistrationStatusService,
+  GetAllCheckInEventsService,
+  GetEventCheckInService,
+  CheckInRegistrationService,
+  GetAllReviewsService,
+  UpdateReviewStatusService,
+  ReplyToReviewService,
+  GetAllUsersService,
+  UpdateUserRoleService,
+  GetAnalyticsOverviewService,
 } from "@/services/admin";
 
 export class AdminController {
@@ -95,6 +106,84 @@ export class AdminController {
       maxParticipants,
       isCancelled,
     });
+    return res.status(result.code).json(result);
+  };
+
+  // ==================== Registrations Management ====================
+
+  public getAllRegistrations = async (req: Request, res: Response) => {
+    const { status, search, eventId } = req.query as { status?: string; search?: string; eventId?: string };
+    const result = await GetAllRegistrationsService({ status, search, eventId });
+    return res.status(result.code).json(result);
+  };
+
+  public updateRegistrationStatus = async (req: Request, res: Response) => {
+    const { id } = req.params;
+    const { status } = req.body ?? {};
+    const result = await UpdateRegistrationStatusService(id, status);
+    return res.status(result.code).json(result);
+  };
+
+  // ==================== Check-ins ====================
+
+  public getAllCheckInEvents = async (req: Request, res: Response) => {
+    const result = await GetAllCheckInEventsService();
+    return res.status(result.code).json(result);
+  };
+
+  public getEventCheckIn = async (req: Request, res: Response) => {
+    const { id } = req.params;
+    const result = await GetEventCheckInService(id);
+    return res.status(result.code).json(result);
+  };
+
+  public checkInRegistration = async (req: Request, res: Response) => {
+    const { id } = req.params;
+    const result = await CheckInRegistrationService(id);
+    return res.status(result.code).json(result);
+  };
+
+  // ==================== Reviews Management ====================
+
+  public getAllReviews = async (req: Request, res: Response) => {
+    const { status, search } = req.query as { status?: string; search?: string };
+    const result = await GetAllReviewsService({ status, search });
+    return res.status(result.code).json(result);
+  };
+
+  public updateReviewStatus = async (req: Request, res: Response) => {
+    const { id } = req.params;
+    const { status } = req.body ?? {};
+    const result = await UpdateReviewStatusService(id, status);
+    return res.status(result.code).json(result);
+  };
+
+  public replyToReview = async (req: Request, res: Response) => {
+    const { id } = req.params;
+    const { reply } = req.body ?? {};
+    const result = await ReplyToReviewService(id, reply);
+    return res.status(result.code).json(result);
+  };
+
+  // ==================== Users Management ====================
+
+  public getAllUsers = async (req: Request, res: Response) => {
+    const { role, search } = req.query as { role?: string; search?: string };
+    const result = await GetAllUsersService({ role, search });
+    return res.status(result.code).json(result);
+  };
+
+  public updateUserRole = async (req: Request, res: Response) => {
+    const { id } = req.params;
+    const { role } = req.body ?? {};
+    const result = await UpdateUserRoleService(id, role);
+    return res.status(result.code).json(result);
+  };
+
+  // ==================== Analytics ====================
+
+  public getAnalyticsOverview = async (req: Request, res: Response) => {
+    const result = await GetAnalyticsOverviewService();
     return res.status(result.code).json(result);
   };
 }

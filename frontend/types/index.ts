@@ -34,9 +34,11 @@ export interface Event {
 
 export interface Registration {
   id: string;
-  status: "CONFIRMED" | "CANCELLED";
+  status: "CONFIRMED" | "PENDING" | "WAITLISTED" | "CANCELLED";
   hasPlusOne: boolean;
   guestName?: string | null;
+  checkedIn?: boolean;
+  checkedInAt?: string | null;
   createdAt: string;
   updatedAt: string;
   userId: string;
@@ -78,16 +80,101 @@ export interface RegistrationData {
 export interface Review {
   id: string;
   rating: number;
+  title?: string;
   comment: string;
+  status: "PENDING" | "APPROVED" | "REJECTED";
+  reply?: string;
   createdAt: string;
   user: {
     id: string;
     name: string;
+    email: string;
   };
   event: {
     id: string;
     title: string;
   };
+}
+
+export interface AdminRegistration {
+  id: string;
+  status: "CONFIRMED" | "PENDING" | "WAITLISTED" | "CANCELLED";
+  hasPlusOne: boolean;
+  guestName?: string | null;
+  checkedIn: boolean;
+  checkedInAt?: string | null;
+  createdAt: string;
+  user: { id: string; name: string; email: string };
+  event: { id: string; title: string; eventDate: string };
+}
+
+export interface RegistrationStats {
+  total: number;
+  confirmed: number;
+  pending: number;
+  waitlisted: number;
+  cancelled: number;
+}
+
+export interface AdminReview {
+  id: string;
+  rating: number;
+  title?: string | null;
+  comment: string;
+  status: "PENDING" | "APPROVED" | "REJECTED";
+  reply?: string | null;
+  createdAt: string;
+  user: { id: string; name: string; email: string };
+  event: { id: string; title: string };
+}
+
+export interface ReviewStats {
+  total: number;
+  pending: number;
+  approved: number;
+  rejected: number;
+  avgRating: number;
+}
+
+export interface AdminUser {
+  id: string;
+  name: string;
+  email: string;
+  role: "USER" | "ADMIN";
+  emailVerified?: string | null;
+  createdAt: string;
+  _count: { registrations: number };
+}
+
+export interface UserStats {
+  total: number;
+  verified: number;
+  unverified: number;
+  admins: number;
+}
+
+export interface AnalyticsOverview {
+  totalEvents: number;
+  totalRegistrations: number;
+  totalUsers: number;
+  totalReviews: number;
+  avgRating: number;
+  registrationTrend: { month: string; registered: number; attended: number }[];
+  eventPerformance: {
+    title: string;
+    registrations: number;
+    maxParticipants: number;
+    fillRate: number;
+    avgRating: number;
+    reviewCount: number;
+  }[];
+}
+
+export interface CheckInEvent {
+  id: string;
+  title: string;
+  eventDate: string;
+  _count: { registrations: number };
 }
 
 export interface GuestInfo {

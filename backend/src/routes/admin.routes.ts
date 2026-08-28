@@ -100,4 +100,91 @@ router.put(
   adminController.updateEvent
 );
 
+// ==================== Registrations Management ====================
+
+router.get(
+  "/v1/registrations",
+  authMiddleware.execute,
+  permittedRole([Role.ADMIN]),
+  adminController.getAllRegistrations
+);
+
+router.put(
+  "/v1/registrations/:id/status",
+  authMiddleware.execute,
+  permittedRole([Role.ADMIN]),
+  adminController.updateRegistrationStatus
+);
+
+// ==================== Check-ins ====================
+
+router.get(
+  "/v1/checkins/events",
+  authMiddleware.execute,
+  permittedRole([Role.ADMIN]),
+  adminController.getAllCheckInEvents
+);
+
+router.get(
+  "/v1/checkins/events/:id",
+  authMiddleware.execute,
+  permittedRole([Role.ADMIN]),
+  adminController.getEventCheckIn
+);
+
+router.post(
+  "/v1/checkins/:id",
+  authMiddleware.execute,
+  permittedRole([Role.ADMIN]),
+  adminController.checkInRegistration
+);
+
+// ==================== Reviews Management ====================
+
+router.get(
+  "/v1/reviews",
+  authMiddleware.execute,
+  permittedRole([Role.ADMIN]),
+  adminController.getAllReviews
+);
+
+router.put(
+  "/v1/reviews/:id/status",
+  authMiddleware.execute,
+  permittedRole([Role.ADMIN]),
+  adminController.updateReviewStatus
+);
+
+router.post(
+  "/v1/reviews/:id/reply",
+  authMiddleware.execute,
+  permittedRole([Role.ADMIN]),
+  adminController.replyToReview
+);
+
+// ==================== Users Management ====================
+
+router.get(
+  "/v1/users",
+  authMiddleware.execute,
+  permittedRole([Role.ADMIN]),
+  adminController.getAllUsers
+);
+
+router.put(
+  "/v1/users/:id/role",
+  authMiddleware.execute,
+  permittedRole([Role.ADMIN]),
+  adminController.updateUserRole
+);
+
+// ==================== Analytics ====================
+
+router.get(
+  "/v1/analytics/overview",
+  authMiddleware.execute,
+  permittedRole([Role.ADMIN]),
+  adminController.getAnalyticsOverview
+);
+
 export default router;

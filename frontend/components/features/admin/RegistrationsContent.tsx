@@ -1,25 +1,153 @@
 "use client";
 
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { useEffect, useState } from "react";
+import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { ClipboardList, Download, Search } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import {
+  DropdownMenu,
+  DropdownMenuTrigger,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+} from "@/components/ui/dropdown-menu";
+import { ClipboardList, Download, Search, MoreHorizontal } from "lucide-react";
+import { adminService } from "@/services/admin.service";
+import type { AdminRegistration, RegistrationStats } from "@/types";
 
-const mockRegistrations = [
-  { id: "1", ref: "MZ-8F4A21", name: "Amara Villanueva", email: "amara.v@gmail.com", event: "Acoustic Friday", date: "Oct 26, 21:30", status: "CONFIRMED", hasPlusOne: true },
-  { id: "2", ref: "MZ-8F4A22", name: "Noel Baptiste", email: "noel.baptiste@gmail.com", event: "Acoustic Friday", date: "Oct 26, 21:30", status: "CONFIRMED", hasPlusOne: false },
-  { id: "3", ref: "MZ-8F4A23", name: "Priya Raghavan", email: "priya.r@gmail.com", event: "Cocktail Night", date: "Oct 28, 20:00", status: "PENDING", hasPlusOne: false },
-  { id: "4", ref: "MZ-8F4A24", name: "Tomasz Krol", email: "tomasz.k@gmail.com", event: "Trivia Hour", date: "Nov 01, 19:00", status: "WAITLISTED", hasPlusOne: true },
-  { id: "5", ref: "MZ-8F4A25", name: "Keiko Tanaka", email: "keiko.t@gmail.com", event: "Acoustic Friday", date: "Oct 26, 21:30", status: "CANCELLED", hasPlusOne: false },
-];
+const STATUS_FILTERS = ["ALL", "CONFIRMED", "PENDING", "WAITLISTED", "CANCELLED"];
+
+function formatDate(date: string) {
+  return new Date(date).toLocaleDateString("en-US", {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+  });
+}
+
+function statusBadgeColor(status: string) {
+  switch (status) {
+    case "CONFIRMED":
+      return "text-[#1a5c2a] border-[#1a5c2a]";
+    case "PENDING":
+      return "text-yellow-600 border-yellow-600";
+    case "WAITLISTED":
+      return "text-blue-600 border-blue-600";
+    case "CANCELLED":
+      return "text-red-500 border-red-500";
+    default:
+      return "";
+  }
+}
+
+function LoadingSkeleton() {
+  return (
+    <div>
+      <div className="flex items-center justify-between mb-6">
+        <div>
+          <div className="h-8 w-48 bg-muted rounded mb-2" />
+          <div className="h-4 w-64 bg-muted rounded" />
+        </div>
+      </div>
+      <div className="grid grid-cols-4 gap-4 mb-6">
+        {[1, 2, 3, 4].map((i) => (
+          <Card key={i}>
+            <CardContent className="p-4">
+              <div className="h-8 w-16 bg-muted rounded mx-auto mb-2" />
+              <div className="h-3 w-24 bg-muted rounded mx-auto" />
+            </CardContent>
+          </Card>
+        ))}
+      </div>
+      <Card>
+        <CardContent className="p-6">
+          <div className="space-y-3">
+            {[1, 2, 3, 4, 5].map((i) => (
+              <div key={i} className="h-12 bg-muted rounded" />
+            ))}
+          </div>
+        </CardContent>
+      </Card>
+    </div>
+  );
+}
+
+function EmptyState() {
+  return (
+    <div className="flex flex-col items-center justify-center py-16">
+      <ClipboardList className="h-12 w-12 text-muted-foreground mb-4" />
+      <h3 className="text-lg font-medium mb-1">No registrations found</h3>
+      <p className="text-sm text-muted-foreground">
+        There are no registrations matching your criteria.
+      </p>
+    </div>
+  );
+}
 
 export default function RegistrationsContent() {
+  const [registrations, setRegistrations] = useState<AdminRegistration[]>([]);
+  const [stats, setStats] = useState<RegistrationStats | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [search, setSearch] = useState("");
+  const [activeFilter, setActiveFilter] = useState("ALL");
+  const [updatingId, setUpdatingId] = useState<string | null>(null);
+
+  const fetchData = async (status?: string, searchTerm?: string) => {
+    try {
+      setLoading(true);
+      const response = await adminService.getRegistrations({
+        status: status !== "ALL" ? status : undefined,
+        search: searchTerm || undefined,
+      });
+      if (response.data) {
+        setRegistrations(response.data.registrations);
+        setStats(response.data.stats);
+      }
+    } catch (error) {
+      console.error("Failed to fetch registrations:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchData(activeFilter, search);
+  }, []);
+
+  const handleFilterChange = (filter: string) => {
+    setActiveFilter(filter);
+    fetchData(filter, search);
+  };
+
+  const handleSearch = (value: string) => {
+    setSearch(value);
+    fetchData(activeFilter, value);
+  };
+
+  const handleStatusChange = async (id: string, status: string) => {
+    try {
+      setUpdatingId(id);
+      await adminService.updateRegistrationStatus(id, status);
+      fetchData(activeFilter, search);
+    } catch (error) {
+      console.error("Failed to update status:", error);
+    } finally {
+      setUpdatingId(null);
+    }
+  };
+
+  if (loading) return <LoadingSkeleton />;
+
   return (
     <div>
       <div className="flex items-center justify-between mb-6">
         <div>
           <h1 className="text-2xl font-bold">Registrations</h1>
-          <p className="text-sm text-muted-foreground">Manage all event registrations</p>
+          <p className="text-sm text-muted-foreground">
+            Manage all event registrations
+          </p>
         </div>
         <Button variant="outline">
           <Download className="h-4 w-4 mr-2" />
@@ -31,88 +159,180 @@ export default function RegistrationsContent() {
       <div className="flex items-center gap-4 mb-6">
         <div className="flex items-center gap-2 border rounded-lg px-3 py-2 flex-1 max-w-sm">
           <Search className="h-4 w-4 text-muted-foreground" />
-          <input placeholder="Search registrations..." className="bg-transparent text-sm outline-none w-full" />
+          <Input
+            placeholder="Search registrations..."
+            value={search}
+            onChange={(e) => handleSearch(e.target.value)}
+            className="border-0 bg-transparent outline-none w-full"
+          />
         </div>
         <div className="flex gap-2">
-          {["All", "Confirmed", "Pending", "Waitlisted", "Cancelled"].map((filter) => (
-            <Button key={filter} variant="outline" size="sm">{filter}</Button>
+          {STATUS_FILTERS.map((filter) => (
+            <Button
+              key={filter}
+              variant={activeFilter === filter ? "default" : "outline"}
+              size="sm"
+              onClick={() => handleFilterChange(filter)}
+              className={
+                activeFilter === filter ? "bg-[#1a5c2a] hover:bg-[#144a22]" : ""
+              }
+            >
+              {filter.charAt(0) + filter.slice(1).toLowerCase()}
+            </Button>
           ))}
         </div>
       </div>
 
       {/* Stats */}
-      <div className="grid grid-cols-4 gap-4 mb-6">
-        <Card>
-          <CardContent className="p-4 text-center">
-            <p className="text-2xl font-bold">1,890</p>
-            <p className="text-xs text-muted-foreground">Total Registrations</p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-4 text-center">
-            <p className="text-2xl font-bold text-[#1a5c2a]">1,428</p>
-            <p className="text-xs text-muted-foreground">Confirmed</p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-4 text-center">
-            <p className="text-2xl font-bold text-yellow-600">264</p>
-            <p className="text-xs text-muted-foreground">Pending</p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-4 text-center">
-            <p className="text-2xl font-bold text-red-500">86</p>
-            <p className="text-xs text-muted-foreground">Cancelled</p>
-          </CardContent>
-        </Card>
-      </div>
+      {stats && (
+        <div className="grid grid-cols-4 gap-4 mb-6">
+          <Card>
+            <CardContent className="p-4 text-center">
+              <p className="text-2xl font-bold">{stats.total.toLocaleString()}</p>
+              <p className="text-xs text-muted-foreground">Total Registrations</p>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardContent className="p-4 text-center">
+              <p className="text-2xl font-bold text-[#1a5c2a]">
+                {stats.confirmed.toLocaleString()}
+              </p>
+              <p className="text-xs text-muted-foreground">Confirmed</p>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardContent className="p-4 text-center">
+              <p className="text-2xl font-bold text-yellow-600">
+                {stats.pending.toLocaleString()}
+              </p>
+              <p className="text-xs text-muted-foreground">Pending</p>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardContent className="p-4 text-center">
+              <p className="text-2xl font-bold text-red-500">
+                {stats.cancelled.toLocaleString()}
+              </p>
+              <p className="text-xs text-muted-foreground">Cancelled</p>
+            </CardContent>
+          </Card>
+        </div>
+      )}
 
       {/* Table */}
-      <Card>
-        <CardContent className="p-0">
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="border-b text-left text-muted-foreground">
-                  <th className="px-6 py-3 font-medium">REFERENCE</th>
-                  <th className="px-6 py-3 font-medium">PARTICIPANT</th>
-                  <th className="px-6 py-3 font-medium">EVENT</th>
-                  <th className="px-6 py-3 font-medium">DATE</th>
-                  <th className="px-6 py-3 font-medium">PLUS ONE</th>
-                  <th className="px-6 py-3 font-medium">STATUS</th>
-                  <th className="px-6 py-3 font-medium">ACTIONS</th>
-                </tr>
-              </thead>
-              <tbody>
-                {mockRegistrations.map((reg) => (
-                  <tr key={reg.id} className="border-b last:border-0 hover:bg-muted/50">
-                    <td className="px-6 py-3 font-mono font-medium">{reg.ref}</td>
-                    <td className="px-6 py-3">
-                      <div>
-                        <p className="font-medium">{reg.name}</p>
-                        <p className="text-xs text-muted-foreground">{reg.email}</p>
-                      </div>
-                    </td>
-                    <td className="px-6 py-3 text-muted-foreground">{reg.event}</td>
-                    <td className="px-6 py-3 text-muted-foreground">{reg.date}</td>
-                    <td className="px-6 py-3 text-muted-foreground">{reg.hasPlusOne ? "Yes" : "No"}</td>
-                    <td className="px-6 py-3">
-                      <Badge variant={reg.status === "CONFIRMED" ? "outline" : reg.status === "CANCELLED" ? "destructive" : "secondary"}
-                        className={reg.status === "CONFIRMED" ? "text-[#1a5c2a] border-[#1a5c2a]" : ""}>
-                        {reg.status}
-                      </Badge>
-                    </td>
-                    <td className="px-6 py-3">
-                      <Button variant="ghost" size="sm">···</Button>
-                    </td>
+      {registrations.length === 0 ? (
+        <Card>
+          <CardContent className="p-0">
+            <EmptyState />
+          </CardContent>
+        </Card>
+      ) : (
+        <Card>
+          <CardContent className="p-0">
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="border-b text-left text-muted-foreground">
+                    <th className="px-6 py-3 font-medium">REFERENCE</th>
+                    <th className="px-6 py-3 font-medium">PARTICIPANT</th>
+                    <th className="px-6 py-3 font-medium">EVENT</th>
+                    <th className="px-6 py-3 font-medium">DATE</th>
+                    <th className="px-6 py-3 font-medium">PLUS ONE</th>
+                    <th className="px-6 py-3 font-medium">STATUS</th>
+                    <th className="px-6 py-3 font-medium">ACTIONS</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </CardContent>
-      </Card>
+                </thead>
+                <tbody>
+                  {registrations.map((reg) => (
+                    <tr
+                      key={reg.id}
+                      className="border-b last:border-0 hover:bg-muted/50"
+                    >
+                      <td className="px-6 py-3 font-mono font-medium">
+                        {reg.id.substring(0, 8)}
+                      </td>
+                      <td className="px-6 py-3">
+                        <div>
+                          <p className="font-medium">{reg.user.name}</p>
+                          <p className="text-xs text-muted-foreground">
+                            {reg.user.email}
+                          </p>
+                        </div>
+                      </td>
+                      <td className="px-6 py-3 text-muted-foreground">
+                        {reg.event.title}
+                      </td>
+                      <td className="px-6 py-3 text-muted-foreground">
+                        {formatDate(reg.event.eventDate)}
+                      </td>
+                      <td className="px-6 py-3 text-muted-foreground">
+                        {reg.hasPlusOne ? "Yes" : "No"}
+                      </td>
+                      <td className="px-6 py-3">
+                        <Badge
+                          variant="outline"
+                          className={statusBadgeColor(reg.status)}
+                        >
+                          {reg.status}
+                        </Badge>
+                      </td>
+                      <td className="px-6 py-3">
+                        <DropdownMenu>
+                          <DropdownMenuTrigger
+                            render={
+                              <Button variant="ghost" size="sm">
+                                <MoreHorizontal className="h-4 w-4" />
+                              </Button>
+                            }
+                          />
+                          <DropdownMenuContent>
+                            <DropdownMenuLabel>Change Status</DropdownMenuLabel>
+                            <DropdownMenuSeparator />
+                            <DropdownMenuItem
+                              onClick={() =>
+                                handleStatusChange(reg.id, "CONFIRMED")
+                              }
+                              disabled={updatingId === reg.id}
+                            >
+                              Confirm
+                            </DropdownMenuItem>
+                            <DropdownMenuItem
+                              onClick={() =>
+                                handleStatusChange(reg.id, "PENDING")
+                              }
+                              disabled={updatingId === reg.id}
+                            >
+                              Set Pending
+                            </DropdownMenuItem>
+                            <DropdownMenuItem
+                              onClick={() =>
+                                handleStatusChange(reg.id, "WAITLISTED")
+                              }
+                              disabled={updatingId === reg.id}
+                            >
+                              Waitlist
+                            </DropdownMenuItem>
+                            <DropdownMenuSeparator />
+                            <DropdownMenuItem
+                              variant="destructive"
+                              onClick={() =>
+                                handleStatusChange(reg.id, "CANCELLED")
+                              }
+                              disabled={updatingId === reg.id}
+                            >
+                              Cancel
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </CardContent>
+        </Card>
+      )}
     </div>
   );
 }

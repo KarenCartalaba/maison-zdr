@@ -15,5 +15,6 @@ router.post("/v1/resend-email-verification", validateSchema(resendVerificationSc
 router.post("/v1/refresh-token", validateSchema(refreshTokenSchema), authController.refresh);
 router.post("/v1/logout", authController.logout);
 router.get("/v1/me", authMiddleware.execute, authController.me);
+router.put("/v1/update-profile", authMiddleware.execute, authController.updateProfile);
 
 export default router;

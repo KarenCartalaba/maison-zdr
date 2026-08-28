@@ -1,6 +1,8 @@
-import * as authRepo from "@/repositories/auth.repository";
+import { AuthRepository } from "@/repositories/auth.repository";
 import { verifyPassword } from "@/utils/password";
 import { signAccessToken, signRefreshToken, TokenExpiry } from "@/lib/jwt";
+
+const authRepo = new AuthRepository();
 
 export async function LoginCredentialsService(email: string, password: string) {
   try {
