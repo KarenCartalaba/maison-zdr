@@ -1,3 +1,4 @@
+import Footer from "@/components/common/Footer"
 import Navbar from "@/components/common/Navbar"
 import AboutSection from "@/components/features/home/AboutSection"
 import HeroSection from "@/components/features/home/HeroSection"
@@ -14,6 +15,7 @@ export default function Page() {
       <UpcomingEventsSection />
       <HowItWorksSection />
       <AboutSection />
+      <Footer />
     </>
   )
 }
