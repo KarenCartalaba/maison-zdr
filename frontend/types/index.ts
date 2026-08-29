@@ -6,6 +6,8 @@ export interface User {
   emailVerified?: string | null;
 }
 
+export type EventType = "FORMAL" | "CASUAL" | "SOCIAL" | "WORKSHOP" | "LIVE_MUSIC" | "FOOD_AND_DRINK" | "TRIVIA" | "PRIVATE";
+
 export interface Event {
   id: string;
   slug: string;
@@ -17,6 +19,7 @@ export interface Event {
   minParticipants: number;
   maxParticipants: number;
   isCancelled: boolean;
+  eventType: EventType;
   gallery: string[];
   createdAt: string;
   updatedAt: string;

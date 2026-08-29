@@ -1,6 +1,7 @@
 import { EventRepository } from "@/repositories/event.repository";
 import { generateSlug } from "@/utils/slug";
 import { cacheGet, cacheSet, cacheInvalidate, cacheInvalidatePattern } from "@/lib/redis";
+import { EventType } from "@/generated/prisma/enums";
 
 const eventRepo = new EventRepository();
 
@@ -19,6 +20,7 @@ export async function CreateEventService(data: {
   minParticipants: number;
   maxParticipants: number;
   authorId: string;
+  eventType?: EventType;
   gallery?: string[];
 }) {
   try {
@@ -63,6 +65,7 @@ export async function UpdateEventService(data: {
   deadline?: Date;
   minParticipants?: number;
   maxParticipants?: number;
+  eventType?: EventType;
   isCancelled?: boolean;
   gallery?: string[];
 }) {

@@ -10,6 +10,7 @@ export interface CreateEventData {
   deadline: string;
   minParticipants: number;
   maxParticipants: number;
+  eventType?: string;
   gallery?: string[];
 }
 

@@ -300,7 +300,17 @@ export class AdminRepository {
 
   public getAllUsers = async (filters?: { role?: string; search?: string }) => {
     const where: any = {};
-    if (filters?.role && filters?.role !== "ALL") where.role = filters.role;
+    if (filters?.role && filters?.role !== "ALL") {
+      if (filters.role === "VERIFIED") {
+        where.role = "USER";
+        where.emailVerified = { not: null };
+      } else if (filters.role === "UNVERIFIED") {
+        where.role = "USER";
+        where.emailVerified = null;
+      } else {
+        where.role = filters.role;
+      }
+    }
     if (filters?.search) {
       where.OR = [
         { name: { contains: filters.search, mode: "insensitive" } },

@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { EventType } from "@/generated/prisma/enums";
 
 export const updateEventSchema = z.object({
   body: z.object({
@@ -10,6 +11,7 @@ export const updateEventSchema = z.object({
     deadline: z.string().datetime().optional(),
     minParticipants: z.number().int().min(0).optional(),
     maxParticipants: z.number().int().min(1).optional(),
+    eventType: z.nativeEnum(EventType).optional(),
     isCancelled: z.boolean().optional(),
     gallery: z.array(z.string()).optional(),
   }),

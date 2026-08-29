@@ -1,0 +1,5 @@
+-- CreateEnum
+CREATE TYPE "EventType" AS ENUM ('FORMAL', 'CASUAL', 'SOCIAL', 'WORKSHOP', 'LIVE_MUSIC', 'FOOD_AND_DRINK', 'TRIVIA', 'PRIVATE');
+
+-- AlterTable
+ALTER TABLE "Event" ADD COLUMN     "event_type" "EventType" NOT NULL DEFAULT 'SOCIAL';

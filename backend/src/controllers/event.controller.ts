@@ -4,7 +4,7 @@ import { CreateEventService, UpdateEventService, DeleteEventService, GetEventSer
 export class EventController {
   public createEvent = async (req: Request, res: Response) => {
     const authorId = (req as any).user?.sub;
-    const { title, description, location, eventDate, deadline, minParticipants, maxParticipants, gallery } = req.body ?? {};
+    const { title, description, location, eventDate, deadline, minParticipants, maxParticipants, eventType, gallery } = req.body ?? {};
 
     const result = await CreateEventService({
       title,
@@ -15,13 +15,14 @@ export class EventController {
       minParticipants,
       maxParticipants,
       authorId,
+      eventType,
       gallery,
     });
     return res.status(result.code).json(result);
   };
 
   public updateEvent = async (req: Request, res: Response) => {
-    const { id, title, description, location, eventDate, deadline, minParticipants, maxParticipants, isCancelled, gallery } = req.body ?? {};
+    const { id, title, description, location, eventDate, deadline, minParticipants, maxParticipants, eventType, isCancelled, gallery } = req.body ?? {};
 
     const result = await UpdateEventService({
       id,
@@ -32,6 +33,7 @@ export class EventController {
       deadline: deadline ? new Date(deadline) : undefined,
       minParticipants,
       maxParticipants,
+      eventType,
       isCancelled,
       gallery,
     });
