@@ -91,6 +91,40 @@ export default function AnalyticsContent() {
   const [data, setData] = useState<AnalyticsOverview | null>(null);
   const [loading, setLoading] = useState(true);
 
+  const handleExportReport = () => {
+    if (!data) return;
+    const lines: string[] = [];
+    lines.push("Analytics Report");
+    lines.push(`Generated,${new Date().toISOString().split("T")[0]}`);
+    lines.push("");
+    lines.push("Overview");
+    lines.push("Metric,Value");
+    lines.push(`Total Events,${data.totalEvents}`);
+    lines.push(`Total Registrations,${data.totalRegistrations}`);
+    lines.push(`Total Users,${data.totalUsers}`);
+    lines.push(`Total Reviews,${data.totalReviews}`);
+    lines.push(`Average Rating,${data.avgRating.toFixed(1)}`);
+    lines.push("");
+    if (data.eventPerformance && data.eventPerformance.length > 0) {
+      lines.push("Event Performance");
+      lines.push("Event,Registrations,Max Participants,Fill Rate,Avg Rating,Reviews");
+      data.eventPerformance.forEach((e) => {
+        lines.push(
+          `"${e.title.replace(/"/g, '""')}",${e.registrations},${e.maxParticipants},${Math.round(e.fillRate)}%,${e.avgRating.toFixed(1)},${e.reviewCount}`
+        );
+      });
+    }
+    const csvContent = lines.join("\n");
+    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    const dateStr = new Date().toISOString().split("T")[0];
+    link.href = url;
+    link.download = `analytics-report-${dateStr}.csv`;
+    link.click();
+    URL.revokeObjectURL(url);
+  };
+
   useEffect(() => {
     const fetchAnalytics = async () => {
       try {

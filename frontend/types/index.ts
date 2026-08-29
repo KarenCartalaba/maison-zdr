@@ -2,7 +2,7 @@ export interface User {
   id: string;
   name: string;
   email: string;
-  role: "USER" | "ADMIN";
+  role: "USER" | "ADMIN" | "MODERATOR";
   emailVerified?: string | null;
   profilePic?: string | null;
   phone?: string | null;
@@ -43,6 +43,8 @@ export interface Registration {
   status: "CONFIRMED" | "PENDING" | "WAITLISTED" | "CANCELLED";
   hasPlusOne: boolean;
   guestName?: string | null;
+  guestNames?: string[];
+  guestCount?: number;
   checkedIn?: boolean;
   checkedInAt?: string | null;
   createdAt: string;
@@ -107,6 +109,8 @@ export interface AdminRegistration {
   status: "CONFIRMED" | "PENDING" | "WAITLISTED" | "CANCELLED";
   hasPlusOne: boolean;
   guestName?: string | null;
+  guestNames?: string[];
+  guestCount?: number;
   checkedIn: boolean;
   checkedInAt?: string | null;
   createdAt: string;
@@ -146,7 +150,7 @@ export interface AdminUser {
   id: string;
   name: string;
   email: string;
-  role: "USER" | "ADMIN";
+  role: "USER" | "ADMIN" | "MODERATOR";
   emailVerified?: string | null;
   createdAt: string;
   _count: { registrations: number };
@@ -185,4 +189,21 @@ export interface CheckInEvent {
 
 export interface GuestInfo {
   name: string;
+}
+
+export interface News {
+  id: string;
+  title: string;
+  content: string;
+  summary?: string;
+  imageUrl?: string;
+  isPublished: boolean;
+  authorId: string;
+  author: {
+    id: string;
+    name: string;
+    email: string;
+  };
+  createdAt: string;
+  updatedAt: string;
 }

@@ -24,6 +24,9 @@ export default function Navbar() {
           <Link href="/events" className="text-sm font-medium text-foreground/80 hover:text-foreground">
             Events
           </Link>
+          <Link href="/news" className="text-sm font-medium text-foreground/80 hover:text-foreground">
+            News
+          </Link>
           <Link href="/contact" className="text-sm font-medium text-foreground/80 hover:text-foreground">
             Contact
           </Link>
@@ -103,6 +106,7 @@ export default function Navbar() {
             <nav className="flex flex-col space-y-3">
               <Link href="/" onClick={() => setIsMobileMenuOpen(false)}>Home</Link>
               <Link href="/events" onClick={() => setIsMobileMenuOpen(false)}>Events</Link>
+              <Link href="/news" onClick={() => setIsMobileMenuOpen(false)}>News</Link>
               <Link href="/contact" onClick={() => setIsMobileMenuOpen(false)}>Contact</Link>
             </nav>
             <div className="flex flex-col space-y-2">

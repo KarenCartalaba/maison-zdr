@@ -15,24 +15,30 @@ import {
   Settings,
   User,
   LogOut,
+  Newspaper,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
-const sidebarLinks = [
-  { label: "Dashboard", href: ROUTES.ADMIN, icon: LayoutDashboard },
-  { label: "Events", href: ROUTES.ADMIN_EVENTS, icon: Calendar },
-  { label: "Registrations", href: ROUTES.ADMIN_REGISTRATIONS, icon: ClipboardList },
-  { label: "Check-ins", href: ROUTES.ADMIN_CHECKINS, icon: QrCode },
-  { label: "Reviews", href: ROUTES.ADMIN_REVIEWS, icon: Star },
-  { label: "Users", href: ROUTES.ADMIN_USERS, icon: Users },
-  { label: "Analytics", href: ROUTES.ADMIN_ANALYTICS, icon: BarChart3 },
-  { label: "Settings", href: ROUTES.ADMIN_SETTINGS, icon: Settings },
-  { label: "Profile", href: ROUTES.ADMIN_PROFILE, icon: User },
+const allSidebarLinks = [
+  { label: "Dashboard", href: ROUTES.ADMIN, icon: LayoutDashboard, adminOnly: false },
+  { label: "Events", href: ROUTES.ADMIN_EVENTS, icon: Calendar, adminOnly: false },
+  { label: "News", href: ROUTES.ADMIN_NEWS, icon: Newspaper, adminOnly: true },
+  { label: "Registrations", href: ROUTES.ADMIN_REGISTRATIONS, icon: ClipboardList, adminOnly: false },
+  { label: "Check-ins", href: ROUTES.ADMIN_CHECKINS, icon: QrCode, adminOnly: false },
+  { label: "Reviews", href: ROUTES.ADMIN_REVIEWS, icon: Star, adminOnly: false },
+  { label: "Users", href: ROUTES.ADMIN_USERS, icon: Users, adminOnly: true },
+  { label: "Analytics", href: ROUTES.ADMIN_ANALYTICS, icon: BarChart3, adminOnly: true },
+  { label: "Settings", href: ROUTES.ADMIN_SETTINGS, icon: Settings, adminOnly: true },
+  { label: "Profile", href: ROUTES.ADMIN_PROFILE, icon: User, adminOnly: false },
 ];
 
 export default function AdminSidebar() {
   const pathname = usePathname();
-  const { user, logout } = useAuth();
+  const { user, isAdmin, logout } = useAuth();
+
+  const sidebarLinks = allSidebarLinks.filter(
+    (link) => isAdmin || !link.adminOnly
+  );
 
   return (
     <aside className="w-64 bg-[#1a5c2a] text-white flex flex-col shrink-0">
@@ -84,7 +90,7 @@ export default function AdminSidebar() {
             </div>
             <div className="min-w-0">
               <p className="text-sm font-medium truncate">{user?.name || "Admin"}</p>
-              <p className="text-xs text-white/60">General Manager</p>
+              <p className="text-xs text-white/60">{user?.role === "ADMIN" ? "General Manager" : "Moderator"}</p>
             </div>
           </div>
           <button

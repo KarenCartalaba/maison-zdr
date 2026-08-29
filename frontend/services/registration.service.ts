@@ -3,10 +3,10 @@ import { API_ENDPOINTS } from "@/constants";
 import type { ApiResponse, Registration } from "@/types";
 
 export const registrationService = {
-  register: async (eventId: string, hasPlusOne: boolean, guestName?: string) => {
+  register: async (eventId: string, hasPlusOne: boolean, guestName?: string, guestNames?: string[], guestCount?: number) => {
     const response = await axiosInstance.post<ApiResponse<{ registration: Registration }>>(
       API_ENDPOINTS.REGISTRATIONS.REGISTER,
-      { eventId, hasPlusOne, guestName }
+      { eventId, hasPlusOne, guestName, guestNames, guestCount }
     );
     return response.data;
   },

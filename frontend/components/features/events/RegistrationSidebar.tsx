@@ -1,10 +1,12 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useAuth } from "@/context/AuthContext";
+import { authService } from "@/services/auth.service";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Lock } from "lucide-react";
+import { Lock, CheckCircle, XCircle } from "lucide-react";
 
 interface RegistrationSidebarProps {
   eventId: string;
@@ -12,6 +14,8 @@ interface RegistrationSidebarProps {
   registeredCount: number;
   status: string;
   isDeadlinePassed: boolean;
+  isCancelled: boolean;
+  deadline: string;
 }
 
 export default function RegistrationSidebar({
@@ -20,10 +24,38 @@ export default function RegistrationSidebar({
   registeredCount,
   status,
   isDeadlinePassed,
+  isCancelled,
+  deadline,
 }: RegistrationSidebarProps) {
-  const { isAuthenticated, isVerified } = useAuth();
+  const { user, isAuthenticated, isVerified } = useAuth();
+  const [alreadyRegistered, setAlreadyRegistered] = useState(false);
+  const [checkingRegistration, setCheckingRegistration] = useState(false);
   const available = maxParticipants - registeredCount;
-  const percentage = (registeredCount / maxParticipants) * 100;
+  const percentage = maxParticipants > 0 ? (registeredCount / maxParticipants) * 100 : 0;
+  const isFull = registeredCount >= maxParticipants;
+
+  useEffect(() => {
+    if (!isAuthenticated || !user) return;
+
+    const checkRegistration = async () => {
+      setCheckingRegistration(true);
+      try {
+        const res = await authService.getMyRegistrations();
+        if (res.data?.registrations) {
+          const registered = res.data.registrations.some(
+            (reg: any) => reg.eventId === eventId && reg.status !== "CANCELLED"
+          );
+          setAlreadyRegistered(registered);
+        }
+      } catch {
+        // Silently fail — don't block the sidebar
+      } finally {
+        setCheckingRegistration(false);
+      }
+    };
+
+    checkRegistration();
+  }, [eventId, isAuthenticated, user]);
 
   return (
     <Card className="border shadow-md">
@@ -59,6 +91,19 @@ export default function RegistrationSidebar({
           <span className="font-medium">{status}</span>
         </div>
 
+        <div className="flex items-center justify-between text-sm">
+          <span className="text-muted-foreground">Registration Deadline</span>
+          <span className="font-medium">
+            {new Date(deadline).toLocaleDateString("en-US", {
+              month: "short",
+              day: "numeric",
+              year: "numeric",
+              hour: "numeric",
+              minute: "2-digit",
+            })}
+          </span>
+        </div>
+
         {/* Registration button logic */}
         {!isAuthenticated ? (
           <Link href="/login">
@@ -78,6 +123,20 @@ export default function RegistrationSidebar({
               You must verify your email to register for events
             </p>
           </div>
+        ) : isCancelled ? (
+          <Button className="w-full" disabled>
+            <XCircle className="h-4 w-4 mr-2" />
+            Event Cancelled
+          </Button>
+        ) : isFull ? (
+          <Button className="w-full" disabled>
+            Event Full
+          </Button>
+        ) : alreadyRegistered ? (
+          <Button className="w-full" disabled variant="secondary">
+            <CheckCircle className="h-4 w-4 mr-2" />
+            Already Registered
+          </Button>
         ) : isDeadlinePassed ? (
           <Button className="w-full" disabled>
             Registration Closed

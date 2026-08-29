@@ -6,6 +6,7 @@ import EventDetailHero from "@/components/features/events/EventDetailHero";
 import RegistrationSidebar from "@/components/features/events/RegistrationSidebar";
 import GalleryGrid from "@/components/features/events/GalleryGrid";
 import ReviewSection from "@/components/features/events/ReviewSection";
+import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 
 interface EventDetailContentProps {
@@ -76,8 +77,11 @@ export default function EventDetailContent({ eventId, initialEvent }: EventDetai
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           {/* Main Content */}
           <div className="lg:col-span-2 space-y-8">
-            {/* Date, Time, Venue pills */}
+            {/* Date, Time, Venue pills + Category badge */}
             <div className="flex flex-wrap gap-3">
+              <Badge className="bg-[#1a5c2a] hover:bg-[#144a22]">
+                {event.eventType?.replace(/_/g, " ").toLowerCase().replace(/\b\w/g, (c: string) => c.toUpperCase())}
+              </Badge>
               <div className="flex items-center gap-2 rounded-full border px-4 py-2 text-sm">
                 <span className="text-muted-foreground">Date</span>
                 <span className="font-medium">
@@ -151,6 +155,8 @@ export default function EventDetailContent({ eventId, initialEvent }: EventDetai
                 registeredCount={registrationCount}
                 status={event.isCancelled ? "Cancelled" : isDeadlinePassed ? "Closed" : "Open"}
                 isDeadlinePassed={isDeadlinePassed}
+                isCancelled={event.isCancelled}
+                deadline={event.deadline}
               />
             </div>
           </div>

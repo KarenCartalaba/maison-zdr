@@ -93,6 +93,31 @@ export default function RegistrationsContent() {
   const [search, setSearch] = useState("");
   const [activeFilter, setActiveFilter] = useState("ALL");
   const [updatingId, setUpdatingId] = useState<string | null>(null);
+  const [eventFilter, setEventFilter] = useState("ALL");
+
+  const handleExportCsv = () => {
+    const headers = ["Reference", "Guest Name", "Guest Email", "Event", "Date", "Status", "Plus-One"];
+    const rows = registrations.map((reg) => [
+      reg.id,
+      reg.user.name,
+      reg.user.email,
+      reg.event.title,
+      formatDate(reg.event.eventDate),
+      reg.status,
+      reg.hasPlusOne ? "Yes" : "No",
+    ]);
+    const csvContent = [headers, ...rows]
+      .map((row) => row.map((cell) => `"${String(cell).replace(/"/g, '""')}"`).join(","))
+      .join("\n");
+    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    const dateStr = new Date().toISOString().split("T")[0];
+    link.href = url;
+    link.download = `registrations-${dateStr}.csv`;
+    link.click();
+    URL.revokeObjectURL(url);
+  };
 
   const fetchData = async (status?: string, searchTerm?: string) => {
     try {
@@ -138,6 +163,14 @@ export default function RegistrationsContent() {
     }
   };
 
+  const filteredRegistrations = eventFilter === "ALL"
+    ? registrations
+    : registrations.filter((reg) => reg.event.id === eventFilter);
+
+  const uniqueEvents = Array.from(
+    new Map(registrations.map((reg) => [reg.event.id, reg.event])).values()
+  );
+
   if (loading) return <LoadingSkeleton />;
 
   return (
@@ -149,7 +182,7 @@ export default function RegistrationsContent() {
             Manage all event registrations
           </p>
         </div>
-        <Button variant="outline">
+        <Button variant="outline" onClick={handleExportCsv}>
           <Download className="h-4 w-4 mr-2" />
           Export CSV
         </Button>
@@ -167,6 +200,18 @@ export default function RegistrationsContent() {
           />
         </div>
         <div className="flex gap-2">
+          <select
+            value={eventFilter}
+            onChange={(e) => setEventFilter(e.target.value)}
+            className="h-9 rounded-md border border-input bg-transparent px-3 text-sm"
+          >
+            <option value="ALL">All Events</option>
+            {uniqueEvents.map((event) => (
+              <option key={event.id} value={event.id}>
+                {event.title}
+              </option>
+            ))}
+          </select>
           {STATUS_FILTERS.map((filter) => (
             <Button
               key={filter}
@@ -220,7 +265,7 @@ export default function RegistrationsContent() {
       )}
 
       {/* Table */}
-      {registrations.length === 0 ? (
+      {filteredRegistrations.length === 0 ? (
         <Card>
           <CardContent className="p-0">
             <EmptyState />
@@ -243,7 +288,7 @@ export default function RegistrationsContent() {
                   </tr>
                 </thead>
                 <tbody>
-                  {registrations.map((reg) => (
+                  {filteredRegistrations.map((reg) => (
                     <tr
                       key={reg.id}
                       className="border-b last:border-0 hover:bg-muted/50"

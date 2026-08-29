@@ -64,6 +64,22 @@ export const adminService = {
     return response.data;
   },
 
+  // Event-specific participants
+  getEventParticipants: async (eventId: string) => {
+    const response = await axiosInstance.get<
+      ApiResponse<{ participants: AdminRegistration[] }>
+    >(API_ENDPOINTS.ADMIN.EVENT_PARTICIPANTS(eventId));
+    return response.data;
+  },
+
+  // Event-specific reviews
+  getEventReviews: async (eventId: string) => {
+    const response = await axiosInstance.get<
+      ApiResponse<{ reviews: AdminReview[] }>
+    >(API_ENDPOINTS.ADMIN.EVENT_REVIEWS(eventId));
+    return response.data;
+  },
+
   // Reviews
   getReviews: async (filters?: { status?: string; search?: string }) => {
     const params = new URLSearchParams();
@@ -110,6 +126,27 @@ export const adminService = {
     const response = await axiosInstance.put<ApiResponse>(
       API_ENDPOINTS.ADMIN.USER_ROLE(id),
       { role }
+    );
+    return response.data;
+  },
+
+  getUser: async (id: string) => {
+    const response = await axiosInstance.get<ApiResponse<{ user: AdminUser }>>(
+      API_ENDPOINTS.ADMIN.USER_DETAIL(id)
+    );
+    return response.data;
+  },
+
+  verifyUser: async (id: string) => {
+    const response = await axiosInstance.put<ApiResponse>(
+      API_ENDPOINTS.ADMIN.USER_VERIFY(id)
+    );
+    return response.data;
+  },
+
+  deleteUser: async (id: string) => {
+    const response = await axiosInstance.delete<ApiResponse>(
+      API_ENDPOINTS.ADMIN.USER_DELETE(id)
     );
     return response.data;
   },

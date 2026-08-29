@@ -15,6 +15,7 @@ interface AuthContextType {
   refreshUser: () => Promise<void>;
   isAuthenticated: boolean;
   isAdmin: boolean;
+  isModerator: boolean;
   isVerified: boolean;
 }
 
@@ -76,7 +77,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         setUser(userData);
         localStorage.setItem("user", JSON.stringify(userData));
 
-        if (userData.role === "ADMIN") {
+        if (userData.role === "ADMIN" || userData.role === "MODERATOR") {
           router.push("/admin");
         } else {
           router.push("/");
@@ -141,6 +142,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         refreshUser,
         isAuthenticated: !!user,
         isAdmin: user?.role?.toUpperCase() === "ADMIN",
+        isModerator: user?.role?.toUpperCase() === "MODERATOR",
         isVerified: !!user?.emailVerified,
       }}
     >
