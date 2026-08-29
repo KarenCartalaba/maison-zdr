@@ -15,9 +15,9 @@ export default function Navbar() {
     <header className="sticky top-0 z-50 w-full border-b bg-white">
       <div className="container px-4 flex h-16 items-center justify-between">
         <Logo />
-
+        
         {/* Desktop Navigation */}
-        <nav className="hidden md:flex items-center space-x-8">
+        <nav className="hidden lg:ms-20 md:flex items-center space-x-8">
           <Link href="/" className="text-sm font-medium text-foreground/80 hover:text-foreground">
             Home
           </Link>
