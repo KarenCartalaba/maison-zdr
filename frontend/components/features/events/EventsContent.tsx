@@ -1,74 +1,46 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import EventHeroBanner from "@/components/features/events/EventHeroBanner";
 import EventFilters from "@/components/features/events/EventFilters";
 import EventCard from "@/components/features/events/EventCard";
+import { eventService } from "@/services/event.service";
+import { Skeleton } from "@/components/ui/skeleton";
 import type { Event } from "@/types";
 
-// TODO: Replace with actual API call
-const MOCK_EVENTS: Event[] = [
-  {
-    id: "1",
-    slug: "acoustic-fridays",
-    title: "Acoustic Fridays",
-    description: "A night of live acoustic music and drinks.",
-    location: "9 Rue du Commerce, 35140 Saint-Hilaire-des-Landes",
-    eventDate: new Date().toISOString(),
-    deadline: new Date(Date.now() + 86400000).toISOString(),
-    minParticipants: 5,
-    maxParticipants: 20,
-    eventType: "LIVE_MUSIC" as const,
-    isCancelled: false,
-    gallery: [],
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString(),
-    authorId: "1",
-    author: { id: "1", name: "Maison ZDR Events Team", email: "events@maisonzdr.com" },
-    _count: { registrations: 8 },
-  },
-  {
-    id: "2",
-    slug: "cocktail-night",
-    title: "Cocktail Night",
-    description: "Enjoy handcrafted cocktails in a relaxed atmosphere.",
-    location: "9 Rue du Commerce, 35140 Saint-Hilaire-des-Landes",
-    eventDate: new Date().toISOString(),
-    deadline: new Date(Date.now() + 86400000).toISOString(),
-    minParticipants: 5,
-    maxParticipants: 20,
-    eventType: "FOOD_AND_DRINK" as const,
-    isCancelled: false,
-    gallery: [],
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString(),
-    authorId: "1",
-    author: { id: "1", name: "Maison ZDR Events Team", email: "events@maisonzdr.com" },
-    _count: { registrations: 8 },
-  },
-  {
-    id: "3",
-    slug: "trivia-hour",
-    title: "Trivia Hour",
-    description: "Test your knowledge with fun trivia questions.",
-    location: "9 Rue du Commerce, 35140 Saint-Hilaire-des-Landes",
-    eventDate: new Date().toISOString(),
-    deadline: new Date(Date.now() + 86400000).toISOString(),
-    minParticipants: 5,
-    maxParticipants: 20,
-    eventType: "TRIVIA" as const,
-    isCancelled: false,
-    gallery: [],
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString(),
-    authorId: "1",
-    author: { id: "1", name: "Maison ZDR Events Team", email: "events@maisonzdr.com" },
-    _count: { registrations: 8 },
-  },
-];
+interface EventsContentProps {
+  initialEvents?: Event[];
+}
 
-export default function EventsContent() {
+export default function EventsContent({ initialEvents = [] }: EventsContentProps) {
   const [selectedCategory, setSelectedCategory] = useState("All Events");
+  const [events, setEvents] = useState<Event[]>(initialEvents);
+  const [loading, setLoading] = useState(initialEvents.length === 0);
+
+  useEffect(() => {
+    if (initialEvents.length > 0) return; // Already have SSR data
+    eventService.getAll()
+      .then((res) => {
+        if (res.data) setEvents(res.data.events);
+      })
+      .catch(() => {})
+      .finally(() => setLoading(false));
+  }, [initialEvents.length]);
+
+  const filteredEvents = selectedCategory === "All Events"
+    ? events
+    : events.filter((e) => {
+        // Map category labels to event types
+        const typeMap: Record<string, string[]> = {
+          "Food": ["FOOD_AND_DRINK"],
+          "Arts": ["WORKSHOP", "SOCIAL"],
+          "Games": ["TRIVIA"],
+          "Music": ["LIVE_MUSIC"],
+          "Performance": ["FORMAL", "CASUAL"],
+        };
+        const types = typeMap[selectedCategory] || [];
+        return types.includes(e.eventType);
+      });
 
   return (
     <>
@@ -76,11 +48,31 @@ export default function EventsContent() {
       <div className="container px-4 py-12">
         <h1 className="text-3xl font-bold mb-6">Events</h1>
         <EventFilters selected={selectedCategory} onSelect={setSelectedCategory} />
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-8">
-          {MOCK_EVENTS.map((event) => (
-            <EventCard key={event.id} event={event} />
-          ))}
-        </div>
+        {loading ? (
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-8">
+            {Array.from({ length: 3 }).map((_, i) => (
+              <div key={i} className="rounded-lg border shadow-md overflow-hidden">
+                <Skeleton className="h-48 w-full" />
+                <div className="p-5 space-y-3">
+                  <Skeleton className="h-5 w-3/4" />
+                  <Skeleton className="h-4 w-full" />
+                  <Skeleton className="h-4 w-2/3" />
+                  <Skeleton className="h-2 w-full" />
+                  <Skeleton className="h-10 w-full" />
+                </div>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-8">
+            {filteredEvents.map((event) => (
+              <EventCard key={event.id} event={event} />
+            ))}
+          </div>
+        )}
+        {!loading && filteredEvents.length === 0 && (
+          <p className="text-center text-muted-foreground py-12">No events found in this category.</p>
+        )}
       </div>
     </>
   );

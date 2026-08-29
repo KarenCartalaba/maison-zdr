@@ -182,8 +182,13 @@ export class AdminRepository {
   };
 
   public getEventReviews = async (eventId: string) => {
-    // TODO: Add Review model to Prisma schema
-    return [];
+    return prisma.review.findMany({
+      where: { eventId, status: "APPROVED" },
+      include: {
+        user: { select: { id: true, name: true, profilePic: true } },
+      },
+      orderBy: { createdAt: "desc" },
+    });
   };
 
   public updateEvent = async (id: string, data: { title?: string; description?: string; location?: string; eventDate?: Date; maxParticipants?: number; isCancelled?: boolean }) => {

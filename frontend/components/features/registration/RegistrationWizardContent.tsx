@@ -1,12 +1,13 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter, useParams } from "next/navigation";
 import { Controller, useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { useAuth } from "@/context/AuthContext";
 import { registrationService } from "@/services/registration.service";
+import { eventService } from "@/services/event.service";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
@@ -52,6 +53,17 @@ export default function RegistrationWizardContent() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
   const [referenceCode, setReferenceCode] = useState("");
+  const [eventData, setEventData] = useState<any>(null);
+
+  useEffect(() => {
+    if (eventId) {
+      eventService.getById(eventId)
+        .then((res) => {
+          if (res.data) setEventData(res.data.event);
+        })
+        .catch(() => {});
+    }
+  }, [eventId]);
 
   // Step 1 form
   const step1Form = useForm<Step1Values>({
@@ -465,24 +477,24 @@ export default function RegistrationWizardContent() {
             <Card className="border shadow-md overflow-hidden">
               <div className="aspect-video bg-muted">
                 <img
-                  src="/images/event-2.jpg"
-                  alt="Event"
+                  src={eventData?.gallery?.[0] || "/images/event-placeholder.jpg"}
+                  alt={eventData?.title || "Event"}
                   className="w-full h-full object-cover"
                 />
               </div>
               <CardContent className="p-6 space-y-4">
                 <div>
                   <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Summary</p>
-                  <h3 className="text-lg font-bold mt-1">Cocktail Night</h3>
+                  <h3 className="text-lg font-bold mt-1">{eventData?.title || "Loading..."}</h3>
                 </div>
                 <div className="space-y-2 text-sm">
                   <div className="flex items-start gap-2">
                     <span className="text-muted-foreground">📅</span>
-                    <span>Wednesday 7:00 pm - 10:00pm</span>
+                    <span>{eventData ? `${new Date(eventData.eventDate).toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric" })} ${new Date(eventData.eventDate).toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" })}` : "Loading..."}</span>
                   </div>
                   <div className="flex items-start gap-2">
                     <span className="text-muted-foreground">📍</span>
-                    <span>9 Rue du Commerce, 35140 Saint-Hilaire-des-Landes</span>
+                    <span>{eventData?.location || "Loading..."}</span>
                   </div>
                 </div>
                 <div className="border-t pt-4 space-y-2 text-sm">
@@ -506,7 +518,7 @@ export default function RegistrationWizardContent() {
                 </div>
                 <div className="border-t pt-4 flex items-center justify-between text-sm">
                   <span className="text-muted-foreground">Places Remaining</span>
-                  <span className="font-bold">7</span>
+                  <span className="font-bold">{eventData ? eventData.maxParticipants - (eventData._count?.registrations || 0) : "—"}</span>
                 </div>
               </CardContent>
             </Card>

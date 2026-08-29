@@ -10,9 +10,13 @@ import { Plus, Pencil, Trash2, Loader2, LayoutGrid, List } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { Event } from "@/types";
 
-export default function AdminEventsContent() {
-  const [events, setEvents] = useState<Event[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+interface AdminEventsContentProps {
+  initialEvents?: any[];
+}
+
+export default function AdminEventsContent({ initialEvents = [] }: AdminEventsContentProps) {
+  const [events, setEvents] = useState<Event[]>(initialEvents);
+  const [isLoading, setIsLoading] = useState(initialEvents.length === 0);
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
   const [activeTab, setActiveTab] = useState<"all" | "ongoing" | "upcoming" | "past" | "cancelled">("all");
 
@@ -48,6 +52,8 @@ export default function AdminEventsContent() {
   };
 
   useEffect(() => {
+    if (initialEvents.length > 0) return; // Already have SSR data
+
     const fetchEvents = async () => {
       try {
         const response = await eventService.getAll();
@@ -62,7 +68,7 @@ export default function AdminEventsContent() {
     };
 
     fetchEvents();
-  }, []);
+  }, [initialEvents.length]);
 
   const handleDelete = async (id: string) => {
     if (!confirm("Are you sure you want to delete this event?")) return;

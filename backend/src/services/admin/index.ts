@@ -310,7 +310,7 @@ export async function GetEventCheckInService(eventId: string) {
     if (!event) return { code: 404, status: "error", message: "Event not found" };
 
     const checkedInCount = event.registrations.filter((r: { checkedIn: boolean }) => r.checkedIn).length;
-    const data = { event, checkedInCount, totalCount: event._count.registrations };
+    const data = { event, registrations: event.registrations, checkedInCount, totalCount: event._count.registrations };
     return { code: 200, status: "success", message: "Event check-in data retrieved", data };
   } catch (error) {
     console.error("GetEventCheckInService error", error);

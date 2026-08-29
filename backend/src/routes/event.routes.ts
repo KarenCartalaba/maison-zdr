@@ -12,6 +12,7 @@ const authMiddleware = new AuthMiddleware();
 
 router.get("/v1/all", eventController.getAllEvents);
 router.get("/v1/:id", eventController.getEvent);
+router.get("/v1/:id/reviews", eventController.getEventReviews);
 
 router.post("/v1/create", authMiddleware.execute, permittedRole([Role.ADMIN]), validateSchema(createEventSchema), eventController.createEvent);
 router.post("/v1/update", authMiddleware.execute, permittedRole([Role.ADMIN]), validateSchema(updateEventSchema), eventController.updateEvent);

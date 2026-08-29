@@ -121,31 +121,57 @@ const upcomingColumns: ColumnDef<typeof features, any>[] = [
   },
 ];
 
-export default function DashboardContent() {
-  const [stats, setStats] = useState<{
+interface DashboardContentProps {
+  initialStats?: {
     totalEvents: number;
     totalRegistrations: number;
     ongoingEvents: number;
     cancelledEvents: number;
-  } | null>(null);
-  const [registrationTrend, setRegistrationTrend] = useState<
-    { month: string; registrations: number }[]
-  >([]);
-  const [registrationStatus, setRegistrationStatus] = useState<
-    { name: string; value: number; fill: string }[]
-  >([]);
-  const [attendanceTrend, setAttendanceTrend] = useState<
-    { month: string; registered: number; attended: number }[]
-  >([]);
-  const [topCategories, setTopCategories] = useState<
-    { name: string; value: number }[]
-  >([]);
-  const [upcomingEvents, setUpcomingEvents] = useState<any[]>([]);
-  const [recentRegistrations, setRecentRegistrations] = useState<any[]>([]);
-  const [topEvents, setTopEvents] = useState<
-    { title: string; registrations: number; fillRate: number; rating: number }[]
-  >([]);
-  const [loading, setLoading] = useState(true);
+  } | null;
+  initialTrend?: { trend: { month: string; registrations: number }[] } | null;
+  initialStatus?: { status: { name: string; value: number; fill: string }[] } | null;
+  initialAttendance?: { trend: { month: string; registered: number; attended: number }[] } | null;
+  initialCategories?: { categories: { name: string; value: number }[] } | null;
+  initialUpcoming?: { events: any[] } | null;
+  initialRecent?: { registrations: any[] } | null;
+  initialTop?: { events: { title: string; registrations: number; fillRate: number; rating: number }[] } | null;
+}
+
+export default function DashboardContent({
+  initialStats = null,
+  initialTrend = null,
+  initialStatus = null,
+  initialAttendance = null,
+  initialCategories = null,
+  initialUpcoming = null,
+  initialRecent = null,
+  initialTop = null,
+}: DashboardContentProps) {
+  const [stats, setStats] = useState(initialStats);
+  const [registrationTrend, setRegistrationTrend] = useState<{ month: string; registrations: number }[]>(
+    initialTrend?.trend ?? []
+  );
+  const [registrationStatus, setRegistrationStatus] = useState<{ name: string; value: number; fill: string }[]>(
+    initialStatus?.status ?? []
+  );
+  const [attendanceTrend, setAttendanceTrend] = useState<{ month: string; registered: number; attended: number }[]>(
+    initialAttendance?.trend ?? []
+  );
+  const [topCategories, setTopCategories] = useState<{ name: string; value: number }[]>(
+    initialCategories?.categories ?? []
+  );
+  const [upcomingEvents, setUpcomingEvents] = useState<any[]>(
+    initialUpcoming?.events ?? []
+  );
+  const [recentRegistrations, setRecentRegistrations] = useState<any[]>(
+    initialRecent?.registrations ?? []
+  );
+  const [topEvents, setTopEvents] = useState<{ title: string; registrations: number; fillRate: number; rating: number }[]>(
+    initialTop?.events ?? []
+  );
+  const [loading, setLoading] = useState(
+    !initialStats
+  );
 
   // TanStack Table instance
   const table = useTable({
@@ -155,6 +181,8 @@ export default function DashboardContent() {
   });
 
   useEffect(() => {
+    if (initialStats) return; // Already have SSR data
+
     async function fetchDashboard() {
       try {
         const [
@@ -193,7 +221,7 @@ export default function DashboardContent() {
     }
 
     fetchDashboard();
-  }, []);
+  }, [initialStats]);
 
   if (loading) {
     return (

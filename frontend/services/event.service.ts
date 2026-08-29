@@ -64,4 +64,11 @@ export const eventService = {
     );
     return response.data;
   },
+
+  getReviews: async (eventId: string) => {
+    const response = await axiosInstance.get<
+      ApiResponse<{ reviews: any[]; averageRating: number; totalReviews: number }>
+    >(API_ENDPOINTS.EVENTS.REVIEWS(eventId));
+    return response.data;
+  },
 };

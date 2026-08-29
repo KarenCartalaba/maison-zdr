@@ -11,20 +11,25 @@ import { authService } from "@/services/auth.service";
 
 type Tab = "events" | "reviews" | "settings";
 
-export default function ProfileContent() {
-  const [activeTab, setActiveTab] = useState<Tab>("events");
-  const [profileStats, setProfileStats] = useState<{
+interface ProfileContentProps {
+  initialStats?: {
     eventsRegistered: number;
     eventsAttended: number;
     reviewsWritten: number;
     totalGuestsBrought: number;
-  } | null>(null);
+  } | null;
+}
+
+export default function ProfileContent({ initialStats = null }: ProfileContentProps) {
+  const [activeTab, setActiveTab] = useState<Tab>("events");
+  const [profileStats, setProfileStats] = useState(initialStats);
 
   useEffect(() => {
+    if (initialStats) return; // Already have SSR data
     authService.getProfileStats().then((res) => {
       if (res.data) setProfileStats(res.data);
     }).catch(() => {});
-  }, []);
+  }, [initialStats]);
 
   const handleEditProfile = useCallback(() => {
     setActiveTab("settings");

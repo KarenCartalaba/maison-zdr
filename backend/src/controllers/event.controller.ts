@@ -1,5 +1,6 @@
 import { Request, Response } from "express";
 import { CreateEventService, UpdateEventService, DeleteEventService, GetEventService, GetAllEventsService } from "@/services/event";
+import { prisma } from "@/lib/prisma";
 
 export class EventController {
   public createEvent = async (req: Request, res: Response) => {
@@ -55,5 +56,32 @@ export class EventController {
   public getAllEvents = async (req: Request, res: Response) => {
     const result = await GetAllEventsService();
     return res.status(result.code).json(result);
+  };
+
+  public getEventReviews = async (req: Request, res: Response) => {
+    const eventId = req.params.id as string;
+    try {
+      const reviews = await prisma.review.findMany({
+        where: { eventId, status: "APPROVED" },
+        include: {
+          user: { select: { id: true, name: true, profilePic: true } },
+        },
+        orderBy: { createdAt: "desc" },
+      });
+
+      const totalReviews = reviews.length;
+      const avgRating = totalReviews > 0
+        ? Math.round((reviews.reduce((sum, r) => sum + r.rating, 0) / totalReviews) * 10) / 10
+        : 0;
+
+      return res.status(200).json({
+        code: 200,
+        status: "success",
+        data: { reviews, averageRating: avgRating, totalReviews },
+      });
+    } catch (error) {
+      console.error("getEventReviews error", error);
+      return res.status(500).json({ code: 500, status: "error", message: "Failed to fetch reviews" });
+    }
   };
 }
