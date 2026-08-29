@@ -17,7 +17,7 @@ export default function Navbar() {
         <Logo />
         
         {/* Desktop Navigation */}
-        <nav className="hidden lg:ms-20 md:flex items-center space-x-8">
+        <nav className="hidden lg:ms-25 md:flex items-center space-x-8">
           <Link href="/" className="text-sm font-medium text-foreground/80 hover:text-foreground">
             Home
           </Link>
