@@ -68,8 +68,8 @@ export default function CheckInsContent() {
         setLoadingEvents(true);
         const response = await adminService.getCheckInEvents();
         if (response.data) {
-          setEvents(response.data.events);
-          if (response.data.events.length > 0) {
+          setEvents(response.data.events ?? []);
+          if ((response.data.events ?? []).length > 0) {
             setSelectedEventId(response.data.events[0].id);
           }
         }

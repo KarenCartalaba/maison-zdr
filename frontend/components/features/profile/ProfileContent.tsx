@@ -1,21 +1,43 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useCallback } from "react";
 import ProfileHeader from "@/components/features/profile/ProfileHeader";
 import ProfileTabs from "@/components/features/profile/ProfileTabs";
 import AccountOverviewCard from "@/components/features/profile/AccountOverviewCard";
 import MyEventsTab from "@/components/features/profile/MyEventsTab";
 import MyReviewsTab from "@/components/features/profile/MyReviewsTab";
 import SettingsTab from "@/components/features/profile/SettingsTab";
+import { authService } from "@/services/auth.service";
 
 type Tab = "events" | "reviews" | "settings";
 
-export default function ProfileContent() {
+interface ProfileContentProps {
+  initialStats?: {
+    eventsRegistered: number;
+    eventsAttended: number;
+    reviewsWritten: number;
+    totalGuestsBrought: number;
+  } | null;
+}
+
+export default function ProfileContent({ initialStats = null }: ProfileContentProps) {
   const [activeTab, setActiveTab] = useState<Tab>("events");
+  const [profileStats, setProfileStats] = useState(initialStats);
+
+  useEffect(() => {
+    if (initialStats) return; // Already have SSR data
+    authService.getProfileStats().then((res) => {
+      if (res.data) setProfileStats(res.data);
+    }).catch(() => {});
+  }, [initialStats]);
+
+  const handleEditProfile = useCallback(() => {
+    setActiveTab("settings");
+  }, []);
 
   return (
     <div className="container px-4 py-8">
-      <ProfileHeader />
+      <ProfileHeader onEditProfile={handleEditProfile} eventsAttended={profileStats?.eventsAttended ?? 0} />
       <div className="my-6 border-t" />
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         <div className="lg:col-span-2">

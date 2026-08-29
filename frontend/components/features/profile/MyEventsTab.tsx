@@ -1,61 +1,73 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import { CalendarDays, Grid, List } from "lucide-react";
+import { authService } from "@/services/auth.service";
+import { Skeleton } from "@/components/ui/skeleton";
 
 const FILTERS = ["All", "Upcoming", "Attended", "Cancelled"];
-
-const MOCK_EVENTS = [
-  {
-    id: "1",
-    title: "Cocktail Night",
-    date: "Wednesday 7:00 pm - 10:00pm",
-    location: "9 Rue du Commerce, 35140 Saint-Hilaire-des-Landes",
-    imageUrl: "/images/event-2.jpg",
-  },
-  {
-    id: "2",
-    title: "Acoustic Friday",
-    date: "Wednesday 7:00 pm - 10:00pm",
-    location: "9 Rue du Commerce, 35140 Saint-Hilaire-des-Landes",
-    imageUrl: "/images/event-1.jpg",
-  },
-  {
-    id: "3",
-    title: "Trivia Hour",
-    date: "Wednesday 7:00 pm - 10:00pm",
-    location: "9 Rue du Commerce, 35140 Saint-Hilaire-des-Landes",
-    imageUrl: "/images/event-3.jpg",
-  },
-  {
-    id: "4",
-    title: "Food Night",
-    date: "Wednesday 7:00 pm - 10:00pm",
-    location: "9 Rue du Commerce, 35140 Saint-Hilaire-des-Landes",
-    imageUrl: "/images/event-4.jpg",
-  },
-  {
-    id: "5",
-    title: "Game Day",
-    date: "Wednesday 7:00 pm - 10:00pm",
-    location: "9 Rue du Commerce, 35140 Saint-Hilaire-des-Landes",
-    imageUrl: "/images/event-5.jpg",
-  },
-];
 
 export default function MyEventsTab() {
   const [selectedFilter, setSelectedFilter] = useState("All");
   const [viewMode, setViewMode] = useState<"list" | "grid">("list");
+  const [registrations, setRegistrations] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    authService.getMyRegistrations()
+      .then((res) => {
+        if (res.data) setRegistrations(res.data.registrations);
+      })
+      .catch(() => {})
+      .finally(() => setLoading(false));
+  }, []);
+
+  const now = new Date();
+  const events = registrations.map((reg) => ({
+    ...reg.event,
+    registration: reg,
+    status: reg.checkedIn ? "Attended" : reg.event.isCancelled ? "Cancelled" : new Date(reg.event.eventDate) > now ? "Upcoming" : "Registered",
+  }));
+
+  const filteredEvents = events.filter((event) => {
+    if (selectedFilter === "All") return true;
+    if (selectedFilter === "Upcoming") return event.status === "Upcoming";
+    if (selectedFilter === "Attended") return event.status === "Attended";
+    if (selectedFilter === "Cancelled") return event.status === "Cancelled";
+    return true;
+  });
+
+  if (loading) {
+    return (
+      <div>
+        <div className="mb-6">
+          <h2 className="text-2xl font-bold">My Events</h2>
+          <p className="text-sm text-muted-foreground mt-1">Track your registration, attendance, and event history.</p>
+        </div>
+        <div className="space-y-4">
+          {Array.from({ length: 3 }).map((_, i) => (
+            <div key={i} className="flex items-center gap-4 rounded-lg border p-4">
+              <Skeleton className="h-20 w-28 rounded-lg" />
+              <div className="flex-1 space-y-2">
+                <Skeleton className="h-5 w-48" />
+                <Skeleton className="h-4 w-64" />
+                <Skeleton className="h-4 w-56" />
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div>
       <div className="mb-6">
         <h2 className="text-2xl font-bold">My Events</h2>
-        <p className="text-sm text-muted-foreground mt-1">
-          Track your registration, attendance, and event history.
-        </p>
+        <p className="text-sm text-muted-foreground mt-1">Track your registration, attendance, and event history.</p>
       </div>
 
       {/* Filter tabs + View toggle */}
@@ -91,31 +103,44 @@ export default function MyEventsTab() {
         </div>
       </div>
 
-      {/* Events list */}
-      <div className="space-y-4">
-        {MOCK_EVENTS.map((event) => (
-          <div key={event.id} className="flex items-center gap-4 rounded-lg border p-4 hover:shadow-sm transition-shadow">
-            <div className="h-20 w-28 rounded-lg overflow-hidden bg-muted shrink-0">
-              <img src={event.imageUrl} alt={event.title} className="h-full w-full object-cover" />
-            </div>
-            <div className="flex-1 min-w-0">
-              <h3 className="font-semibold text-lg">{event.title}</h3>
-              <div className="flex items-center gap-4 mt-1 text-sm text-muted-foreground">
-                <span className="flex items-center gap-1">
-                  <CalendarDays className="h-4 w-4" />
-                  {event.date}
-                </span>
+      {filteredEvents.length === 0 ? (
+        <div className="text-center py-12 text-muted-foreground">
+          <CalendarDays className="h-12 w-12 mx-auto mb-4 opacity-50" />
+          <p className="font-medium">No events found</p>
+          <p className="text-sm mt-1">Register for events to see them here.</p>
+        </div>
+      ) : (
+        <div className="space-y-4">
+          {filteredEvents.map((event) => (
+            <div key={event.id} className="flex items-center gap-4 rounded-lg border p-4 hover:shadow-sm transition-shadow">
+              <div className="h-20 w-28 rounded-lg overflow-hidden bg-muted shrink-0">
+                <img src={event.gallery?.[0] || "/images/event-placeholder.jpg"} alt={event.title} className="h-full w-full object-cover" />
               </div>
-              <p className="text-sm text-muted-foreground mt-1">{event.location}</p>
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-2">
+                  <h3 className="font-semibold text-lg">{event.title}</h3>
+                  <Badge variant="outline" className={`text-xs ${
+                    event.status === "Attended" ? "text-[#1a5c2a] border-[#1a5c2a]"
+                    : event.status === "Cancelled" ? "text-red-500 border-red-500"
+                    : event.status === "Upcoming" ? "text-blue-500 border-blue-500"
+                    : "text-muted-foreground"
+                  }`}>{event.status}</Badge>
+                </div>
+                <div className="flex items-center gap-4 mt-1 text-sm text-muted-foreground">
+                  <span className="flex items-center gap-1">
+                    <CalendarDays className="h-4 w-4" />
+                    {new Date(event.eventDate).toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" })}
+                  </span>
+                </div>
+                <p className="text-sm text-muted-foreground mt-1">{event.location}</p>
+              </div>
+              <Link href={`/events/${event.id}`}>
+                <Button variant="outline" size="sm">View Details →</Button>
+              </Link>
             </div>
-            <Link href={`/events/${event.id}`}>
-              <Button variant="outline" size="sm">
-                View Details →
-              </Button>
-            </Link>
-          </div>
-        ))}
-      </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 }

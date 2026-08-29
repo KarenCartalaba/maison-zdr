@@ -89,4 +89,35 @@ export const authService = {
     );
     return response.data;
   },
+
+  getMyRegistrations: async () => {
+    const response = await axiosInstance.get<ApiResponse<{ registrations: any[] }>>(
+      "/api/auth/v1/my-registrations"
+    );
+    return response.data;
+  },
+
+  getProfileStats: async () => {
+    const response = await axiosInstance.get<ApiResponse<{
+      eventsRegistered: number;
+      eventsAttended: number;
+      reviewsWritten: number;
+      totalGuestsBrought: number;
+    }>>("/api/auth/v1/profile-stats");
+    return response.data;
+  },
+
+  getMyReviews: async () => {
+    const response = await axiosInstance.get<ApiResponse<{ reviews: any[] }>>(
+      "/api/auth/v1/my-reviews"
+    );
+    return response.data;
+  },
+
+  getPendingReviews: async () => {
+    const response = await axiosInstance.get<ApiResponse<{ pending: any[] }>>(
+      "/api/auth/v1/pending-reviews"
+    );
+    return response.data;
+  },
 };

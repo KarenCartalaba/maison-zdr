@@ -26,6 +26,9 @@ export async function GetMeService(userId: string) {
       email: user.email,
       role: user.role,
       emailVerified: user.emailVerified,
+      profilePic: (user as any).profilePic ?? null,
+      phone: user.phone ?? null,
+      createdAt: user.createdAt,
     };
 
     await cacheSet(USER_BY_ID(userId), userData, USER_TTL);

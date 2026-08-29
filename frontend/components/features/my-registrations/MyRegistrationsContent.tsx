@@ -9,12 +9,17 @@ import { Loader2, Calendar, MapPin } from "lucide-react";
 import Link from "next/link";
 import type { Registration } from "@/types";
 
-export default function MyRegistrationsContent() {
+interface MyRegistrationsContentProps {
+  initialRegistrations?: Registration[];
+}
+
+export default function MyRegistrationsContent({ initialRegistrations = [] }: MyRegistrationsContentProps) {
   const { user } = useAuth();
-  const [registrations, setRegistrations] = useState<Registration[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const [registrations, setRegistrations] = useState<Registration[]>(initialRegistrations);
+  const [isLoading, setIsLoading] = useState(initialRegistrations.length === 0);
 
   useEffect(() => {
+    if (initialRegistrations.length > 0) return; // Already have SSR data
     const fetchRegistrations = async () => {
       if (!user) return;
       try {
@@ -29,7 +34,7 @@ export default function MyRegistrationsContent() {
       }
     };
     fetchRegistrations();
-  }, [user]);
+  }, [user, initialRegistrations.length]);
 
   if (isLoading) {
     return (

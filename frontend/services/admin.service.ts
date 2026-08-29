@@ -122,4 +122,67 @@ export const adminService = {
       );
     return response.data;
   },
+
+  // Dashboard
+  getDashboardStats: async () => {
+    const response = await axiosInstance.get<ApiResponse<{
+      totalEvents: number;
+      totalRegistrations: number;
+      ongoingEvents: number;
+      cancelledEvents: number;
+    }>>(API_ENDPOINTS.ADMIN.DASHBOARD_STATS);
+    return response.data;
+  },
+
+  getRegistrationTrend: async () => {
+    const response = await axiosInstance.get<ApiResponse<{
+      trend: { month: string; registrations: number }[];
+    }>>(API_ENDPOINTS.ADMIN.DASHBOARD_REG_TREND);
+    return response.data;
+  },
+
+  getRegistrationStatus: async () => {
+    const response = await axiosInstance.get<ApiResponse<{
+      status: { name: string; value: number; fill: string }[];
+    }>>(API_ENDPOINTS.ADMIN.DASHBOARD_REG_STATUS);
+    return response.data;
+  },
+
+  getAttendanceTrend: async () => {
+    const response = await axiosInstance.get<ApiResponse<{
+      trend: { month: string; registered: number; attended: number }[];
+    }>>(API_ENDPOINTS.ADMIN.DASHBOARD_ATTENDANCE);
+    return response.data;
+  },
+
+  getTopCategories: async () => {
+    const response = await axiosInstance.get<ApiResponse<{
+      categories: { name: string; value: number }[];
+    }>>(API_ENDPOINTS.ADMIN.DASHBOARD_CATEGORIES);
+    return response.data;
+  },
+
+  getUpcomingEvents: async (limit?: number) => {
+    const query = limit ? `?limit=${limit}` : "";
+    const response = await axiosInstance.get<ApiResponse<{
+      events: any[];
+    }>>(`${API_ENDPOINTS.ADMIN.DASHBOARD_UPCOMING}${query}`);
+    return response.data;
+  },
+
+  getRecentRegistrations: async (limit?: number) => {
+    const query = limit ? `?limit=${limit}` : "";
+    const response = await axiosInstance.get<ApiResponse<{
+      registrations: any[];
+    }>>(`${API_ENDPOINTS.ADMIN.DASHBOARD_RECENT}${query}`);
+    return response.data;
+  },
+
+  getTopEvents: async (limit?: number) => {
+    const query = limit ? `?limit=${limit}` : "";
+    const response = await axiosInstance.get<ApiResponse<{
+      events: { title: string; registrations: number; fillRate: number; rating: number }[];
+    }>>(`${API_ENDPOINTS.ADMIN.DASHBOARD_TOP}${query}`);
+    return response.data;
+  },
 };

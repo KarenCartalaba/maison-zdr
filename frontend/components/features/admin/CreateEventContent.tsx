@@ -19,6 +19,7 @@ const createEventSchema = z.object({
   deadline: z.string().min(1, "Deadline is required"),
   minParticipants: z.number().min(0, "Must be at least 0"),
   maxParticipants: z.number().min(1, "Must be at least 1"),
+  eventType: z.enum(["FORMAL", "CASUAL", "SOCIAL", "WORKSHOP", "LIVE_MUSIC", "FOOD_AND_DRINK", "TRIVIA", "PRIVATE"]),
 });
 
 type CreateEventInput = z.infer<typeof createEventSchema>;
@@ -36,6 +37,7 @@ export default function CreateEventContent() {
     defaultValues: {
       minParticipants: 0,
       maxParticipants: 100,
+      eventType: "SOCIAL" as const,
     },
   });
 
@@ -88,6 +90,29 @@ export default function CreateEventContent() {
               />
               {errors.description && (
                 <p className="text-sm text-red-500">{errors.description.message}</p>
+              )}
+            </div>
+
+            <div className="space-y-2">
+              <label htmlFor="eventType" className="text-sm font-medium">
+                Event Type
+              </label>
+              <select
+                id="eventType"
+                className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                {...register("eventType")}
+              >
+                <option value="FORMAL">Formal</option>
+                <option value="CASUAL">Casual</option>
+                <option value="SOCIAL">Social</option>
+                <option value="WORKSHOP">Workshop</option>
+                <option value="LIVE_MUSIC">Live Music</option>
+                <option value="FOOD_AND_DRINK">Food & Drink</option>
+                <option value="TRIVIA">Trivia</option>
+                <option value="PRIVATE">Private</option>
+              </select>
+              {errors.eventType && (
+                <p className="text-sm text-red-500">{errors.eventType.message}</p>
               )}
             </div>
 

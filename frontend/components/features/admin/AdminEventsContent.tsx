@@ -10,13 +10,50 @@ import { Plus, Pencil, Trash2, Loader2, LayoutGrid, List } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { Event } from "@/types";
 
-export default function AdminEventsContent() {
-  const [events, setEvents] = useState<Event[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+interface AdminEventsContentProps {
+  initialEvents?: any[];
+}
+
+export default function AdminEventsContent({ initialEvents = [] }: AdminEventsContentProps) {
+  const [events, setEvents] = useState<Event[]>(initialEvents);
+  const [isLoading, setIsLoading] = useState(initialEvents.length === 0);
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
   const [activeTab, setActiveTab] = useState<"all" | "ongoing" | "upcoming" | "past" | "cancelled">("all");
 
+  const now = new Date();
+
+  const filteredEvents = events.filter((event) => {
+    const eventDate = new Date(event.eventDate);
+    const deadline = new Date(event.deadline);
+
+    switch (activeTab) {
+      case "ongoing":
+        return !event.isCancelled && eventDate <= now && deadline >= now;
+      case "upcoming":
+        return !event.isCancelled && eventDate > now;
+      case "past":
+        return !event.isCancelled && eventDate < now;
+      case "cancelled":
+        return event.isCancelled;
+      default:
+        return true;
+    }
+  });
+
+  const eventTypeLabels: Record<string, string> = {
+    FORMAL: "Formal",
+    CASUAL: "Casual",
+    SOCIAL: "Social",
+    WORKSHOP: "Workshop",
+    LIVE_MUSIC: "Live Music",
+    FOOD_AND_DRINK: "Food & Drink",
+    TRIVIA: "Trivia",
+    PRIVATE: "Private",
+  };
+
   useEffect(() => {
+    if (initialEvents.length > 0) return; // Already have SSR data
+
     const fetchEvents = async () => {
       try {
         const response = await eventService.getAll();
@@ -31,7 +68,7 @@ export default function AdminEventsContent() {
     };
 
     fetchEvents();
-  }, []);
+  }, [initialEvents.length]);
 
   const handleDelete = async (id: string) => {
     if (!confirm("Are you sure you want to delete this event?")) return;
@@ -122,12 +159,12 @@ export default function AdminEventsContent() {
       {/* Grid View */}
       {viewMode === "grid" ? (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {events.length === 0 ? (
+          {filteredEvents.length === 0 ? (
             <div className="col-span-full text-center py-12 text-muted-foreground">
               No events found. Create your first event!
             </div>
           ) : (
-            events.map((event) => (
+            filteredEvents.map((event) => (
               <Card key={event.id} className="overflow-hidden">
                 <div className="h-40 bg-muted">
                   <img
@@ -139,7 +176,7 @@ export default function AdminEventsContent() {
                 <CardContent className="p-4">
                   <div className="flex items-center justify-between mb-2">
                     <Badge variant="secondary" className="bg-[#e8f5e9] text-[#1a5c2a]">
-                      Public · Formal
+                      Public · {eventTypeLabels[event.eventType] || "Social"}
                     </Badge>
                   </div>
                   <h3 className="font-semibold text-lg mb-1">{event.title}</h3>
@@ -194,14 +231,14 @@ export default function AdminEventsContent() {
                   </tr>
                 </thead>
                 <tbody>
-                  {events.length === 0 ? (
+                  {filteredEvents.length === 0 ? (
                     <tr>
                       <td colSpan={9} className="px-6 py-12 text-center text-muted-foreground">
                         No events found. Create your first event!
                       </td>
                     </tr>
                   ) : (
-                    events.map((event) => (
+                    filteredEvents.map((event) => (
                       <tr key={event.id} className="border-b last:border-0 hover:bg-muted/50">
                         <td className="px-6 py-3">
                           <div className="h-10 w-14 rounded overflow-hidden bg-muted">
@@ -217,7 +254,7 @@ export default function AdminEventsContent() {
                         </td>
                         <td className="px-6 py-3 text-muted-foreground">{event.location}</td>
                         <td className="px-6 py-3">
-                          <Badge variant="secondary" className="bg-[#e8f5e9] text-[#1a5c2a]">Public</Badge>
+                          <Badge variant="secondary" className="bg-[#e8f5e9] text-[#1a5c2a]">Public · {eventTypeLabels[event.eventType] || "Social"}</Badge>
                         </td>
                         <td className="px-6 py-3">
                           <Badge variant={event.isCancelled ? "destructive" : "outline"} className={!event.isCancelled ? "text-[#1a5c2a] border-[#1a5c2a]" : ""}>

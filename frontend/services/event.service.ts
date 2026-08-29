@@ -10,6 +10,7 @@ export interface CreateEventData {
   deadline: string;
   minParticipants: number;
   maxParticipants: number;
+  eventType?: string;
   gallery?: string[];
 }
 
@@ -61,6 +62,13 @@ export const eventService = {
     const response = await axiosInstance.get<ApiResponse<RegistrationData>>(
       API_ENDPOINTS.REGISTRATIONS.BY_EVENT(eventId)
     );
+    return response.data;
+  },
+
+  getReviews: async (eventId: string) => {
+    const response = await axiosInstance.get<
+      ApiResponse<{ reviews: any[]; averageRating: number; totalReviews: number }>
+    >(API_ENDPOINTS.EVENTS.REVIEWS(eventId));
     return response.data;
   },
 };

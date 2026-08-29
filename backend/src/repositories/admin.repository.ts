@@ -182,8 +182,13 @@ export class AdminRepository {
   };
 
   public getEventReviews = async (eventId: string) => {
-    // TODO: Add Review model to Prisma schema
-    return [];
+    return prisma.review.findMany({
+      where: { eventId, status: "APPROVED" },
+      include: {
+        user: { select: { id: true, name: true, profilePic: true } },
+      },
+      orderBy: { createdAt: "desc" },
+    });
   };
 
   public updateEvent = async (id: string, data: { title?: string; description?: string; location?: string; eventDate?: Date; maxParticipants?: number; isCancelled?: boolean }) => {
@@ -300,7 +305,17 @@ export class AdminRepository {
 
   public getAllUsers = async (filters?: { role?: string; search?: string }) => {
     const where: any = {};
-    if (filters?.role && filters?.role !== "ALL") where.role = filters.role;
+    if (filters?.role && filters?.role !== "ALL") {
+      if (filters.role === "VERIFIED") {
+        where.role = "USER";
+        where.emailVerified = { not: null };
+      } else if (filters.role === "UNVERIFIED") {
+        where.role = "USER";
+        where.emailVerified = null;
+      } else {
+        where.role = filters.role;
+      }
+    }
     if (filters?.search) {
       where.OR = [
         { name: { contains: filters.search, mode: "insensitive" } },
