@@ -18,7 +18,9 @@ export async function RegisterForEventService(
   userId: string,
   eventId: string,
   hasPlusOne: boolean,
-  guestName?: string
+  guestName?: string,
+  guestNames?: string[],
+  guestCount?: number
 ) {
   try {
     const event = await eventRepo.findEventById(eventId);
@@ -40,13 +42,14 @@ export async function RegisterForEventService(
     }
 
     const confirmedCount = await registrationRepo.countConfirmedRegistrations(eventId);
-    const slotsNeeded = hasPlusOne ? 2 : 1;
+    const effectiveGuestCount = guestCount ?? (hasPlusOne ? 1 : 0);
+    const slotsNeeded = 1 + effectiveGuestCount;
 
     if (confirmedCount + slotsNeeded > event.maxParticipants) {
       return { code: 400, status: "error", message: "Event is at full capacity" };
     }
 
-    if (hasPlusOne && !guestName) {
+    if (effectiveGuestCount > 0 && !guestName) {
       return { code: 400, status: "error", message: "Guest name is required for plus-one registration" };
     }
 
@@ -55,6 +58,8 @@ export async function RegisterForEventService(
       eventId,
       hasPlusOne,
       guestName,
+      guestNames: guestNames ?? (guestName ? [guestName] : []),
+      guestCount: effectiveGuestCount,
     });
 
     // Invalidate registration caches + event cache (counts changed)
@@ -71,7 +76,8 @@ export async function RegisterForEventService(
         eventDate: new Date(event.eventDate).toUTCString(),
         eventLocation: event.location,
         hasPlusOne: String(hasPlusOne),
-        guestName: guestName ?? "",
+        guestName: guestNames?.join(", ") ?? guestName ?? "",
+        guestCount: String(effectiveGuestCount),
       });
 
       await sendEmail({

@@ -18,6 +18,23 @@ export default function EventCard({ event }: EventCardProps) {
   const capacityPercentage = (registrationCount / event.maxParticipants) * 100;
   const isDeadlinePassed = new Date(event.deadline) < new Date();
 
+  const getStatusBadge = (): { label: string; className: string } => {
+    if (event.isCancelled) return { label: "Cancelled", className: "bg-red-600 hover:bg-red-700" };
+
+    const now = new Date();
+    const eventDate = new Date(event.eventDate);
+
+    // Compare date portions only (ignore time)
+    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    const eventDay = new Date(eventDate.getFullYear(), eventDate.getMonth(), eventDate.getDate());
+
+    if (eventDay < today) return { label: "Completed", className: "bg-gray-600 hover:bg-gray-700" };
+    if (eventDay.getTime() === today.getTime()) return { label: "Ongoing", className: "bg-[#1a5c2a] hover:bg-[#144a22]" };
+    return { label: "Upcoming", className: "bg-[#1a5c2a] hover:bg-[#144a22]" };
+  };
+
+  const statusBadge = getStatusBadge();
+
   const getButtonState = () => {
     if (event.isCancelled) return { text: "Event Cancelled", disabled: true };
     if (isDeadlinePassed) return { text: "Registration Closed", disabled: true };
@@ -38,8 +55,8 @@ export default function EventCard({ event }: EventCardProps) {
           alt={event.title}
           className="w-full h-full object-cover"
         />
-        <Badge className="absolute top-3 right-3 bg-[#1a5c2a] hover:bg-[#144a22]">
-          {event.isCancelled ? "Cancelled" : "Ongoing"}
+        <Badge className={`absolute top-3 right-3 ${statusBadge.className}`}>
+          {statusBadge.label}
         </Badge>
       </div>
       <CardContent className="p-5 space-y-3">

@@ -4,9 +4,9 @@ import { RegisterForEventService, CancelRegistrationService, GetRegistrationsByE
 export class RegistrationController {
   public register = async (req: Request, res: Response) => {
     const userId = (req as any).user?.sub;
-    const { eventId, hasPlusOne, guestName } = req.body ?? {};
+    const { eventId, hasPlusOne, guestName, guestNames, guestCount } = req.body ?? {};
 
-    const result = await RegisterForEventService(userId, eventId, hasPlusOne ?? false, guestName);
+    const result = await RegisterForEventService(userId, eventId, hasPlusOne ?? false, guestName, guestNames, guestCount);
     return res.status(result.code).json(result);
   };
 

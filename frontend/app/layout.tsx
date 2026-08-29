@@ -1,8 +1,10 @@
+import type { Metadata } from "next"
 import { Geist, Geist_Mono } from "next/font/google"
 
 import "./globals.css"
 import { ThemeProvider } from "@/components/theme-provider"
 import { AuthProvider } from "@/context/AuthContext"
+import PWARegistrar from "@/components/PWARegistrar"
 import { Toaster } from "sonner"
 import { cn } from "@/lib/utils";
 
@@ -13,12 +15,21 @@ const fontMono = Geist_Mono({
   variable: "--font-mono",
 })
 
-export const metadata = {
+export const metadata: Metadata = {
   title: {
-    default: "Zone de Rassemblement",
+    default: "Zone de Rassemblement | Maison ZDR",
     template: "%s | Zone de Rassemblement",
   },
-  description: "A web-based event registration system for gathering zones.",
+  description: "Discover and register for events at Maison ZDR. Browse upcoming activities, subscribe to events, and join our community.",
+  openGraph: {
+    title: "Zone de Rassemblement | Maison ZDR",
+    description: "Discover and register for events at Maison ZDR",
+    siteName: "Zone de Rassemblement",
+    type: "website",
+  },
+  twitter: {
+    card: "summary_large_image",
+  },
 };
 
 export default function RootLayout({
@@ -33,6 +44,7 @@ export default function RootLayout({
       className={cn("antialiased", fontMono.variable, "font-sans", geist.variable)}
     >
       <body>
+        <PWARegistrar />
         <ThemeProvider>
           <AuthProvider>
             {children}

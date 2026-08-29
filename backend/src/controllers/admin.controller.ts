@@ -22,8 +22,12 @@ import {
   ReplyToReviewService,
   GetAllUsersService,
   UpdateUserRoleService,
+  GetUserService,
+  VerifyUserService,
+  DeleteUserService,
   GetAnalyticsOverviewService,
 } from "@/services/admin";
+import { TriggerRemindersService } from "@/services/email/event-reminder-service";
 
 export class AdminController {
   // ==================== Dashboard Stats ====================
@@ -180,10 +184,35 @@ export class AdminController {
     return res.status(result.code).json(result);
   };
 
+  public getUserDetails = async (req: Request, res: Response) => {
+    const { id } = req.params as { id: string };
+    const result = await GetUserService(id);
+    return res.status(result.code).json(result);
+  };
+
+  public verifyUser = async (req: Request, res: Response) => {
+    const { id } = req.params as { id: string };
+    const result = await VerifyUserService(id);
+    return res.status(result.code).json(result);
+  };
+
+  public deleteUser = async (req: Request, res: Response) => {
+    const { id } = req.params as { id: string };
+    const result = await DeleteUserService(id);
+    return res.status(result.code).json(result);
+  };
+
   // ==================== Analytics ====================
 
   public getAnalyticsOverview = async (req: Request, res: Response) => {
     const result = await GetAnalyticsOverviewService();
+    return res.status(result.code).json(result);
+  };
+
+  // ==================== Reminders ====================
+
+  public triggerReminders = async (req: Request, res: Response) => {
+    const result = await TriggerRemindersService();
     return res.status(result.code).json(result);
   };
 }

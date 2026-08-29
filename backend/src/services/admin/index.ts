@@ -419,6 +419,49 @@ export async function UpdateUserRoleService(id: string, role: string) {
   }
 }
 
+export async function GetUserService(id: string) {
+  try {
+    const user = await adminRepo.findUserById(id);
+    if (!user) return { code: 404, status: "error", message: "User not found" };
+
+    return { code: 200, status: "success", message: "User retrieved successfully", data: { user } };
+  } catch (error) {
+    console.error("GetUserService error", error);
+    return { code: 500, status: "error", message: "Unable to retrieve user" };
+  }
+}
+
+export async function VerifyUserService(id: string) {
+  try {
+    const user = await prisma.user.findUnique({ where: { id } });
+    if (!user) return { code: 404, status: "error", message: "User not found" };
+
+    const updated = await adminRepo.verifyUser(id);
+    await cacheInvalidatePattern("admin:users:*");
+    await cacheInvalidatePattern("admin:*");
+    return { code: 200, status: "success", message: "User verified successfully", data: { user: { id: updated.id, name: updated.name, email: updated.email, emailVerified: updated.emailVerified } } };
+  } catch (error) {
+    console.error("VerifyUserService error", error);
+    return { code: 500, status: "error", message: "Unable to verify user" };
+  }
+}
+
+export async function DeleteUserService(id: string) {
+  try {
+    const user = await prisma.user.findUnique({ where: { id } });
+    if (!user) return { code: 404, status: "error", message: "User not found" };
+    if (user.role === "ADMIN") return { code: 400, status: "error", message: "Cannot delete an admin user" };
+
+    await adminRepo.deleteUser(id);
+    await cacheInvalidatePattern("admin:users:*");
+    await cacheInvalidatePattern("admin:*");
+    return { code: 200, status: "success", message: "User deleted successfully" };
+  } catch (error) {
+    console.error("DeleteUserService error", error);
+    return { code: 500, status: "error", message: "Unable to delete user" };
+  }
+}
+
 // ==================== Analytics ====================
 
 export async function GetAnalyticsOverviewService() {

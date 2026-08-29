@@ -7,13 +7,14 @@ import { Role } from "@/generated/prisma/enums";
 const router = Router();
 const adminController = new AdminController();
 const authMiddleware = new AuthMiddleware();
+const modOrAdmin = permittedRole([Role.ADMIN, Role.MODERATOR]);
 
 // ==================== Dashboard Stats ====================
 
 router.get(
   "/v1/dashboard/stats",
   authMiddleware.execute,
-  permittedRole([Role.ADMIN]),
+  modOrAdmin,
   adminController.getDashboardStats
 );
 
@@ -22,28 +23,28 @@ router.get(
 router.get(
   "/v1/dashboard/registration-trend",
   authMiddleware.execute,
-  permittedRole([Role.ADMIN]),
+  modOrAdmin,
   adminController.getRegistrationTrend
 );
 
 router.get(
   "/v1/dashboard/registration-status",
   authMiddleware.execute,
-  permittedRole([Role.ADMIN]),
+  modOrAdmin,
   adminController.getRegistrationStatus
 );
 
 router.get(
   "/v1/dashboard/attendance-trend",
   authMiddleware.execute,
-  permittedRole([Role.ADMIN]),
+  modOrAdmin,
   adminController.getAttendanceTrend
 );
 
 router.get(
   "/v1/dashboard/top-categories",
   authMiddleware.execute,
-  permittedRole([Role.ADMIN]),
+  modOrAdmin,
   adminController.getTopCategories
 );
 
@@ -52,21 +53,21 @@ router.get(
 router.get(
   "/v1/dashboard/upcoming-events",
   authMiddleware.execute,
-  permittedRole([Role.ADMIN]),
+  modOrAdmin,
   adminController.getUpcomingEvents
 );
 
 router.get(
   "/v1/dashboard/recent-registrations",
   authMiddleware.execute,
-  permittedRole([Role.ADMIN]),
+  modOrAdmin,
   adminController.getRecentRegistrations
 );
 
 router.get(
   "/v1/dashboard/top-events",
   authMiddleware.execute,
-  permittedRole([Role.ADMIN]),
+  modOrAdmin,
   adminController.getTopEvents
 );
 
@@ -75,21 +76,21 @@ router.get(
 router.get(
   "/v1/events/:id/workspace",
   authMiddleware.execute,
-  permittedRole([Role.ADMIN]),
+  modOrAdmin,
   adminController.getEventWorkspace
 );
 
 router.get(
   "/v1/events/:id/participants",
   authMiddleware.execute,
-  permittedRole([Role.ADMIN]),
+  modOrAdmin,
   adminController.getEventParticipants
 );
 
 router.get(
   "/v1/events/:id/reviews",
   authMiddleware.execute,
-  permittedRole([Role.ADMIN]),
+  modOrAdmin,
   adminController.getEventReviews
 );
 
@@ -105,14 +106,14 @@ router.put(
 router.get(
   "/v1/registrations",
   authMiddleware.execute,
-  permittedRole([Role.ADMIN]),
+  modOrAdmin,
   adminController.getAllRegistrations
 );
 
 router.put(
   "/v1/registrations/:id/status",
   authMiddleware.execute,
-  permittedRole([Role.ADMIN]),
+  modOrAdmin,
   adminController.updateRegistrationStatus
 );
 
@@ -121,21 +122,21 @@ router.put(
 router.get(
   "/v1/checkins/events",
   authMiddleware.execute,
-  permittedRole([Role.ADMIN]),
+  modOrAdmin,
   adminController.getAllCheckInEvents
 );
 
 router.get(
   "/v1/checkins/events/:id",
   authMiddleware.execute,
-  permittedRole([Role.ADMIN]),
+  modOrAdmin,
   adminController.getEventCheckIn
 );
 
 router.post(
   "/v1/checkins/:id",
   authMiddleware.execute,
-  permittedRole([Role.ADMIN]),
+  modOrAdmin,
   adminController.checkInRegistration
 );
 
@@ -144,14 +145,14 @@ router.post(
 router.get(
   "/v1/reviews",
   authMiddleware.execute,
-  permittedRole([Role.ADMIN]),
+  modOrAdmin,
   adminController.getAllReviews
 );
 
 router.put(
   "/v1/reviews/:id/status",
   authMiddleware.execute,
-  permittedRole([Role.ADMIN]),
+  modOrAdmin,
   adminController.updateReviewStatus
 );
 
@@ -171,11 +172,32 @@ router.get(
   adminController.getAllUsers
 );
 
+router.get(
+  "/v1/users/:id",
+  authMiddleware.execute,
+  permittedRole([Role.ADMIN]),
+  adminController.getUserDetails
+);
+
 router.put(
   "/v1/users/:id/role",
   authMiddleware.execute,
   permittedRole([Role.ADMIN]),
   adminController.updateUserRole
+);
+
+router.put(
+  "/v1/users/:id/verify",
+  authMiddleware.execute,
+  permittedRole([Role.ADMIN]),
+  adminController.verifyUser
+);
+
+router.delete(
+  "/v1/users/:id",
+  authMiddleware.execute,
+  permittedRole([Role.ADMIN]),
+  adminController.deleteUser
 );
 
 // ==================== Analytics ====================
@@ -185,6 +207,15 @@ router.get(
   authMiddleware.execute,
   permittedRole([Role.ADMIN]),
   adminController.getAnalyticsOverview
+);
+
+// ==================== Reminders ====================
+
+router.post(
+  "/v1/reminders/trigger",
+  authMiddleware.execute,
+  permittedRole([Role.ADMIN]),
+  adminController.triggerReminders
 );
 
 export default router;

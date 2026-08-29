@@ -6,6 +6,8 @@ import EventFilters from "@/components/features/events/EventFilters";
 import EventCard from "@/components/features/events/EventCard";
 import { eventService } from "@/services/event.service";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Input } from "@/components/ui/input";
+import { Search } from "lucide-react";
 import type { Event } from "@/types";
 
 interface EventsContentProps {
@@ -16,6 +18,7 @@ export default function EventsContent({ initialEvents = [] }: EventsContentProps
   const [selectedCategory, setSelectedCategory] = useState("All Events");
   const [events, setEvents] = useState<Event[]>(initialEvents);
   const [loading, setLoading] = useState(initialEvents.length === 0);
+  const [searchTerm, setSearchTerm] = useState("");
 
   useEffect(() => {
     if (initialEvents.length > 0) return; // Already have SSR data
@@ -27,26 +30,44 @@ export default function EventsContent({ initialEvents = [] }: EventsContentProps
       .finally(() => setLoading(false));
   }, [initialEvents.length]);
 
-  const filteredEvents = selectedCategory === "All Events"
-    ? events
-    : events.filter((e) => {
-        // Map category labels to event types
-        const typeMap: Record<string, string[]> = {
-          "Food": ["FOOD_AND_DRINK"],
-          "Arts": ["WORKSHOP", "SOCIAL"],
-          "Games": ["TRIVIA"],
-          "Music": ["LIVE_MUSIC"],
-          "Performance": ["FORMAL", "CASUAL"],
-        };
-        const types = typeMap[selectedCategory] || [];
-        return types.includes(e.eventType);
-      });
+  const filteredEvents = events
+    .filter((e) => {
+      if (!searchTerm.trim()) return true;
+      const term = searchTerm.toLowerCase();
+      return (
+        e.title.toLowerCase().includes(term) ||
+        e.description.toLowerCase().includes(term) ||
+        e.location.toLowerCase().includes(term)
+      );
+    })
+    .filter((e) => {
+      if (selectedCategory === "All Events") return true;
+      const typeMap: Record<string, string[]> = {
+        "Food": ["FOOD_AND_DRINK"],
+        "Arts": ["WORKSHOP", "SOCIAL"],
+        "Games": ["TRIVIA"],
+        "Music": ["LIVE_MUSIC"],
+        "Performance": ["FORMAL", "CASUAL"],
+      };
+      const types = typeMap[selectedCategory] || [];
+      return types.includes(e.eventType);
+    });
 
   return (
     <>
       <EventHeroBanner />
       <div className="container px-4 py-12">
         <h1 className="text-3xl font-bold mb-6">Events</h1>
+        <div className="relative mb-6">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+          <Input
+            type="text"
+            placeholder="Search events by title, description, or location..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="pl-10"
+          />
+        </div>
         <EventFilters selected={selectedCategory} onSelect={setSelectedCategory} />
         {loading ? (
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-8">

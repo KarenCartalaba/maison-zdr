@@ -126,8 +126,10 @@ export default function RegistrationWizardContent() {
 
       const hasPlusOne = step2Data.guests.length > 0;
       const guestName = step2Data.guests[0]?.name || undefined;
+      const guestNames = step2Data.guests.map(g => g.name).filter(Boolean);
+      const guestCount = guestNames.length;
 
-      const response = await registrationService.register(eventId, hasPlusOne, guestName);
+      const response = await registrationService.register(eventId, hasPlusOne, guestName, guestNames, guestCount);
 
       if (response.code === 200 || response.code === 201) {
         const code = `ZDR-${eventId.slice(0, 3).toUpperCase()}-${Math.floor(100000 + Math.random() * 900000)}`;

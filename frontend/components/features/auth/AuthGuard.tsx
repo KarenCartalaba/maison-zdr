@@ -10,14 +10,16 @@ interface AuthGuardProps {
 }
 
 export function AuthGuard({ children, mode = "PRIVATE" }: AuthGuardProps) {
-  const { isLoading, isAuthenticated, isAdmin, isVerified } = useAuth();
+  const { isLoading, isAuthenticated, isAdmin, isModerator, isVerified } = useAuth();
   const router = useRouter();
+
+  const hasAdminAccess = isAdmin || isModerator;
 
   useEffect(() => {
     if (isLoading) return;
 
     if (mode === "GUEST" && isAuthenticated) {
-      if (isAdmin) {
+      if (hasAdminAccess) {
         router.push("/admin");
       } else {
         router.push("/");
@@ -28,14 +30,14 @@ export function AuthGuard({ children, mode = "PRIVATE" }: AuthGuardProps) {
       router.push("/login");
     } else if (mode === "VERIFIED" && isAuthenticated && !isVerified) {
       router.push("/");
-    } else if (mode === "ADMIN" && !isAdmin) {
+    } else if (mode === "ADMIN" && !hasAdminAccess) {
       if (isAuthenticated) {
         router.push("/");
       } else {
         router.push("/login");
       }
     }
-  }, [isLoading, isAuthenticated, isAdmin, isVerified, mode, router]);
+  }, [isLoading, isAuthenticated, hasAdminAccess, isVerified, mode, router]);
 
   // Show loading while checking auth or if redirecting
   if (
@@ -43,7 +45,7 @@ export function AuthGuard({ children, mode = "PRIVATE" }: AuthGuardProps) {
     (mode === "GUEST" && isAuthenticated) ||
     (mode === "PRIVATE" && !isAuthenticated) ||
     (mode === "VERIFIED" && (!isAuthenticated || !isVerified)) ||
-    (mode === "ADMIN" && !isAdmin)
+    (mode === "ADMIN" && !hasAdminAccess)
   ) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-background">

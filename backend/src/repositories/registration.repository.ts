@@ -37,6 +37,11 @@ export class RegistrationRepository {
   };
 
   public countConfirmedRegistrations = async (eventId: string) => {
-    return prisma.registration.count({ where: { eventId, status: "CONFIRMED" } });
+    const result = await prisma.registration.aggregate({
+      where: { eventId, status: "CONFIRMED" },
+      _sum: { guestCount: true },
+      _count: true,
+    });
+    return result._count + (result._sum.guestCount ?? 0);
   };
 }

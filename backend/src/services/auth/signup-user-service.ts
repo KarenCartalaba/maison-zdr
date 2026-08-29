@@ -34,11 +34,12 @@ export async function SignupUserService(name: string, email: string, password: s
       html,
     });
 
+    const { password: _, ...safeUser } = created;
     return {
       code: 201,
       status: "success",
       message: "Account created successfully! Please verify your email.",
-      data: { user: created },
+      data: { user: safeUser },
     };
   } catch (error) {
     console.error("SignupUserService error", error);

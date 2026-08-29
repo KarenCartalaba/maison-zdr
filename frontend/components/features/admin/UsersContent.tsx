@@ -128,6 +128,35 @@ export default function UsersContent() {
     }
   };
 
+  const handleVerifyUser = async (id: string) => {
+    try {
+      setActionLoading(id);
+      await adminService.verifyUser(id);
+      fetchData(activeFilter, search);
+    } catch (error) {
+      console.error("Failed to verify user:", error);
+    } finally {
+      setActionLoading(null);
+    }
+  };
+
+  const handleDeleteUser = async (id: string, name: string) => {
+    const confirmed = window.confirm(
+      `Are you sure you want to delete user "${name}"? This action cannot be undone.`
+    );
+    if (!confirmed) return;
+
+    try {
+      setActionLoading(id);
+      await adminService.deleteUser(id);
+      fetchData(activeFilter, search);
+    } catch (error) {
+      console.error("Failed to delete user:", error);
+    } finally {
+      setActionLoading(null);
+    }
+  };
+
   if (loading) return <LoadingSkeleton />;
 
   return (
@@ -244,9 +273,13 @@ export default function UsersContent() {
                       </td>
                       <td className="px-6 py-3">
                         <Badge
-                          variant={u.role === "ADMIN" ? "default" : "secondary"}
+                          variant={u.role === "ADMIN" ? "default" : u.role === "MODERATOR" ? "default" : "secondary"}
                           className={
-                            u.role === "ADMIN" ? "bg-[#1a5c2a]" : ""
+                            u.role === "ADMIN"
+                              ? "bg-[#1a5c2a]"
+                              : u.role === "MODERATOR"
+                                ? "bg-blue-600"
+                                : ""
                           }
                         >
                           {u.role}
@@ -289,10 +322,35 @@ export default function UsersContent() {
                               Make Admin
                             </DropdownMenuItem>
                             <DropdownMenuItem
+                              onClick={() => handleRoleChange(u.id, "MODERATOR")}
+                              disabled={actionLoading === u.id}
+                            >
+                              Make Moderator
+                            </DropdownMenuItem>
+                            <DropdownMenuItem
                               onClick={() => handleRoleChange(u.id, "USER")}
                               disabled={actionLoading === u.id}
                             >
                               Make User
+                            </DropdownMenuItem>
+                            {!u.emailVerified && (
+                              <>
+                                <DropdownMenuSeparator />
+                                <DropdownMenuItem
+                                  onClick={() => handleVerifyUser(u.id)}
+                                  disabled={actionLoading === u.id}
+                                >
+                                  Verify User
+                                </DropdownMenuItem>
+                              </>
+                            )}
+                            <DropdownMenuSeparator />
+                            <DropdownMenuItem
+                              onClick={() => handleDeleteUser(u.id, u.name)}
+                              disabled={actionLoading === u.id}
+                              className="text-red-600"
+                            >
+                              Delete User
                             </DropdownMenuItem>
                           </DropdownMenuContent>
                         </DropdownMenu>

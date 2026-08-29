@@ -11,6 +11,7 @@ datasource db {
 enum Role {
   USER
   ADMIN
+  MODERATOR
 }
 
 enum TokenType {
@@ -60,6 +61,24 @@ model User {
   events        Event[]
   registrations Registration[]
   reviews       Review[]
+  news          News[]
+}
+
+model News {
+  id          String   @id @default(uuid())
+  title       String
+  content     String   @db.Text
+  summary     String?
+  imageUrl    String?  @map("image_url")
+  isPublished Boolean  @default(true) @map("is_published")
+  authorId    String   @map("author_id")
+  author      User     @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([isPublished])
+  @@index([createdAt])
+  @@map("news")
 }
 
 model Event {
@@ -91,6 +110,8 @@ model Registration {
   status      RegistrationStatus @default(CONFIRMED)
   hasPlusOne  Boolean            @default(false) @map("has_plus_one")
   guestName   String?            @map("guest_name")
+  guestNames  String[]           @default([]) @map("guest_names")
+  guestCount  Int                @default(0) @map("guest_count")
   checkedIn   Boolean            @default(false)
   checkedInAt DateTime?          @map("checked_in_at")
   createdAt   DateTime           @default(now())
@@ -141,4 +162,12 @@ model Token {
   user       User       @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId, type])
+}
+
+model ContactMessage {
+  id        String   @id @default(cuid())
+  name      String
+  email     String
+  message   String
+  createdAt DateTime @default(now())
 }

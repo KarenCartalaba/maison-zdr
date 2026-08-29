@@ -343,6 +343,35 @@ export class AdminRepository {
     return prisma.user.update({ where: { id }, data: { role: role as any } });
   };
 
+  public findUserById = async (id: string) => {
+    return prisma.user.findUnique({
+      where: { id },
+      select: {
+        id: true,
+        name: true,
+        email: true,
+        role: true,
+        emailVerified: true,
+        profilePic: true,
+        phone: true,
+        createdAt: true,
+        updatedAt: true,
+        _count: { select: { registrations: true } },
+      },
+    });
+  };
+
+  public verifyUser = async (id: string) => {
+    return prisma.user.update({
+      where: { id },
+      data: { emailVerified: new Date() },
+    });
+  };
+
+  public deleteUser = async (id: string) => {
+    return prisma.user.delete({ where: { id } });
+  };
+
   // ==================== Analytics ====================
 
   public getAnalyticsOverview = async () => {

@@ -19,6 +19,7 @@
   "dependencies": {
     "@prisma/adapter-pg": "^7.7.0",
     "@prisma/client": "^7.8.0",
+    "@types/node-cron": "^3.0.11",
     "cloudinary": "^2.11.0",
     "cookie-parser": "^1.4.7",
     "cors": "^2.8.6",
@@ -26,6 +27,7 @@
     "express": "^5.2.1",
     "ioredis": "^6.0.0",
     "jsonwebtoken": "^9.0.3",
+    "node-cron": "^4.6.0",
     "nodemailer": "^8.0.5",
     "pg": "^8.20.0",
     "tsdown": "^0.22.14",

@@ -8,6 +8,14 @@ export interface GalleryImage {
   createdAt: string;
 }
 
+export interface UploadResult {
+  url: string;
+  publicId: string;
+  width: number;
+  height: number;
+  format: string;
+}
+
 export const galleryService = {
   getAll: async () => {
     const response = await axiosInstance.get<ApiResponse<{ images: GalleryImage[] }>>(
@@ -16,18 +24,18 @@ export const galleryService = {
     return response.data;
   },
 
-  upload: async (eventId: string, imageUrl: string) => {
-    const response = await axiosInstance.post<ApiResponse<{ image: GalleryImage }>>(
+  upload: async (data: { imageBase64: string; folder?: string }) => {
+    const response = await axiosInstance.post<ApiResponse<UploadResult>>(
       "/api/gallery/v1/upload",
-      { eventId, imageUrl }
+      data
     );
     return response.data;
   },
 
-  delete: async (id: string) => {
+  delete: async (data: { url?: string; publicId?: string }) => {
     const response = await axiosInstance.post<ApiResponse>(
       "/api/gallery/v1/delete",
-      { id }
+      data
     );
     return response.data;
   },

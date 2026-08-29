@@ -15,14 +15,17 @@ export default function Navbar() {
     <header className="sticky top-0 z-50 w-full border-b bg-white">
       <div className="container px-4 flex h-16 items-center justify-between">
         <Logo />
-
+        
         {/* Desktop Navigation */}
-        <nav className="hidden md:flex items-center space-x-8">
+        <nav className="hidden lg:ms-25 md:flex items-center space-x-8">
           <Link href="/" className="text-sm font-medium text-foreground/80 hover:text-foreground">
             Home
           </Link>
           <Link href="/events" className="text-sm font-medium text-foreground/80 hover:text-foreground">
             Events
+          </Link>
+          <Link href="/news" className="text-sm font-medium text-foreground/80 hover:text-foreground">
+            News
           </Link>
           <Link href="/contact" className="text-sm font-medium text-foreground/80 hover:text-foreground">
             Contact
@@ -103,6 +106,7 @@ export default function Navbar() {
             <nav className="flex flex-col space-y-3">
               <Link href="/" onClick={() => setIsMobileMenuOpen(false)}>Home</Link>
               <Link href="/events" onClick={() => setIsMobileMenuOpen(false)}>Events</Link>
+              <Link href="/news" onClick={() => setIsMobileMenuOpen(false)}>News</Link>
               <Link href="/contact" onClick={() => setIsMobileMenuOpen(false)}>Contact</Link>
             </nav>
             <div className="flex flex-col space-y-2">
