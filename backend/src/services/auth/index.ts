@@ -7,3 +7,7 @@ export { GetMeService } from "@/services/auth/get-me-service";
 export { UpdateProfileService } from "@/services/auth/update-profile-service";
 export { ForgotPasswordService } from "@/services/auth/forgot-password-service";
 export { ChangePasswordService } from "@/services/auth/change-password-service";
+export { MyRegistrationsService } from "@/services/auth/my-registrations-service";
+export { ProfileStatsService } from "@/services/auth/profile-stats-service";
+export { MyReviewsService } from "@/services/auth/my-reviews-service";
+export { PendingReviewsService } from "@/services/auth/pending-reviews-service";

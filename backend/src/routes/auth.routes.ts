@@ -1,11 +1,13 @@
 import { Router } from "express";
 import { AuthController } from "@/controllers/auth.controller";
+import { MyProfileController } from "@/controllers/my-profile.controller";
 import { validateSchema } from "@/middlewares/validate-schema";
 import { signupSchema, loginSchema, verifyEmailSchema, resendVerificationSchema, refreshTokenSchema, forgotPasswordSchema, changePasswordSchema } from "@/schema/auth";
 import { AuthMiddleware } from "@/middlewares/auth-middleware";
 
 const router = Router();
 const authController = new AuthController();
+const myProfileController = new MyProfileController();
 const authMiddleware = new AuthMiddleware();
 
 router.post("/v1/signup", validateSchema(signupSchema), authController.signup);
@@ -18,5 +20,9 @@ router.get("/v1/me", authMiddleware.execute, authController.me);
 router.put("/v1/update-profile", authMiddleware.execute, authController.updateProfile);
 router.post("/v1/forgot-password", validateSchema(forgotPasswordSchema), authController.forgotPassword);
 router.put("/v1/change-password", authMiddleware.execute, validateSchema(changePasswordSchema), authController.changePassword);
+router.get("/v1/my-registrations", authMiddleware.execute, myProfileController.getMyRegistrations);
+router.get("/v1/profile-stats", authMiddleware.execute, myProfileController.getProfileStats);
+router.get("/v1/my-reviews", authMiddleware.execute, myProfileController.getMyReviews);
+router.get("/v1/pending-reviews", authMiddleware.execute, myProfileController.getPendingReviews);
 
 export default router;

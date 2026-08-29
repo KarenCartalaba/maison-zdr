@@ -4,6 +4,9 @@ export interface User {
   email: string;
   role: "USER" | "ADMIN";
   emailVerified?: string | null;
+  profilePic?: string | null;
+  phone?: string | null;
+  createdAt?: string;
 }
 
 export type EventType = "FORMAL" | "CASUAL" | "SOCIAL" | "WORKSHOP" | "LIVE_MUSIC" | "FOOD_AND_DRINK" | "TRIVIA" | "PRIVATE";

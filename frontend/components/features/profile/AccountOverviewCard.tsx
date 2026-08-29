@@ -1,26 +1,24 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import { useAuth } from "@/context/AuthContext";
+import { authService } from "@/services/auth.service";
 import { Badge } from "@/components/ui/badge";
 
-interface AccountOverviewCardProps {
-  stats?: {
-    eventsRegistered: number;
-    eventsAttended: number;
-    reviewsWritten: number;
-    totalGuestsBrought: number;
-  };
-}
-
-export default function AccountOverviewCard({
-  stats = {
+export default function AccountOverviewCard() {
+  const { isVerified } = useAuth();
+  const [stats, setStats] = useState({
     eventsRegistered: 0,
     eventsAttended: 0,
     reviewsWritten: 0,
     totalGuestsBrought: 0,
-  },
-}: AccountOverviewCardProps) {
-  const { isVerified } = useAuth();
+  });
+
+  useEffect(() => {
+    authService.getProfileStats().then((res) => {
+      if (res.data) setStats(res.data);
+    }).catch(() => {});
+  }, []);
 
   return (
     <div className="rounded-lg border shadow-md overflow-hidden">
