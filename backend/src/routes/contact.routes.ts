@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { ContactController } from "@/controllers/contact";
+import { ContactController } from "@/controllers/contact.controller";
 import { validateSchema } from "@/middlewares/validate-schema";
 import { contactSchema } from "@/schema/contact";
 

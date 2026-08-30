@@ -52,8 +52,6 @@ export default function AdminEventsContent({ initialEvents = [] }: AdminEventsCo
   };
 
   useEffect(() => {
-    if (initialEvents.length > 0) return; // Already have SSR data
-
     const fetchEvents = async () => {
       try {
         const response = await eventService.getAll();
@@ -167,11 +165,17 @@ export default function AdminEventsContent({ initialEvents = [] }: AdminEventsCo
             filteredEvents.map((event) => (
               <Card key={event.id} className="overflow-hidden">
                 <div className="h-40 bg-muted">
-                  <img
-                    src="/images/event-placeholder.jpg"
-                    alt={event.title}
-                    className="h-full w-full object-cover"
-                  />
+                  {event.gallery?.[0] ? (
+                    <img
+                      src={event.gallery[0]}
+                      alt={event.title}
+                      className="h-full w-full object-cover"
+                    />
+                  ) : (
+                    <div className="w-full h-full bg-gradient-to-br from-[#1a5c2a] to-[#2d8a4e] flex items-center justify-center">
+                      <span className="text-2xl font-bold text-white/80">{event.title.charAt(0).toUpperCase()}</span>
+                    </div>
+                  )}
                 </div>
                 <CardContent className="p-4">
                   <div className="flex items-center justify-between mb-2">
@@ -242,7 +246,13 @@ export default function AdminEventsContent({ initialEvents = [] }: AdminEventsCo
                       <tr key={event.id} className="border-b last:border-0 hover:bg-muted/50">
                         <td className="px-6 py-3">
                           <div className="h-10 w-14 rounded overflow-hidden bg-muted">
-                            <img src="/images/event-placeholder.jpg" alt={event.title} className="h-full w-full object-cover" />
+                            {event.gallery?.[0] ? (
+                              <img src={event.gallery[0]} alt={event.title} className="h-full w-full object-cover" />
+                            ) : (
+                              <div className="w-full h-full bg-gradient-to-br from-[#1a5c2a] to-[#2d8a4e] flex items-center justify-center">
+                                <span className="text-xs font-bold text-white/80">{event.title.charAt(0).toUpperCase()}</span>
+                              </div>
+                            )}
                           </div>
                         </td>
                         <td className="px-6 py-3 font-medium">{event.title}</td>

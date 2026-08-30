@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { ReviewController } from "@/controllers/review";
+import { ReviewController } from "@/controllers/review.controller";
 import { validateSchema } from "@/middlewares/validate-schema";
 import { createReviewSchema } from "@/schema/review";
 import { AuthMiddleware } from "@/middlewares/auth-middleware";

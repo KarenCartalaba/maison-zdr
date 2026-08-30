@@ -1,16 +1,18 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useRouter, useParams } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { eventService } from "@/services/event.service";
+import { galleryService } from "@/services/gallery.service";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
-import { Loader2 } from "lucide-react";
+import { Loader2, ImagePlus } from "lucide-react";
 import type { Event } from "@/types";
+import { toast } from "sonner";
 
 const updateEventSchema = z.object({
   title: z.string().min(3, "Title must be at least 3 characters"),
@@ -30,6 +32,9 @@ export default function EditEventContent() {
   const [event, setEvent] = useState<Event | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [coverImage, setCoverImage] = useState<File | null>(null);
+  const [coverPreview, setCoverPreview] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const {
     register,
@@ -47,6 +52,9 @@ export default function EditEventContent() {
         if (response.code === 200 && response.data) {
           const ev = response.data.event;
           setEvent(ev);
+          if (ev.gallery?.[0]) {
+            setCoverPreview(ev.gallery[0]);
+          }
           reset({
             title: ev.title,
             description: ev.description,
@@ -67,20 +75,52 @@ export default function EditEventContent() {
     fetchEvent();
   }, [params.id, reset]);
 
+  const handleImageSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error("Image must be less than 5MB");
+      return;
+    }
+    setCoverImage(file);
+    const reader = new FileReader();
+    reader.onload = (ev) => setCoverPreview(ev.target?.result as string);
+    reader.readAsDataURL(file);
+  };
+
   const onSubmit = async (data: UpdateEventInput) => {
     setIsSubmitting(true);
     try {
+      let gallery: string[] | undefined;
+      if (coverImage) {
+        try {
+          const reader = new FileReader();
+          const base64 = await new Promise<string>((resolve) => {
+            reader.onload = (ev) => resolve(ev.target?.result as string);
+            reader.readAsDataURL(coverImage);
+          });
+          const uploadRes = await galleryService.upload({ imageBase64: base64, folder: "events" });
+          if (uploadRes.data?.url) {
+            gallery = [uploadRes.data.url];
+          }
+        } catch (uploadErr: any) {
+          toast.error(uploadErr.response?.data?.message || "Failed to upload image");
+          return;
+        }
+      }
       const response = await eventService.update({
         id: params.id as string,
         ...data,
+        ...(gallery && { gallery }),
         eventDate: new Date(data.eventDate).toISOString(),
         deadline: new Date(data.deadline).toISOString(),
       });
       if (response.code === 200) {
+        toast.success("Event updated successfully");
         router.push("/admin/events");
       }
-    } catch (err) {
-      console.error("Failed to update event:", err);
+    } catch (err: any) {
+      toast.error(err.response?.data?.message || "Failed to update event");
     } finally {
       setIsSubmitting(false);
     }
@@ -112,6 +152,31 @@ export default function EditEventContent() {
       <Card>
         <CardContent className="p-6">
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+            <div className="space-y-2">
+              <label className="text-sm font-medium">Cover Image</label>
+              <div 
+                className="border-2 border-dashed rounded-lg p-8 text-center cursor-pointer hover:border-[#1a5c2a] transition-colors"
+                onClick={() => fileInputRef.current?.click()}
+              >
+                {coverPreview ? (
+                  <img src={coverPreview} alt="Preview" className="max-h-48 mx-auto rounded-lg object-cover" />
+                ) : (
+                  <>
+                    <ImagePlus className="h-10 w-10 mx-auto text-muted-foreground mb-2" />
+                    <p className="text-sm text-muted-foreground">Click to upload cover image</p>
+                    <p className="text-xs text-muted-foreground mt-1">JPG, PNG up to 5MB</p>
+                  </>
+                )}
+              </div>
+              <input 
+                ref={fileInputRef}
+                type="file" 
+                accept="image/*" 
+                className="hidden"
+                onChange={handleImageSelect}
+              />
+            </div>
+
             <div className="space-y-2">
               <label htmlFor="title" className="text-sm font-medium">
                 Title

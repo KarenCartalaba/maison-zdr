@@ -1,15 +1,17 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { eventService, CreateEventData } from "@/services/event.service";
+import { galleryService } from "@/services/gallery.service";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
-import { Loader2 } from "lucide-react";
+import { Loader2, ImagePlus } from "lucide-react";
+import { toast } from "sonner";
 
 const createEventSchema = z.object({
   title: z.string().min(3, "Title must be at least 3 characters"),
@@ -26,6 +28,9 @@ type CreateEventInput = z.infer<typeof createEventSchema>;
 
 export default function CreateEventContent() {
   const [isLoading, setIsLoading] = useState(false);
+  const [coverImage, setCoverImage] = useState<File | null>(null);
+  const [coverPreview, setCoverPreview] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const router = useRouter();
 
   const {
@@ -41,19 +46,51 @@ export default function CreateEventContent() {
     },
   });
 
+  const handleImageSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error("Image must be less than 5MB");
+      return;
+    }
+    setCoverImage(file);
+    const reader = new FileReader();
+    reader.onload = (ev) => setCoverPreview(ev.target?.result as string);
+    reader.readAsDataURL(file);
+  };
+
   const onSubmit = async (data: CreateEventInput) => {
     setIsLoading(true);
     try {
+      let gallery: string[] = [];
+      if (coverImage) {
+        try {
+          const reader = new FileReader();
+          const base64 = await new Promise<string>((resolve) => {
+            reader.onload = (ev) => resolve(ev.target?.result as string);
+            reader.readAsDataURL(coverImage);
+          });
+          const uploadRes = await galleryService.upload({ imageBase64: base64, folder: "events" });
+          if (uploadRes.data?.url) {
+            gallery = [uploadRes.data.url];
+          }
+        } catch (uploadErr: any) {
+          toast.error(uploadErr.response?.data?.message || "Failed to upload image");
+          return;
+        }
+      }
       const response = await eventService.create({
         ...data,
+        gallery,
         eventDate: new Date(data.eventDate).toISOString(),
         deadline: new Date(data.deadline).toISOString(),
       });
       if (response.code === 201) {
+        toast.success("Event created successfully");
         router.push("/admin/events");
       }
-    } catch (err) {
-      console.error("Failed to create event:", err);
+    } catch (err: any) {
+      toast.error(err.response?.data?.message || "Failed to create event");
     } finally {
       setIsLoading(false);
     }
@@ -69,6 +106,31 @@ export default function CreateEventContent() {
       <Card>
         <CardContent className="p-6">
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+            <div className="space-y-2">
+              <label className="text-sm font-medium">Cover Image</label>
+              <div 
+                className="border-2 border-dashed rounded-lg p-8 text-center cursor-pointer hover:border-[#1a5c2a] transition-colors"
+                onClick={() => fileInputRef.current?.click()}
+              >
+                {coverPreview ? (
+                  <img src={coverPreview} alt="Preview" className="max-h-48 mx-auto rounded-lg object-cover" />
+                ) : (
+                  <>
+                    <ImagePlus className="h-10 w-10 mx-auto text-muted-foreground mb-2" />
+                    <p className="text-sm text-muted-foreground">Click to upload cover image</p>
+                    <p className="text-xs text-muted-foreground mt-1">JPG, PNG up to 5MB</p>
+                  </>
+                )}
+              </div>
+              <input 
+                ref={fileInputRef}
+                type="file" 
+                accept="image/*" 
+                className="hidden"
+                onChange={handleImageSelect}
+              />
+            </div>
+
             <div className="space-y-2">
               <label htmlFor="title" className="text-sm font-medium">
                 Title

@@ -181,8 +181,6 @@ export default function DashboardContent({
   });
 
   useEffect(() => {
-    if (initialStats) return; // Already have SSR data
-
     async function fetchDashboard() {
       try {
         const [

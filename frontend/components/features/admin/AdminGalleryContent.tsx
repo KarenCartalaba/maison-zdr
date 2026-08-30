@@ -80,8 +80,8 @@ export default function AdminGalleryContent() {
             setEvents(events.map((ev) => (ev.id === selectedEvent.id ? updatedEvent : ev)));
             toast.success("Image uploaded successfully");
           }
-        } catch {
-          toast.error("Failed to upload image");
+        } catch (err: any) {
+          toast.error(err.response?.data?.message || "Failed to upload image");
         } finally {
           setIsUploading(false);
         }
