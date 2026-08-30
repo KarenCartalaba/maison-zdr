@@ -12,6 +12,7 @@ const authMiddleware = new AuthMiddleware();
 
 router.post("/v1/signup", validateSchema(signupSchema), authController.signup);
 router.post("/v1/login", validateSchema(loginSchema), authController.login);
+router.post("/v1/google-login", authController.googleLogin);
 router.get("/v1/verify-email", validateSchema(verifyEmailSchema), authController.verifyEmail);
 router.post("/v1/resend-email-verification", validateSchema(resendVerificationSchema), authController.resendEmailVerification);
 router.post("/v1/refresh-token", validateSchema(refreshTokenSchema), authController.refresh);

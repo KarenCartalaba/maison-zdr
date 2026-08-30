@@ -55,4 +55,16 @@ export class AuthRepository {
   public updateUserPassword = async (id: string, hashedPassword: string) => {
     return prisma.user.update({ where: { id }, data: { password: hashedPassword } });
   };
+
+  public findUserByGoogleId = async (googleId: string) => {
+    return prisma.user.findFirst({ where: { googleId } });
+  };
+
+  public createUserWithGoogle = async (data: { email: string; name: string; googleId: string; profilePic?: string; emailVerified?: Date }) => {
+    return prisma.user.create({ data });
+  };
+
+  public linkGoogleToUser = async (userId: string, googleId: string) => {
+    return prisma.user.update({ where: { id: userId }, data: { googleId } });
+  };
 }

@@ -30,6 +30,14 @@ export const authService = {
     return response.data;
   },
 
+  googleLogin: async (idToken: string) => {
+    const response = await axiosInstance.post<ApiResponse<LoginResponse>>(
+      API_ENDPOINTS.AUTH.GOOGLE_LOGIN,
+      { idToken }
+    );
+    return response.data;
+  },
+
   signup: async (data: SignupInput) => {
     const response = await axiosInstance.post<ApiResponse<User>>(
       API_ENDPOINTS.AUTH.SIGNUP,

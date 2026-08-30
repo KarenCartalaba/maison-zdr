@@ -11,3 +11,4 @@ export { MyRegistrationsService } from "@/services/auth/my-registrations-service
 export { ProfileStatsService } from "@/services/auth/profile-stats-service";
 export { MyReviewsService } from "@/services/auth/my-reviews-service";
 export { PendingReviewsService } from "@/services/auth/pending-reviews-service";
+export { GoogleLoginService } from "@/services/auth/google-login-service";
