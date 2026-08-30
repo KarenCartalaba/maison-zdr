@@ -10,6 +10,7 @@ import {
   DropdownMenuTrigger,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuGroup,
   DropdownMenuLabel,
   DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu";
@@ -326,32 +327,33 @@ export default function RegistrationsContent() {
                             <MoreHorizontal className="h-4 w-4" />
                           </DropdownMenuTrigger>
                           <DropdownMenuContent>
-                            <DropdownMenuLabel>Change Status</DropdownMenuLabel>
-                            <DropdownMenuSeparator />
-                            <DropdownMenuItem
-                              onClick={() =>
-                                handleStatusChange(reg.id, "CONFIRMED")
-                              }
-                              disabled={updatingId === reg.id}
-                            >
-                              Confirm
-                            </DropdownMenuItem>
-                            <DropdownMenuItem
-                              onClick={() =>
-                                handleStatusChange(reg.id, "PENDING")
-                              }
-                              disabled={updatingId === reg.id}
-                            >
-                              Set Pending
-                            </DropdownMenuItem>
-                            <DropdownMenuItem
-                              onClick={() =>
-                                handleStatusChange(reg.id, "WAITLISTED")
-                              }
-                              disabled={updatingId === reg.id}
-                            >
-                              Waitlist
-                            </DropdownMenuItem>
+                            <DropdownMenuGroup>
+                              <DropdownMenuLabel>Change Status</DropdownMenuLabel>
+                              <DropdownMenuItem
+                                onClick={() =>
+                                  handleStatusChange(reg.id, "CONFIRMED")
+                                }
+                                disabled={updatingId === reg.id}
+                              >
+                                Confirm
+                              </DropdownMenuItem>
+                              <DropdownMenuItem
+                                onClick={() =>
+                                  handleStatusChange(reg.id, "PENDING")
+                                }
+                                disabled={updatingId === reg.id}
+                              >
+                                Set Pending
+                              </DropdownMenuItem>
+                              <DropdownMenuItem
+                                onClick={() =>
+                                  handleStatusChange(reg.id, "WAITLISTED")
+                                }
+                                disabled={updatingId === reg.id}
+                              >
+                                Waitlist
+                              </DropdownMenuItem>
+                            </DropdownMenuGroup>
                             <DropdownMenuSeparator />
                             <DropdownMenuItem
                               variant="destructive"

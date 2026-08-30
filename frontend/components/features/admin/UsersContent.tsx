@@ -10,6 +10,7 @@ import {
   DropdownMenuTrigger,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuGroup,
   DropdownMenuLabel,
   DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu";
@@ -352,25 +353,27 @@ export default function UsersContent() {
                               View Profile
                             </DropdownMenuItem>
                             <DropdownMenuSeparator />
-                            <DropdownMenuLabel>Change Role</DropdownMenuLabel>
-                            <DropdownMenuItem
-                              onClick={() => handleRoleChange(u.id, "ADMIN")}
-                              disabled={actionLoading === u.id}
-                            >
-                              Make Admin
-                            </DropdownMenuItem>
-                            <DropdownMenuItem
-                              onClick={() => handleRoleChange(u.id, "MODERATOR")}
-                              disabled={actionLoading === u.id}
-                            >
-                              Make Moderator
-                            </DropdownMenuItem>
-                            <DropdownMenuItem
-                              onClick={() => handleRoleChange(u.id, "USER")}
-                              disabled={actionLoading === u.id}
-                            >
-                              Make User
-                            </DropdownMenuItem>
+                            <DropdownMenuGroup>
+                              <DropdownMenuLabel>Change Role</DropdownMenuLabel>
+                              <DropdownMenuItem
+                                onClick={() => handleRoleChange(u.id, "ADMIN")}
+                                disabled={actionLoading === u.id}
+                              >
+                                Make Admin
+                              </DropdownMenuItem>
+                              <DropdownMenuItem
+                                onClick={() => handleRoleChange(u.id, "MODERATOR")}
+                                disabled={actionLoading === u.id}
+                              >
+                                Make Moderator
+                              </DropdownMenuItem>
+                              <DropdownMenuItem
+                                onClick={() => handleRoleChange(u.id, "USER")}
+                                disabled={actionLoading === u.id}
+                              >
+                                Make User
+                              </DropdownMenuItem>
+                            </DropdownMenuGroup>
                             <DropdownMenuSeparator />
                             {!u.emailVerified && (
                               <DropdownMenuItem
