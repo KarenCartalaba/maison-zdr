@@ -1,5 +1,5 @@
 import { Request, Response } from "express";
-import { SignupUserService, LoginCredentialsService, VerifyEmailService, RefreshTokenService, ResendEmailVerificationService, GetMeService, UpdateProfileService, ForgotPasswordService, ChangePasswordService } from "@/services/auth";
+import { SignupUserService, LoginCredentialsService, VerifyEmailService, RefreshTokenService, ResendEmailVerificationService, GetMeService, UpdateProfileService, ForgotPasswordService, ChangePasswordService, GoogleLoginService } from "@/services/auth";
 import { TokenExpiry, toMilliseconds } from "@/lib/jwt";
 import { ENV } from "@/config/env";
 
@@ -91,6 +91,17 @@ export class AuthController {
     const userId = (req as any).user?.sub;
     const { currentPassword, newPassword } = req.body ?? {};
     const result = await ChangePasswordService(userId, currentPassword, newPassword);
+    return res.status(result.code).json(result);
+  };
+
+  public googleLogin = async (req: Request, res: Response) => {
+    const { idToken } = req.body ?? {};
+    const result = await GoogleLoginService(idToken);
+
+    if (result.code === 200 && result.data?.tokens) {
+      this.setAuthCookies(res, result.data.tokens);
+    }
+
     return res.status(result.code).json(result);
   };
 }

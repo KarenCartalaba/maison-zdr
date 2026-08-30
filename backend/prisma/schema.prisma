@@ -48,7 +48,7 @@ enum ReviewStatus {
 model User {
   id            String    @id @default(uuid())
   email         String    @unique
-  password      String
+  password      String?
   name          String
   emailVerified DateTime? @map("email_verified")
   profilePic    String?   @map("profile_pic")
@@ -58,6 +58,7 @@ model User {
 
   role          Role      @default(USER)
   suspended     Boolean   @default(false)
+  googleId      String?
   tokens        Token[]
   events        Event[]
   registrations Registration[]

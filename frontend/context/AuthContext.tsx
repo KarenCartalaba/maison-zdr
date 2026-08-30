@@ -10,6 +10,7 @@ interface AuthContextType {
   user: User | null;
   isLoading: boolean;
   login: (data: LoginInput) => Promise<void>;
+  loginWithGoogle: (idToken: string) => Promise<void>;
   signup: (data: SignupInput) => Promise<void>;
   logout: () => Promise<void>;
   refreshUser: () => Promise<void>;
@@ -97,6 +98,32 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
+  const loginWithGoogle = async (idToken: string) => {
+    try {
+      const response = await authService.googleLogin(idToken);
+      if (response.code === 200 && response.data) {
+        const userData = response.data.user;
+        setUser(userData);
+        localStorage.setItem("user", JSON.stringify(userData));
+
+        if (userData.role === "ADMIN" || userData.role === "MODERATOR") {
+          router.push("/admin");
+        } else {
+          router.push("/");
+        }
+      } else {
+        const error: any = new Error(response.message || "Google login failed");
+        error.message = response.message;
+        throw error;
+      }
+    } catch (error: any) {
+      const message = error.response?.data?.message || error.message || "Google login failed";
+      const authError: any = new Error(message);
+      authError.message = message;
+      throw authError;
+    }
+  };
+
   const signup = async (data: SignupInput) => {
     try {
       const response = await authService.signup(data);
@@ -137,6 +164,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         user,
         isLoading,
         login,
+        loginWithGoogle,
         signup,
         logout,
         refreshUser,

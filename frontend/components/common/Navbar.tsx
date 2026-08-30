@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useAuth } from "@/context/AuthContext";
 import { Button } from "@/components/ui/button";
-import { Bell, LogOut, LayoutDashboard, Menu, X, MailWarning } from "lucide-react";
+import { Bell, LogOut, LayoutDashboard, Menu, X, MailWarning, User } from "lucide-react";
 import { useState } from "react";
 import Logo from "@/components/common/Logo";
 
@@ -72,7 +72,7 @@ export default function Navbar() {
                 <Link href="/profile">
                   <div className="h-8 w-8 rounded-full bg-muted overflow-hidden">
                     <img
-                      src={user?.profilePic || "/images/profile-placeholder.jpg"}
+                      src={user?.profilePic || "h"}
                       alt={user?.name || "Profile"}
                       className="h-full w-full object-cover"
                     />
