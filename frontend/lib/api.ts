@@ -38,7 +38,7 @@ export async function serverFetch<T = any>(
   }
 
   // Use Next.js ISR revalidation (only works with cache: "force-cache" or default)
-  if (options?.revalidate !== undefined) {
+  if (options?.revalidate !== undefined && options.revalidate !== false) {
     fetchOptions.next = { revalidate: options.revalidate };
     delete fetchOptions.cache; // Remove no-store when using revalidate
   }

@@ -161,7 +161,7 @@ export default function AnalyticsContent() {
             Event performance and insights
           </p>
         </div>
-        <Button variant="outline">
+        <Button variant="outline" onClick={handleExportReport}>
           <Download className="h-4 w-4 mr-2" />
           Export Report
         </Button>

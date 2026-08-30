@@ -96,7 +96,7 @@ export default function RegistrationsContent() {
   const [eventFilter, setEventFilter] = useState("ALL");
 
   const handleExportCsv = () => {
-    const headers = ["Reference", "Guest Name", "Guest Email", "Event", "Date", "Status", "Plus-One"];
+    const headers = ["Reference", "Guest", "Email", "Event", "Date", "Status"];
     const rows = registrations.map((reg) => [
       reg.id,
       reg.user.name,
@@ -104,7 +104,6 @@ export default function RegistrationsContent() {
       reg.event.title,
       formatDate(reg.event.eventDate),
       reg.status,
-      reg.hasPlusOne ? "Yes" : "No",
     ]);
     const csvContent = [headers, ...rows]
       .map((row) => row.map((cell) => `"${String(cell).replace(/"/g, '""')}"`).join(","))

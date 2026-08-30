@@ -28,7 +28,6 @@ export default function AdminNewsContent({ initialNews = [] }: AdminNewsContentP
   });
 
   useEffect(() => {
-    if (initialNews.length > 0) return;
     newsService
       .getAll()
       .then((res) => {
@@ -36,7 +35,7 @@ export default function AdminNewsContent({ initialNews = [] }: AdminNewsContentP
       })
       .catch(() => {})
       .finally(() => setIsLoading(false));
-  }, [initialNews.length]);
+  }, []);
 
   const resetForm = () => {
     setFormData({

@@ -682,9 +682,9 @@ function HighlightsTab({ event }: { event: Event }) {
         setGallery(updatedGallery);
         toast.success("Image uploaded successfully");
       }
-    } catch (err) {
+    } catch (err: any) {
       console.error("Failed to upload image:", err);
-      toast.error("Failed to upload image");
+      toast.error(err.response?.data?.message || "Failed to upload image");
     } finally {
       setIsUploading(false);
       // Reset file input

@@ -47,14 +47,18 @@ export default function EventCard({ event }: EventCardProps) {
 
   return (
     <Card className="overflow-hidden border-none shadow-md">
-      {/* TODO: Replace placeholder with actual event image from event.imageUrl */}
       <div className="relative h-48 bg-muted">
-        {/* TODO: Replace with actual event image */}
-        <img
-          src={`/images/event-${event.id}.jpg`}
-          alt={event.title}
-          className="w-full h-full object-cover"
-        />
+        {event.gallery?.[0] ? (
+          <img
+            src={event.gallery[0]}
+            alt={event.title}
+            className="w-full h-full object-cover"
+          />
+        ) : (
+          <div className="w-full h-full bg-gradient-to-br from-[#1a5c2a] to-[#2d8a4e] flex items-center justify-center">
+            <span className="text-4xl font-bold text-white/80">{event.title.charAt(0).toUpperCase()}</span>
+          </div>
+        )}
         <Badge className={`absolute top-3 right-3 ${statusBadge.className}`}>
           {statusBadge.label}
         </Badge>

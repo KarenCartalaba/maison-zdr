@@ -16,5 +16,8 @@ export const ENV = {
     USER: process.env.SMTP_USER,
     PASS: process.env.SMTP_PASSWORD,
     FROM: process.env.SMTP_FROM,
-  }
+  },
+  CLOUD_NAME: process.env.CLOUDINARY_CLOUD_NAME,
+  CLOUDINARY_API_KEY: process.env.CLOUDINARY_API_KEY,
+  CLOUDINARY_SECRET_KEY: process.env.CLOUDINARY_SECRET_KEY,
 };

@@ -1,5 +1,5 @@
 import { AuthRepository } from "@/repositories/auth.repository";
-import { uploadImage, deleteImage, extractPublicId } from "@/lib/cloudinary";
+import { uploadImage, deleteImage, getPublicIdFromUrl } from "@/lib/cloudinary";
 import { cacheInvalidate } from "@/lib/redis";
 
 const authRepo = new AuthRepository();
@@ -24,17 +24,15 @@ export async function UpdateProfileService(
       // Delete old profile pic if it exists
       const currentProfilePic = (user as any).profilePic;
       if (currentProfilePic) {
-        const oldPublicId = extractPublicId(currentProfilePic);
+        const oldPublicId = getPublicIdFromUrl(currentProfilePic);
         if (oldPublicId) {
           await deleteImage(oldPublicId).catch(console.error);
         }
       }
 
       // Upload new pic
-      const base64Data = imageBase64.replace(/^data:image\/\w+;base64,/, "");
-      const buffer = Buffer.from(base64Data, "base64");
-      const result = await uploadImage(buffer, "maison-zdr/profiles", `profile-${userId}`);
-      updateData.profilePic = result.url;
+      const result = await uploadImage(imageBase64, "maison-zdr/profiles");
+      updateData.profilePic = result.secure_url;
     }
 
     // Check email uniqueness if changing
