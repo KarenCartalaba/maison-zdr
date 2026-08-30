@@ -70,10 +70,9 @@ export default function Navbar() {
 
                 {/* User Avatar */}
                 <Link href="/profile">
-                  {/* TODO: Replace with actual user profile photo */}
                   <div className="h-8 w-8 rounded-full bg-muted overflow-hidden">
                     <img
-                      src="/images/profile-placeholder.jpg"
+                      src={user?.profilePic || "/images/profile-placeholder.jpg"}
                       alt={user?.name || "Profile"}
                       className="h-full w-full object-cover"
                     />

@@ -13,6 +13,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Field, FieldError, FieldGroup, FieldLabel } from "@/components/ui/field";
 import { Star, Loader2 } from "lucide-react";
 import { toast } from "sonner";
+import EventImage from "@/components/ui/event-image";
 
 const reviewSchema = z.object({
   rating: z.number().min(1, "Please select a rating").max(5, "Rating must be at most 5"),
@@ -154,9 +155,7 @@ export default function MyReviewsTab() {
           <div className="flex gap-4 overflow-x-auto pb-2">
             {pending.map((item: any) => (
               <div key={item.id} className="flex items-center gap-3 rounded-lg border bg-white p-3 min-w-[280px]">
-                <div className="h-12 w-12 rounded-lg overflow-hidden bg-muted shrink-0">
-                  <img src={item.gallery?.[0] || "/images/event-placeholder.jpg"} alt={item.title} className="h-full w-full object-cover" />
-                </div>
+                <EventImage src={item.gallery?.[0]} title={item.title} className="h-12 w-12 rounded-lg shrink-0" />
                 <div className="flex-1 min-w-0">
                   <p className="font-medium text-sm truncate">{item.title}</p>
                   <p className="text-xs text-muted-foreground">
@@ -213,9 +212,7 @@ export default function MyReviewsTab() {
             <Card key={review.id}>
               <CardContent className="p-6">
                 <div className="flex items-center gap-4 mb-4">
-                  <div className="h-14 w-14 rounded-lg overflow-hidden bg-muted shrink-0">
-                    <img src={review.event?.gallery?.[0] || "/images/event-placeholder.jpg"} alt={review.event?.title || "Event"} className="h-full w-full object-cover" />
-                  </div>
+                  <EventImage src={review.event?.gallery?.[0]} title={review.event?.title} className="h-14 w-14 rounded-lg shrink-0" />
                   <div className="flex-1">
                     <p className="font-semibold">{review.event?.title}</p>
                     <p className="text-sm text-muted-foreground">
@@ -255,9 +252,7 @@ export default function MyReviewsTab() {
             <CardContent className="p-8 space-y-6">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
-                  <div className="h-12 w-12 rounded-lg overflow-hidden bg-muted">
-                    <img src={selectedPending.gallery?.[0] || "/images/event-placeholder.jpg"} alt={selectedPending.title} className="h-full w-full object-cover" />
-                  </div>
+                  <EventImage src={selectedPending.gallery?.[0]} title={selectedPending.title} className="h-12 w-12 rounded-lg" />
                   <div>
                     <h3 className="text-lg font-bold">Write a Review</h3>
                     <p className="text-sm text-muted-foreground">{selectedPending.title} - {new Date(selectedPending.eventDate).toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" })}</p>

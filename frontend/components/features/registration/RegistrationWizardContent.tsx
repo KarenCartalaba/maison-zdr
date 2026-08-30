@@ -13,6 +13,7 @@ import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
 import { Field, FieldError, FieldGroup, FieldLabel } from "@/components/ui/field";
 import { ArrowLeft, Check, User, Users, ClipboardCheck, Trash2, Loader2 } from "lucide-react";
+import EventImage from "@/components/ui/event-image";
 import Link from "next/link";
 
 const STEPS = [
@@ -160,7 +161,7 @@ export default function RegistrationWizardContent() {
             <div className="text-center space-y-2">
               <p className="text-sm font-medium text-muted-foreground uppercase tracking-wide">Registration Confirmed</p>
               <h2 className="text-2xl font-bold text-[#1a5c2a]">
-                You&apos;re on the list for Cocktail Night.
+                You&apos;re on the list for {eventData?.title || "this event"}.
               </h2>
             </div>
 
@@ -477,13 +478,7 @@ export default function RegistrationWizardContent() {
         <div className="lg:col-span-1">
           <div className="sticky top-24">
             <Card className="border shadow-md overflow-hidden">
-              <div className="aspect-video bg-muted">
-                <img
-                  src={eventData?.gallery?.[0] || "/images/event-placeholder.jpg"}
-                  alt={eventData?.title || "Event"}
-                  className="w-full h-full object-cover"
-                />
-              </div>
+              <EventImage src={eventData?.gallery?.[0]} title={eventData?.title} className="aspect-video" />
               <CardContent className="p-6 space-y-4">
                 <div>
                   <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Summary</p>

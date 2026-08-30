@@ -3,6 +3,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Calendar, MapPin } from "lucide-react";
+import EventImage from "@/components/ui/event-image";
 import type { Event } from "@/types";
 
 interface UpcomingEventsSectionProps {
@@ -31,12 +32,8 @@ export default function UpcomingEventsSection({ events = [] }: UpcomingEventsSec
           const regCount = event._count?.registrations || 0;
           return (
             <Card key={event.id} className="overflow-hidden border-none shadow-md">
-              <div className="relative h-48 bg-muted">
-                <img
-                  src={event.gallery?.[0] || "/images/event-placeholder.jpg"}
-                  alt={event.title}
-                  className="w-full h-full object-cover"
-                />
+              <div className="relative h-48">
+                <EventImage src={event.gallery?.[0]} title={event.title} className="h-48" />
                 <Badge className="absolute top-3 right-3 bg-[#1a5c2a] hover:bg-[#144a22]">
                   Upcoming
                 </Badge>

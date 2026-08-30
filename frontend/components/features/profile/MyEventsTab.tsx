@@ -7,6 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { CalendarDays, Grid, List } from "lucide-react";
 import { authService } from "@/services/auth.service";
 import { Skeleton } from "@/components/ui/skeleton";
+import EventImage from "@/components/ui/event-image";
 
 const FILTERS = ["All", "Upcoming", "Attended", "Cancelled"];
 
@@ -113,9 +114,7 @@ export default function MyEventsTab() {
         <div className="space-y-4">
           {filteredEvents.map((event) => (
             <div key={event.id} className="flex items-center gap-4 rounded-lg border p-4 hover:shadow-sm transition-shadow">
-              <div className="h-20 w-28 rounded-lg overflow-hidden bg-muted shrink-0">
-                <img src={event.gallery?.[0] || "/images/event-placeholder.jpg"} alt={event.title} className="h-full w-full object-cover" />
-              </div>
+              <EventImage src={event.gallery?.[0]} title={event.title} cacheKey={event.updatedAt} className="h-20 w-28 rounded-lg shrink-0" />
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2">
                   <h3 className="font-semibold text-lg">{event.title}</h3>

@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { serverFetchCached } from "@/lib/api";
+import { serverFetch } from "@/lib/api";
 import Footer from "@/components/common/Footer";
 import Navbar from "@/components/common/Navbar";
 import AboutSection from "@/components/features/home/AboutSection";
@@ -25,8 +25,8 @@ export default async function Page() {
   let news: News[] = [];
   try {
     const [eventsRes, newsRes] = await Promise.all([
-      serverFetchCached<{ data: { events: Event[] } }>("/api/events/v1/all", 300),
-      serverFetchCached<{ data: { news: News[] } }>("/api/news/v1/all", 300),
+      serverFetch<{ data: { events: Event[] } }>("/api/events/v1/all"),
+      serverFetch<{ data: { news: News[] } }>("/api/news/v1/all"),
     ]);
     events = eventsRes.data?.events ?? [];
     news = newsRes.data?.news ?? [];

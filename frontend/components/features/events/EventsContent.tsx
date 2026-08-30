@@ -7,8 +7,11 @@ import EventCard from "@/components/features/events/EventCard";
 import { eventService } from "@/services/event.service";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Input } from "@/components/ui/input";
+import { Pagination } from "@/components/ui/pagination";
 import { Search } from "lucide-react";
 import type { Event } from "@/types";
+
+const ITEMS_PER_PAGE = 6;
 
 interface EventsContentProps {
   initialEvents?: Event[];
@@ -19,6 +22,7 @@ export default function EventsContent({ initialEvents = [] }: EventsContentProps
   const [events, setEvents] = useState<Event[]>(initialEvents);
   const [loading, setLoading] = useState(initialEvents.length === 0);
   const [searchTerm, setSearchTerm] = useState("");
+  const [currentPage, setCurrentPage] = useState(1);
 
   useEffect(() => {
     if (initialEvents.length > 0) return; // Already have SSR data
@@ -53,6 +57,16 @@ export default function EventsContent({ initialEvents = [] }: EventsContentProps
       return types.includes(e.eventType);
     });
 
+  const totalPages = Math.max(1, Math.ceil(filteredEvents.length / ITEMS_PER_PAGE));
+  const paginatedEvents = filteredEvents.slice(
+    (currentPage - 1) * ITEMS_PER_PAGE,
+    currentPage * ITEMS_PER_PAGE
+  );
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchTerm, selectedCategory]);
+
   return (
     <>
       <EventHeroBanner />
@@ -86,9 +100,14 @@ export default function EventsContent({ initialEvents = [] }: EventsContentProps
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-8">
-            {filteredEvents.map((event) => (
+            {paginatedEvents.map((event) => (
               <EventCard key={event.id} event={event} />
             ))}
+          </div>
+        )}
+        {filteredEvents.length > 0 && (
+          <div className="mt-8">
+            <Pagination currentPage={currentPage} totalPages={totalPages} onPageChange={setCurrentPage} />
           </div>
         )}
         {!loading && filteredEvents.length === 0 && (
