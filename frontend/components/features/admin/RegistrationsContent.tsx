@@ -322,13 +322,9 @@ export default function RegistrationsContent() {
                       </td>
                       <td className="px-6 py-3">
                         <DropdownMenu>
-                          <DropdownMenuTrigger
-                            render={
-                              <Button variant="ghost" size="sm">
-                                <MoreHorizontal className="h-4 w-4" />
-                              </Button>
-                            }
-                          />
+                          <DropdownMenuTrigger className="inline-flex items-center justify-center h-7 w-7 rounded-md hover:bg-muted text-muted-foreground">
+                            <MoreHorizontal className="h-4 w-4" />
+                          </DropdownMenuTrigger>
                           <DropdownMenuContent>
                             <DropdownMenuLabel>Change Status</DropdownMenuLabel>
                             <DropdownMenuSeparator />

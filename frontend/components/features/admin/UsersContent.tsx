@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -13,7 +13,19 @@ import {
   DropdownMenuLabel,
   DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu";
-import { Search, Users, User, MoreHorizontal, Inbox } from "lucide-react";
+import {
+  Search,
+  Users,
+  User,
+  MoreHorizontal,
+  Inbox,
+  Shield,
+  Mail,
+  Calendar,
+  Ban,
+  X,
+  Loader2,
+} from "lucide-react";
 import { adminService } from "@/services/admin.service";
 import type { AdminUser, UserStats } from "@/types";
 
@@ -80,13 +92,20 @@ export default function UsersContent() {
   const [users, setUsers] = useState<AdminUser[]>([]);
   const [stats, setStats] = useState<UserStats | null>(null);
   const [loading, setLoading] = useState(true);
+  const [isSearching, setIsSearching] = useState(false);
   const [search, setSearch] = useState("");
   const [activeFilter, setActiveFilter] = useState("ALL");
   const [actionLoading, setActionLoading] = useState<string | null>(null);
+  const [selectedUser, setSelectedUser] = useState<AdminUser | null>(null);
+  const searchTimer = useRef<NodeJS.Timeout | null>(null);
 
-  const fetchData = async (role?: string, searchTerm?: string) => {
+  const fetchData = async (role?: string, searchTerm?: string, isInitial = false) => {
     try {
-      setLoading(true);
+      if (isInitial) {
+        setLoading(true);
+      } else {
+        setIsSearching(true);
+      }
       const response = await adminService.getUsers({
         role: role !== "ALL" ? role : undefined,
         search: searchTerm || undefined,
@@ -99,21 +118,25 @@ export default function UsersContent() {
       console.error("Failed to fetch users:", error);
     } finally {
       setLoading(false);
+      setIsSearching(false);
     }
   };
 
   useEffect(() => {
-    fetchData(activeFilter, search);
+    fetchData(activeFilter, search, true);
   }, []);
 
   const handleFilterChange = (filter: string) => {
     setActiveFilter(filter);
-    fetchData(filter, search);
+    fetchData(filter, search, true);
   };
 
   const handleSearch = (value: string) => {
     setSearch(value);
-    fetchData(activeFilter, value);
+    if (searchTimer.current) clearTimeout(searchTimer.current);
+    searchTimer.current = setTimeout(() => {
+      fetchData(activeFilter, value);
+    }, 300);
   };
 
   const handleRoleChange = async (id: string, role: string) => {
@@ -135,6 +158,18 @@ export default function UsersContent() {
       fetchData(activeFilter, search);
     } catch (error) {
       console.error("Failed to verify user:", error);
+    } finally {
+      setActionLoading(null);
+    }
+  };
+
+  const handleSuspendUser = async (id: string) => {
+    try {
+      setActionLoading(id);
+      await adminService.suspendUser(id);
+      fetchData(activeFilter, search);
+    } catch (error) {
+      console.error("Failed to suspend/unsuspend user:", error);
     } finally {
       setActionLoading(null);
     }
@@ -210,6 +245,7 @@ export default function UsersContent() {
             onChange={(e) => handleSearch(e.target.value)}
             className="border-0 bg-transparent outline-none w-full"
           />
+          {isSearching && <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />}
         </div>
         <div className="flex gap-2">
           {FILTER_OPTIONS.map((filter) => (
@@ -305,16 +341,18 @@ export default function UsersContent() {
                       </td>
                       <td className="px-6 py-3">
                         <DropdownMenu>
-                          <DropdownMenuTrigger
-                            render={
-                              <Button variant="ghost" size="sm">
-                                <MoreHorizontal className="h-4 w-4" />
-                              </Button>
-                            }
-                          />
+                          <DropdownMenuTrigger className="inline-flex items-center justify-center h-7 w-7 rounded-md hover:bg-muted text-muted-foreground">
+                            <MoreHorizontal className="h-4 w-4" />
+                          </DropdownMenuTrigger>
                           <DropdownMenuContent>
-                            <DropdownMenuLabel>Change Role</DropdownMenuLabel>
+                            <DropdownMenuItem
+                              onClick={() => setSelectedUser(u)}
+                              disabled={actionLoading === u.id}
+                            >
+                              View Profile
+                            </DropdownMenuItem>
                             <DropdownMenuSeparator />
+                            <DropdownMenuLabel>Change Role</DropdownMenuLabel>
                             <DropdownMenuItem
                               onClick={() => handleRoleChange(u.id, "ADMIN")}
                               disabled={actionLoading === u.id}
@@ -333,17 +371,21 @@ export default function UsersContent() {
                             >
                               Make User
                             </DropdownMenuItem>
+                            <DropdownMenuSeparator />
                             {!u.emailVerified && (
-                              <>
-                                <DropdownMenuSeparator />
-                                <DropdownMenuItem
-                                  onClick={() => handleVerifyUser(u.id)}
-                                  disabled={actionLoading === u.id}
-                                >
-                                  Verify User
-                                </DropdownMenuItem>
-                              </>
+                              <DropdownMenuItem
+                                onClick={() => handleVerifyUser(u.id)}
+                                disabled={actionLoading === u.id}
+                              >
+                                Verify User
+                              </DropdownMenuItem>
                             )}
+                            <DropdownMenuItem
+                              onClick={() => handleSuspendUser(u.id)}
+                              disabled={actionLoading === u.id}
+                            >
+                              {u.suspended ? "Unsuspend User" : "Suspend User"}
+                            </DropdownMenuItem>
                             <DropdownMenuSeparator />
                             <DropdownMenuItem
                               onClick={() => handleDeleteUser(u.id, u.name)}
@@ -362,6 +404,114 @@ export default function UsersContent() {
             </div>
           </CardContent>
         </Card>
+      )}
+
+      {/* View Profile Modal */}
+      {selectedUser && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/50"
+          onClick={() => setSelectedUser(null)}
+        >
+          <div
+            className="bg-background rounded-lg p-6 max-w-md w-full mx-4 shadow-lg"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center justify-between mb-6">
+              <h2 className="text-lg font-bold">User Profile</h2>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setSelectedUser(null)}
+              >
+                <X className="h-4 w-4" />
+              </Button>
+            </div>
+
+            <div className="flex flex-col items-center mb-6">
+              <div className="h-16 w-16 rounded-full bg-muted flex items-center justify-center mb-3">
+                <User className="h-8 w-8 text-muted-foreground" />
+              </div>
+              <h3 className="text-xl font-bold">{selectedUser.name}</h3>
+              <p className="text-sm text-muted-foreground">{selectedUser.email}</p>
+            </div>
+
+            <div className="space-y-4">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                  <Shield className="h-4 w-4" />
+                  Role
+                </div>
+                <Badge
+                  variant={selectedUser.role === "ADMIN" ? "default" : selectedUser.role === "MODERATOR" ? "default" : "secondary"}
+                  className={
+                    selectedUser.role === "ADMIN"
+                      ? "bg-[#1a5c2a]"
+                      : selectedUser.role === "MODERATOR"
+                        ? "bg-blue-600"
+                        : ""
+                  }
+                >
+                  {selectedUser.role}
+                </Badge>
+              </div>
+
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                  <Mail className="h-4 w-4" />
+                  Email Status
+                </div>
+                <Badge
+                  variant={selectedUser.emailVerified ? "outline" : "secondary"}
+                  className={
+                    selectedUser.emailVerified
+                      ? "text-[#1a5c2a] border-[#1a5c2a]"
+                      : ""
+                  }
+                >
+                  {selectedUser.emailVerified ? "Verified" : "Pending"}
+                </Badge>
+              </div>
+
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                  <Ban className="h-4 w-4" />
+                  Suspended
+                </div>
+                <Badge
+                  variant={selectedUser.suspended ? "destructive" : "outline"}
+                >
+                  {selectedUser.suspended ? "Yes" : "No"}
+                </Badge>
+              </div>
+
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                  <Users className="h-4 w-4" />
+                  Registrations
+                </div>
+                <span className="text-sm font-medium">
+                  {selectedUser._count.registrations}
+                </span>
+              </div>
+
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                  <Calendar className="h-4 w-4" />
+                  Member Since
+                </div>
+                <span className="text-sm font-medium">
+                  {formatDate(selectedUser.createdAt)}
+                </span>
+              </div>
+            </div>
+
+            <div className="mt-6 flex justify-end">
+              <Button variant="outline" onClick={() => setSelectedUser(null)}>
+                Close
+              </Button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );

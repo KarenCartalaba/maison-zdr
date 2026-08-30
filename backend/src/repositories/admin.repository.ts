@@ -325,7 +325,7 @@ export class AdminRepository {
     return prisma.user.findMany({
       where,
       select: {
-        id: true, name: true, email: true, role: true, emailVerified: true, createdAt: true,
+        id: true, name: true, email: true, role: true, emailVerified: true, suspended: true, createdAt: true,
         _count: { select: { registrations: true } },
       },
       orderBy: { createdAt: "desc" },
@@ -351,6 +351,7 @@ export class AdminRepository {
         name: true,
         email: true,
         role: true,
+        suspended: true,
         emailVerified: true,
         profilePic: true,
         phone: true,

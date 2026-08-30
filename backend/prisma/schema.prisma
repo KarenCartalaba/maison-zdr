@@ -57,6 +57,7 @@ model User {
   updatedAt     DateTime  @updatedAt
 
   role          Role      @default(USER)
+  suspended     Boolean   @default(false)
   tokens        Token[]
   events        Event[]
   registrations Registration[]

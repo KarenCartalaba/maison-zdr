@@ -152,6 +152,7 @@ export interface AdminUser {
   email: string;
   role: "USER" | "ADMIN" | "MODERATOR";
   emailVerified?: string | null;
+  suspended?: boolean;
   createdAt: string;
   _count: { registrations: number };
 }

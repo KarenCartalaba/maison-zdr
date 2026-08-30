@@ -144,6 +144,13 @@ export const adminService = {
     return response.data;
   },
 
+  suspendUser: async (id: string) => {
+    const response = await axiosInstance.put<ApiResponse<{ suspended: boolean }>>(
+      API_ENDPOINTS.ADMIN.USER_SUSPEND(id)
+    );
+    return response.data;
+  },
+
   deleteUser: async (id: string) => {
     const response = await axiosInstance.delete<ApiResponse>(
       API_ENDPOINTS.ADMIN.USER_DELETE(id)

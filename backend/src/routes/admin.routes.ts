@@ -193,6 +193,13 @@ router.put(
   adminController.verifyUser
 );
 
+router.put(
+  "/v1/users/:id/suspend",
+  authMiddleware.execute,
+  permittedRole([Role.ADMIN]),
+  adminController.suspendUser
+);
+
 router.delete(
   "/v1/users/:id",
   authMiddleware.execute,

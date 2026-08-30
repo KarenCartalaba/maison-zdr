@@ -8,7 +8,10 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Plus, Pencil, Trash2, Loader2, LayoutGrid, List } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { Pagination } from "@/components/ui/pagination";
 import type { Event } from "@/types";
+
+const ITEMS_PER_PAGE = 6;
 
 interface AdminEventsContentProps {
   initialEvents?: any[];
@@ -19,6 +22,7 @@ export default function AdminEventsContent({ initialEvents = [] }: AdminEventsCo
   const [isLoading, setIsLoading] = useState(initialEvents.length === 0);
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
   const [activeTab, setActiveTab] = useState<"all" | "ongoing" | "upcoming" | "past" | "cancelled">("all");
+  const [currentPage, setCurrentPage] = useState(1);
 
   const now = new Date();
 
@@ -39,6 +43,12 @@ export default function AdminEventsContent({ initialEvents = [] }: AdminEventsCo
         return true;
     }
   });
+
+  const totalPages = Math.max(1, Math.ceil(filteredEvents.length / ITEMS_PER_PAGE));
+  const paginatedEvents = filteredEvents.slice(
+    (currentPage - 1) * ITEMS_PER_PAGE,
+    currentPage * ITEMS_PER_PAGE
+  );
 
   const eventTypeLabels: Record<string, string> = {
     FORMAL: "Formal",
@@ -68,13 +78,39 @@ export default function AdminEventsContent({ initialEvents = [] }: AdminEventsCo
     fetchEvents();
   }, [initialEvents.length]);
 
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [activeTab]);
+
   const handleDelete = async (id: string) => {
     if (!confirm("Are you sure you want to delete this event?")) return;
 
     try {
       const response = await eventService.delete(id);
       if (response.code === 200) {
-        setEvents(events.filter((e) => e.id !== id));
+        const newEvents = events.filter((e) => e.id !== id);
+        setEvents(newEvents);
+        // Clamp page if last item on current page was deleted
+        const newFilteredCount = newEvents.filter((event) => {
+          const eventDate = new Date(event.eventDate);
+          const deadline = new Date(event.deadline);
+          switch (activeTab) {
+            case "ongoing":
+              return !event.isCancelled && eventDate <= now && deadline >= now;
+            case "upcoming":
+              return !event.isCancelled && eventDate > now;
+            case "past":
+              return !event.isCancelled && eventDate < now;
+            case "cancelled":
+              return event.isCancelled;
+            default:
+              return true;
+          }
+        }).length;
+        const newTotalPages = Math.max(1, Math.ceil(newFilteredCount / ITEMS_PER_PAGE));
+        if (currentPage > newTotalPages) {
+          setCurrentPage(newTotalPages);
+        }
       }
     } catch (err) {
       console.error("Failed to delete event:", err);
@@ -162,7 +198,7 @@ export default function AdminEventsContent({ initialEvents = [] }: AdminEventsCo
               No events found. Create your first event!
             </div>
           ) : (
-            filteredEvents.map((event) => (
+            paginatedEvents.map((event) => (
               <Card key={event.id} className="overflow-hidden">
                 <div className="h-40 bg-muted">
                   {event.gallery?.[0] ? (
@@ -229,20 +265,19 @@ export default function AdminEventsContent({ initialEvents = [] }: AdminEventsCo
                     <th className="px-6 py-3 font-medium">TIME</th>
                     <th className="px-6 py-3 font-medium">VENUE</th>
                     <th className="px-6 py-3 font-medium">TYPE</th>
-                    <th className="px-6 py-3 font-medium">PRICE</th>
                     <th className="px-6 py-3 font-medium">STATUS</th>
-                    <th className="px-6 py-3 font-medium">ACTIONS</th>
+                    <th className="px-6 py-3 font-medium text-right">ACTIONS</th>
                   </tr>
                 </thead>
                 <tbody>
                   {filteredEvents.length === 0 ? (
                     <tr>
-                      <td colSpan={9} className="px-6 py-12 text-center text-muted-foreground">
+                      <td colSpan={8} className="px-6 py-12 text-center text-muted-foreground">
                         No events found. Create your first event!
                       </td>
                     </tr>
                   ) : (
-                    filteredEvents.map((event) => (
+                    paginatedEvents.map((event) => (
                       <tr key={event.id} className="border-b last:border-0 hover:bg-muted/50">
                         <td className="px-6 py-3">
                           <div className="h-10 w-14 rounded overflow-hidden bg-muted">
@@ -272,7 +307,7 @@ export default function AdminEventsContent({ initialEvents = [] }: AdminEventsCo
                           </Badge>
                         </td>
                         <td className="px-6 py-3">
-                          <div className="flex items-center gap-1">
+                          <div className="flex items-center justify-end gap-1">
                             <Link href={`/admin/events/${event.id}`}>
                               <Button variant="ghost" size="sm">···</Button>
                             </Link>
@@ -299,6 +334,12 @@ export default function AdminEventsContent({ initialEvents = [] }: AdminEventsCo
             </div>
           </CardContent>
         </Card>
+      )}
+      {/* Pagination */}
+      {filteredEvents.length > 0 && (
+        <div className="mt-6">
+          <Pagination currentPage={currentPage} totalPages={totalPages} onPageChange={setCurrentPage} />
+        </div>
       )}
     </div>
   );
