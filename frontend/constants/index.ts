@@ -81,6 +81,7 @@ export const API_ENDPOINTS = {
     USER_DETAIL: (id: string) => `/api/admin/v1/users/${id}`,
     USER_ROLE: (id: string) => `/api/admin/v1/users/${id}/role`,
     USER_VERIFY: (id: string) => `/api/admin/v1/users/${id}/verify`,
+    USER_SUSPEND: (id: string) => `/api/admin/v1/users/${id}/suspend`,
     USER_DELETE: (id: string) => `/api/admin/v1/users/${id}`,
     ANALYTICS: "/api/admin/v1/analytics/overview",
     DASHBOARD_STATS: "/api/admin/v1/dashboard/stats",

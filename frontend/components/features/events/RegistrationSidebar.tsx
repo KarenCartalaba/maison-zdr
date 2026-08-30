@@ -27,7 +27,7 @@ export default function RegistrationSidebar({
   isCancelled,
   deadline,
 }: RegistrationSidebarProps) {
-  const { user, isAuthenticated, isVerified } = useAuth();
+  const { user, isAuthenticated, isVerified, isLoading } = useAuth();
   const [alreadyRegistered, setAlreadyRegistered] = useState(false);
   const [checkingRegistration, setCheckingRegistration] = useState(false);
   const available = maxParticipants - registeredCount;
@@ -105,7 +105,11 @@ export default function RegistrationSidebar({
         </div>
 
         {/* Registration button logic */}
-        {!isAuthenticated ? (
+        {isLoading || checkingRegistration ? (
+          <Button className="w-full" disabled>
+            Loading...
+          </Button>
+        ) : !isAuthenticated ? (
           <Link href="/login">
             <Button className="w-full bg-[#1a5c2a] hover:bg-[#144a22]">
               Login to Register

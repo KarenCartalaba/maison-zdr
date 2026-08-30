@@ -22,6 +22,7 @@ interface ProfileContentProps {
 
 export default function ProfileContent({ initialStats = null }: ProfileContentProps) {
   const [activeTab, setActiveTab] = useState<Tab>("events");
+  const [tabKey, setTabKey] = useState(0);
   const [profileStats, setProfileStats] = useState(initialStats);
 
   useEffect(() => {
@@ -31,8 +32,14 @@ export default function ProfileContent({ initialStats = null }: ProfileContentPr
     }).catch(() => {});
   }, [initialStats]);
 
+  const handleTabChange = useCallback((tab: Tab) => {
+    setActiveTab(tab);
+    setTabKey((prev) => prev + 1);
+  }, []);
+
   const handleEditProfile = useCallback(() => {
     setActiveTab("settings");
+    setTabKey((prev) => prev + 1);
   }, []);
 
   return (
@@ -41,11 +48,11 @@ export default function ProfileContent({ initialStats = null }: ProfileContentPr
       <div className="my-6 border-t" />
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         <div className="lg:col-span-2">
-          <ProfileTabs activeTab={activeTab} onTabChange={setActiveTab} />
+          <ProfileTabs activeTab={activeTab} onTabChange={handleTabChange} />
           <div className="py-6">
-            {activeTab === "events" && <MyEventsTab />}
-            {activeTab === "reviews" && <MyReviewsTab />}
-            {activeTab === "settings" && <SettingsTab />}
+            {activeTab === "events" && <MyEventsTab key={`events-${tabKey}`} />}
+            {activeTab === "reviews" && <MyReviewsTab key={`reviews-${tabKey}`} />}
+            {activeTab === "settings" && <SettingsTab key={`settings-${tabKey}`} />}
           </div>
         </div>
         <div className="lg:col-span-1">

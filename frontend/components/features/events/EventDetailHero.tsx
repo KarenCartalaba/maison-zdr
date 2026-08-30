@@ -1,5 +1,6 @@
 import { ArrowLeft } from "lucide-react";
 import Link from "next/link";
+import EventImage from "@/components/ui/event-image";
 
 interface EventDetailHeroProps {
   title: string;
@@ -9,12 +10,7 @@ interface EventDetailHeroProps {
 export default function EventDetailHero({ title, imageUrl }: EventDetailHeroProps) {
   return (
     <section className="relative h-[300px] md:h-[400px]">
-      {/* TODO: Replace with actual event image from imageUrl prop */}
-      <img
-        src={imageUrl || "/images/event-default.jpg"}
-        alt={title}
-        className="w-full h-full object-cover"
-      />
+      <EventImage src={imageUrl} title={title} className="h-full" />
       <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
       <div className="absolute bottom-0 left-0 p-8">
         <Link

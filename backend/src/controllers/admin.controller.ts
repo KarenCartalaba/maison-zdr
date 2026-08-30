@@ -25,6 +25,7 @@ import {
   GetUserService,
   VerifyUserService,
   DeleteUserService,
+  SuspendUserService,
   GetAnalyticsOverviewService,
 } from "@/services/admin";
 import { TriggerRemindersService } from "@/services/email/event-reminder-service";
@@ -193,6 +194,12 @@ export class AdminController {
   public verifyUser = async (req: Request, res: Response) => {
     const { id } = req.params as { id: string };
     const result = await VerifyUserService(id);
+    return res.status(result.code).json(result);
+  };
+
+  public suspendUser = async (req: Request, res: Response) => {
+    const { id } = req.params as { id: string };
+    const result = await SuspendUserService(id);
     return res.status(result.code).json(result);
   };
 

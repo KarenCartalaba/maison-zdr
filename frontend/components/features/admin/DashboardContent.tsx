@@ -5,6 +5,7 @@ import Link from "next/link";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import EventImage from "@/components/ui/event-image";
 import {
   Table,
   TableHeader,
@@ -74,8 +75,8 @@ const upcomingColumns: ColumnDef<typeof features, any>[] = [
     header: "Title",
     cell: ({ row }) => (
       <div className="flex items-center gap-3">
-        <div className="h-10 w-14 rounded overflow-hidden bg-muted">
-          <img src="/images/event-placeholder.jpg" alt="" className="h-full w-full object-cover" />
+        <div className="h-10 w-14 rounded overflow-hidden">
+          <EventImage src={row.original.gallery?.[0]} title={row.original.title} className="h-10 w-14 rounded" />
         </div>
         <span className="font-medium">{row.original.title}</span>
       </div>
