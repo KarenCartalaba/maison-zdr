@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { QrCode, Search, CheckCircle2, User, CalendarDays } from "lucide-react";
 import { adminService } from "@/services/admin.service";
 import type { AdminRegistration, CheckInEvent } from "@/types";
@@ -61,6 +62,7 @@ export default function CheckInsContent() {
   const [loadingEvents, setLoadingEvents] = useState(true);
   const [loadingCheckIn, setLoadingCheckIn] = useState(false);
   const [checkInLoadingId, setCheckInLoadingId] = useState<string | null>(null);
+  const [searchTerm, setSearchTerm] = useState("");
 
   useEffect(() => {
     const fetchEvents = async () => {
@@ -123,6 +125,12 @@ export default function CheckInsContent() {
   if (loadingEvents) return <LoadingSkeleton />;
 
   const selectedEvent = events.find((e) => e.id === selectedEventId);
+
+  const filteredRegistrations = registrations.filter(
+    (reg) =>
+      reg.user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      reg.user.email.toLowerCase().includes(searchTerm.toLowerCase())
+  );
 
   return (
     <div>
@@ -191,6 +199,17 @@ export default function CheckInsContent() {
         </div>
       )}
 
+      {/* Search */}
+      <div className="flex items-center gap-2 border rounded-lg px-3 py-2 mb-4 max-w-sm">
+        <Search className="h-4 w-4 text-muted-foreground" />
+        <Input
+          placeholder="Search by name or email..."
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
+          className="border-0 bg-transparent outline-none w-full shadow-none focus-visible:ring-0"
+        />
+      </div>
+
       {/* Check-in List */}
       <Card>
         <CardHeader>
@@ -207,7 +226,7 @@ export default function CheckInsContent() {
                 <div key={i} className="h-14 bg-muted rounded" />
               ))}
             </div>
-          ) : registrations.length === 0 ? (
+          ) : filteredRegistrations.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-16">
               <User className="h-12 w-12 text-muted-foreground mb-4" />
               <h3 className="text-lg font-medium mb-1">
@@ -230,7 +249,7 @@ export default function CheckInsContent() {
                   </tr>
                 </thead>
                 <tbody>
-                  {registrations.map((guest) => (
+                  {filteredRegistrations.map((guest) => (
                     <tr
                       key={guest.id}
                       className="border-b last:border-0 hover:bg-muted/50"

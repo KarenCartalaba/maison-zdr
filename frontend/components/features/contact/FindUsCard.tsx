@@ -10,7 +10,7 @@ export default function FindUsCard() {
         {/* TODO: Replace with actual Google Maps embed or interactive map */}
         <div className="aspect-video rounded-lg overflow-hidden bg-muted">
           <img
-            src="/images/map-placeholder.jpg"
+            src="/images/map.png"
             alt="Map showing our location"
             className="w-full h-full object-cover"
           />
