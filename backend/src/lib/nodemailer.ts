@@ -26,3 +26,12 @@ export const sendEmail = async ({ to, subject, html }: SendEmailOptions) => {
   });
   return info;
 };
+
+export const sendEmailWithTimeout = async ({ to, subject, html }: SendEmailOptions, timeoutMs = 5000) => {
+  return Promise.race([
+    sendEmail({ to, subject, html }),
+    new Promise<null>((_, reject) =>
+      setTimeout(() => reject(new Error("SMTP timeout")), timeoutMs)
+    ),
+  ]);
+};
