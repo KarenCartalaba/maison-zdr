@@ -39,11 +39,15 @@ const transporter = nodemailer.createTransport({
 
 ## Email Types
 
-| Type | Trigger | Template |
-|------|---------|----------|
-| Email verification | Signup | Link to `/verify-email?token=xxx` |
-| Password reset | Forgot password | Link to `/reset-password?token=xxx` |
-| Event reminder | Cron job (hourly) | Event details + registration link |
+| Type | Trigger | Template | Strategy |
+|------|---------|----------|----------|
+| Email verification | Signup | `verify-email.html` | `sendEmailWithTimeout` (fire-and-forget) |
+| Password reset | Forgot password | `password-reset.html` | `sendEmailWithTimeout` (fire-and-forget) |
+| Event registration | Registration | `event-registration.html` | Fire-and-forget |
+| Event cancellation | Cancellation | `event-cancellation.html` | Fire-and-forget |
+| Event reminder | Cron job (hourly) | `event-reminder.html` | `await sendEmail` |
+
+All templates use a unified styled design: green header (`#1a5c2a`), card layout, CTA buttons, info callouts, and footer.
 
 ## Event Reminder Cron
 

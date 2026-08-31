@@ -12,3 +12,5 @@ export { forgotPasswordSchema } from "./forgot-password-schema";
 export type { ForgotPasswordInput } from "./forgot-password-schema";
 export { changePasswordSchema } from "./change-password-schema";
 export type { ChangePasswordInput } from "./change-password-schema";
+export { resetPasswordSchema } from "./reset-password-schema";
+export type { ResetPasswordInput } from "./reset-password-schema";

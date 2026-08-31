@@ -12,3 +12,4 @@ export { ProfileStatsService } from "@/services/auth/profile-stats-service";
 export { MyReviewsService } from "@/services/auth/my-reviews-service";
 export { PendingReviewsService } from "@/services/auth/pending-reviews-service";
 export { GoogleLoginService } from "@/services/auth/google-login-service";
+export { ResetPasswordService } from "@/services/auth/reset-password-service";
