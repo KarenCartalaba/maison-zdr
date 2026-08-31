@@ -126,15 +126,15 @@ axios.interceptors.response.use(
 );
 ```
 
-## Tuning for Production
+## Trust Proxy (Required for Render)
 
-For production behind a reverse proxy (Render, Nginx), add trust proxy:
+`trust proxy` is configured in `src/app.ts` so `express-rate-limit` correctly reads the real client IP behind Render's reverse proxy:
 
 ```typescript
 app.set("trust proxy", 1); // Trust first proxy
 ```
 
-This ensures `req.ip` returns the real client IP, not the proxy IP.
+Without this, Render sets `X-Forwarded-For` headers and Express throws `ERR_ERL_UNEXPECTED_X_FORWARDED_FOR`.
 
 For multi-instance deployments, use a shared store (Redis) instead of in-memory:
 
