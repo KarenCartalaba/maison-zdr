@@ -1,7 +1,7 @@
 import crypto from "crypto";
 import { AuthRepository } from "@/repositories/auth.repository";
 import { renderTemplate } from "@/utils/template";
-import { sendEmail } from "@/lib/nodemailer";
+import { sendEmailWithTimeout } from "@/lib/nodemailer";
 
 const authRepo = new AuthRepository();
 
@@ -42,7 +42,7 @@ export async function ResendEmailVerificationService(email: string) {
       expiresAt: expiresAt.toUTCString(),
     });
 
-    sendEmail({
+    await sendEmailWithTimeout({
       to: user.email ?? email,
       subject: "Verify your email address",
       html,

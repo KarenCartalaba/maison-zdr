@@ -27,7 +27,7 @@ export const sendEmail = async ({ to, subject, html }: SendEmailOptions) => {
   return info;
 };
 
-export const sendEmailWithTimeout = async ({ to, subject, html }: SendEmailOptions, timeoutMs = 5000) => {
+export const sendEmailWithTimeout = async ({ to, subject, html }: SendEmailOptions, timeoutMs = 30000) => {
   return Promise.race([
     sendEmail({ to, subject, html }),
     new Promise<null>((_, reject) =>

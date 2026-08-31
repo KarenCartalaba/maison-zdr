@@ -2,7 +2,8 @@ import crypto from "crypto";
 import { AuthRepository } from "@/repositories/auth.repository";
 import { hashPassword } from "@/utils/password";
 import { renderTemplate } from "@/utils/template";
-import { sendEmail } from "@/lib/nodemailer";
+import { sendEmailWithTimeout } from "@/lib/nodemailer";
+import { cacheInvalidatePattern } from "@/lib/redis";
 
 const authRepo = new AuthRepository();
 
@@ -18,6 +19,9 @@ export async function SignupUserService(name: string, email: string, password: s
 
     const created = await authRepo.createUser({ name, email, password: hashPassword(password) });
 
+    // Invalidate admin users cache so new user appears immediately
+    await cacheInvalidatePattern("admin:users:*");
+
     await authRepo.createToken({ type: "EMAIL_VERIFY", token, expiresAt, userId: created.id });
 
     const emailVerificationURL = `${process.env.FRONTEND_URL}/verify-email?token=${encodeURIComponent(token)}`;
@@ -28,7 +32,7 @@ export async function SignupUserService(name: string, email: string, password: s
       expiresAt: expiresAt.toUTCString(),
     });
 
-    sendEmail({
+    await sendEmailWithTimeout({
       to: created.email ?? email,
       subject: "Verify your email address",
       html,
