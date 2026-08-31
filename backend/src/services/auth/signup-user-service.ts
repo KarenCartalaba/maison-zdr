@@ -2,7 +2,7 @@ import crypto from "crypto";
 import { AuthRepository } from "@/repositories/auth.repository";
 import { hashPassword } from "@/utils/password";
 import { renderTemplate } from "@/utils/template";
-import { sendEmailWithTimeout } from "@/lib/nodemailer";
+import { sendEmail } from "@/lib/nodemailer";
 
 const authRepo = new AuthRepository();
 
@@ -28,7 +28,7 @@ export async function SignupUserService(name: string, email: string, password: s
       expiresAt: expiresAt.toUTCString(),
     });
 
-    sendEmailWithTimeout({
+    sendEmail({
       to: created.email ?? email,
       subject: "Verify your email address",
       html,
