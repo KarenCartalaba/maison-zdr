@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { Controller, useForm } from "react-hook-form";
@@ -33,8 +33,8 @@ export default function ResetPasswordForm() {
   const searchParams = useSearchParams();
   const token = searchParams.get("token");
   const [isLoading, setIsLoading] = useState(false);
-  const [status, setStatus] = useState<"form" | "success" | "error">(
-    token ? "form" : "error"
+  const [status, setStatus] = useState<"validating" | "form" | "success" | "error">(
+    token ? "validating" : "error"
   );
   const [message, setMessage] = useState(
     token ? "" : "No reset token provided. Please request a new password reset link."
@@ -45,6 +45,27 @@ export default function ResetPasswordForm() {
     defaultValues: { password: "", confirmPassword: "" },
     mode: "onBlur",
   });
+
+  useEffect(() => {
+    if (!token) return;
+
+    const validateToken = async () => {
+      try {
+        const response = await authService.validateResetToken(token);
+        if (response.code === 200) {
+          setStatus("form");
+        } else {
+          setStatus("error");
+          setMessage(response.message);
+        }
+      } catch (error: any) {
+        setStatus("error");
+        setMessage(error.response?.data?.message || "Invalid or expired reset link");
+      }
+    };
+
+    validateToken();
+  }, [token]);
 
   const handleSubmit = async (data: ResetPasswordValues) => {
     if (!token) return;
@@ -73,6 +94,18 @@ export default function ResetPasswordForm() {
       setIsLoading(false);
     }
   };
+
+  if (status === "validating") {
+    return (
+      <div className="text-center space-y-4">
+        <Loader2 className="mx-auto h-12 w-12 animate-spin text-muted-foreground" />
+        <h2 className="text-xl font-bold">Validating reset link...</h2>
+        <p className="text-sm text-muted-foreground">
+          Please wait while we verify your reset token
+        </p>
+      </div>
+    );
+  }
 
   if (status === "success") {
     return (

@@ -22,6 +22,7 @@ router.get("/v1/me", authMiddleware.execute, authController.me);
 router.put("/v1/update-profile", authMiddleware.execute, authController.updateProfile);
 router.post("/v1/forgot-password", strictLimiter, validateSchema(forgotPasswordSchema), authController.forgotPassword);
 router.post("/v1/reset-password", strictLimiter, validateSchema(resetPasswordSchema), authController.resetPassword);
+router.get("/v1/reset-password", authController.validateResetToken);
 router.put("/v1/change-password", authMiddleware.execute, validateSchema(changePasswordSchema), authController.changePassword);
 router.get("/v1/my-registrations", authMiddleware.execute, myProfileController.getMyRegistrations);
 router.get("/v1/profile-stats", authMiddleware.execute, myProfileController.getProfileStats);

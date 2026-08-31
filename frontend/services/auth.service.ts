@@ -136,4 +136,11 @@ export const authService = {
     );
     return response.data;
   },
+
+  validateResetToken: async (token: string) => {
+    const response = await axiosInstance.get<ApiResponse>(
+      `${API_ENDPOINTS.AUTH.RESET_PASSWORD}?token=${encodeURIComponent(token)}`
+    );
+    return response.data;
+  },
 };
