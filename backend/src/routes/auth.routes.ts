@@ -2,7 +2,7 @@ import { Router } from "express";
 import { AuthController } from "@/controllers/auth.controller";
 import { MyProfileController } from "@/controllers/my-profile.controller";
 import { validateSchema } from "@/middlewares/validate-schema";
-import { signupSchema, loginSchema, verifyEmailSchema, resendVerificationSchema, refreshTokenSchema, forgotPasswordSchema, changePasswordSchema } from "@/schema/auth";
+import { signupSchema, loginSchema, verifyEmailSchema, resendVerificationSchema, refreshTokenSchema, forgotPasswordSchema, changePasswordSchema, resetPasswordSchema } from "@/schema/auth";
 import { AuthMiddleware } from "@/middlewares/auth-middleware";
 import { strictLimiter, moderateLimiter } from "@/lib/rate-limit";
 
@@ -21,6 +21,8 @@ router.post("/v1/logout", authController.logout);
 router.get("/v1/me", authMiddleware.execute, authController.me);
 router.put("/v1/update-profile", authMiddleware.execute, authController.updateProfile);
 router.post("/v1/forgot-password", strictLimiter, validateSchema(forgotPasswordSchema), authController.forgotPassword);
+router.post("/v1/reset-password", strictLimiter, validateSchema(resetPasswordSchema), authController.resetPassword);
+router.get("/v1/reset-password", authController.validateResetToken);
 router.put("/v1/change-password", authMiddleware.execute, validateSchema(changePasswordSchema), authController.changePassword);
 router.get("/v1/my-registrations", authMiddleware.execute, myProfileController.getMyRegistrations);
 router.get("/v1/profile-stats", authMiddleware.execute, myProfileController.getProfileStats);

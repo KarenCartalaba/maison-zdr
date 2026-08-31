@@ -132,3 +132,25 @@ return `${salt}:${hash}`;
 4. Backend sets `emailVerified` timestamp on user
 5. Login blocked until email verified (403 response)
 6. Google OAuth users auto-verified (no email check)
+
+## Password Reset Flow
+
+1. User requests reset at `POST /api/auth/v1/forgot-password` with email
+2. Backend generates random token, stores as `PASSWORD_RESET` (1h expiry)
+3. Password reset email sent (fire-and-forget with SMTP timeout)
+4. User clicks link → `/reset-password?token=xxx` frontend page
+5. User enters new password + confirmation
+6. Frontend submits to `POST /api/auth/v1/reset-password` with token + password
+7. Backend validates token (exists, not consumed, not revoked, not expired)
+8. Backend hashes new password, updates user, consumes token
+9. User redirected to login
+
+### Key Files
+
+| File | Purpose |
+|------|---------|
+| `src/services/auth/forgot-password-service.ts` | Generate token + send email |
+| `src/services/auth/reset-password-service.ts` | Verify token + update password |
+| `src/schema/auth/reset-password-schema.ts` | Validate token + password |
+| `frontend/app/(auth)/reset-password/page.tsx` | Reset password page |
+| `frontend/components/features/auth/ResetPasswordForm.tsx` | Password reset form |

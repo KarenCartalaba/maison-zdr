@@ -128,4 +128,19 @@ export const authService = {
     );
     return response.data;
   },
+
+  resetPassword: async (token: string, password: string) => {
+    const response = await axiosInstance.post<ApiResponse>(
+      API_ENDPOINTS.AUTH.RESET_PASSWORD,
+      { token, password }
+    );
+    return response.data;
+  },
+
+  validateResetToken: async (token: string) => {
+    const response = await axiosInstance.get<ApiResponse>(
+      `${API_ENDPOINTS.AUTH.RESET_PASSWORD}?token=${encodeURIComponent(token)}`
+    );
+    return response.data;
+  },
 };

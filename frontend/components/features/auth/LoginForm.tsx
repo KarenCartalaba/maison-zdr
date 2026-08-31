@@ -66,7 +66,6 @@ export default function LoginForm() {
           size: "large",
           text: "continue_with",
           theme: "outline",
-          width: "100%",
         });
       }
     };

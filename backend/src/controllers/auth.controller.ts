@@ -1,5 +1,5 @@
 import { Request, Response } from "express";
-import { SignupUserService, LoginCredentialsService, VerifyEmailService, RefreshTokenService, ResendEmailVerificationService, GetMeService, UpdateProfileService, ForgotPasswordService, ChangePasswordService, GoogleLoginService } from "@/services/auth";
+import { SignupUserService, LoginCredentialsService, VerifyEmailService, RefreshTokenService, ResendEmailVerificationService, GetMeService, UpdateProfileService, ForgotPasswordService, ChangePasswordService, GoogleLoginService, ResetPasswordService, ValidateResetTokenService } from "@/services/auth";
 import { TokenExpiry, toMilliseconds } from "@/lib/jwt";
 import { ENV } from "@/config/env";
 
@@ -84,6 +84,18 @@ export class AuthController {
   public forgotPassword = async (req: Request, res: Response) => {
     const { email } = req.body ?? {};
     const result = await ForgotPasswordService(email);
+    return res.status(result.code).json(result);
+  };
+
+  public resetPassword = async (req: Request, res: Response) => {
+    const { token, password } = req.body ?? {};
+    const result = await ResetPasswordService(token, password);
+    return res.status(result.code).json(result);
+  };
+
+  public validateResetToken = async (req: Request, res: Response) => {
+    const token = req.query.token as string;
+    const result = await ValidateResetTokenService(token);
     return res.status(result.code).json(result);
   };
 

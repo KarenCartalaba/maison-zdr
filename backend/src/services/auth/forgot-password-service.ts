@@ -1,5 +1,6 @@
+import crypto from "crypto";
 import { AuthRepository } from "@/repositories/auth.repository";
-import { hashPassword } from "@/utils/password";
+import { renderTemplate } from "@/utils/template";
 import { sendEmail } from "@/lib/nodemailer";
 import { ENV } from "@/config/env";
 
@@ -10,14 +11,12 @@ export async function ForgotPasswordService(email: string) {
     const user = await authRepo.findUserByEmail(email);
     if (!user) {
       // Don't reveal if email exists
-      return { code: 200, status: "success", message: "If an account exists with this email, you will receive a password reset link." };
+      return { code: 200, status: "success", message: "If an account exists with that email, you will receive a password reset link." };
     }
 
-    // Generate a simple token (in production, use JWT or crypto)
     const token = Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
     const expiresAt = new Date(Date.now() + 60 * 60 * 1000); // 1 hour
 
-    // Store token
     await authRepo.createToken({
       type: "PASSWORD_RESET",
       token,
@@ -25,18 +24,24 @@ export async function ForgotPasswordService(email: string) {
       userId: user.id,
     });
 
-    // Send email (don't block on failure)
     const resetUrl = `${ENV.FRONTEND_URL}/reset-password?token=${token}`;
+
+    const html = renderTemplate("password-reset.html", {
+      name: user.name ?? "there",
+      resetUrl,
+      expiresAt: expiresAt.toUTCString(),
+    });
+
     sendEmail({
       to: user.email,
-      subject: "Password Reset Request",
-      html: `<p>Click <a href="${resetUrl}">here</a> to reset your password. This link expires in 1 hour.</p>`,
-    }).catch(console.error);
+      subject: "Reset Your Password",
+      html,
+    }).catch((err) => console.error("Failed to send password reset email:", err));
 
     return {
       code: 200,
       status: "success",
-      message: "If an account exists with this email, you will receive a password reset link.",
+      message: "If an account exists with that email, you will receive a password reset link.",
     };
   } catch (error) {
     console.error("ForgotPasswordService error", error);

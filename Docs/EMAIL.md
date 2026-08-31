@@ -39,11 +39,15 @@ const transporter = nodemailer.createTransport({
 
 ## Email Types
 
-| Type | Trigger | Template |
-|------|---------|----------|
-| Email verification | Signup | Link to `/verify-email?token=xxx` |
-| Password reset | Forgot password | Link to `/reset-password?token=xxx` |
-| Event reminder | Cron job (hourly) | Event details + registration link |
+| Type | Trigger | Template | Strategy |
+|------|---------|----------|----------|
+| Email verification | Signup | `verify-email.html` | `sendEmailWithTimeout` (fire-and-forget) |
+| Password reset | Forgot password | `password-reset.html` | `sendEmailWithTimeout` (fire-and-forget) |
+| Event registration | Registration | `event-registration.html` | Fire-and-forget |
+| Event cancellation | Cancellation | `event-cancellation.html` | Fire-and-forget |
+| Event reminder | Cron job (hourly) | `event-reminder.html` | `await sendEmail` |
+
+All templates use a unified styled design: green header (`#1a5c2a`), card layout, CTA buttons, info callouts, and footer.
 
 ## Event Reminder Cron
 
@@ -75,40 +79,30 @@ npm install -D @types/nodemailer
 
 ## SMTP Timeout Issue (Render Free Tier)
 
-On Render free tier, the first SMTP connection after cold start takes minutes. If `sendEmail` is `await`ed in a user-facing route, the HTTP response is blocked until SMTP connects or times out — causing 500 errors after long loading.
+On Render free tier, the first SMTP connection after cold start takes minutes. Two problems:
 
-### Solution: Two strategies in `src/lib/nodemailer.ts`
+1. **`await sendEmail`** blocks the HTTP response — causes 500 errors after long loading
+2. **`sendEmailWithTimeout` with short timeout** (5s) kills the SMTP connection before it can establish — email never sends
 
-**1. `sendEmailWithTimeout`** — for critical emails (signup verification, resend verification). Races the SMTP call against a 5s timeout. User still gets an immediate response even if SMTP is slow.
+### Solution: Fire-and-forget `sendEmail` (no timeout)
 
-```typescript
-export const sendEmailWithTimeout = async (opts, timeoutMs = 5000) => {
-  return Promise.race([
-    sendEmail(opts),
-    new Promise<null>((_, reject) =>
-      setTimeout(() => reject(new Error("SMTP timeout")), timeoutMs)
-    ),
-  ]);
-};
-```
-
-**2. Fire-and-forget `sendEmail`** — for non-critical emails (registration confirmation, cancellation, forgot password, contact form). The email sends in the background without blocking the response.
+All user-facing emails use `sendEmail` without `await` and without a timeout. The response is instant, and the email sends in the background — even if SMTP cold start takes minutes.
 
 ```typescript
-// No await — sends in background
+// No await, no timeout — sends in background, Gmail keeps the connection alive
 sendEmail({ to, subject, html }).catch(console.error);
 ```
 
-### Which strategy is used where
+### Which emails use this pattern
 
-| Email type | Strategy | Why |
-|-----------|----------|-----|
-| Signup verification | `sendEmailWithTimeout` (fire-and-forget) | Critical — but account is already created |
-| Resend verification | `sendEmailWithTimeout` (fire-and-forget) | Critical — token is already created |
-| Registration confirmation | Fire-and-forget | Nice-to-have — user can check My Registrations |
-| Cancellation | Fire-and-forget | Nice-to-have |
-| Forgot password | Fire-and-forget | Token is created regardless |
-| Contact form | Fire-and-forget | Message saved to DB regardless |
+| Email type | Pattern | Why |
+|-----------|---------|-----|
+| Signup verification | Fire-and-forget `sendEmail` | Account already created |
+| Resend verification | Fire-and-forget `sendEmail` | Token already created |
+| Registration confirmation | Fire-and-forget `sendEmail` | User can check My Registrations |
+| Cancellation | Fire-and-forget `sendEmail` | Registration already cancelled |
+| Forgot password | Fire-and-forget `sendEmail` | Token already created |
+| Contact form | Fire-and-forget `sendEmail` | Message saved to DB |
 | Event reminders | `await sendEmail` | Cron job — needs sent/failed tracking |
 
 ### Key principle
