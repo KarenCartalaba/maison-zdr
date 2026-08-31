@@ -1,3 +1,5 @@
+import dns from "dns";
+import net from "net";
 import nodemailer from "nodemailer";
 import { ENV } from "@/config/env";
 
@@ -5,10 +7,17 @@ const transporter = nodemailer.createTransport({
   host: ENV.SMTP.HOST,
   port: ENV.SMTP.PORT,
   secure: false,
-  family: 4,
   auth: {
     user: ENV.SMTP.USER,
     pass: ENV.SMTP.PASS,
+  },
+  tls: { rejectUnauthorized: true },
+  getSocket: (options: any, callback: any) => {
+    dns.resolve4(options.host, (err: any, addresses: string[]) => {
+      if (err) return callback(err);
+      const socket = net.createConnection({ host: addresses[0], port: options.port });
+      callback(null, { socket, host: options.host });
+    });
   },
 });
 

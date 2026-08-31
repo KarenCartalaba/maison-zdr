@@ -108,4 +108,4 @@ This applies all pending migrations without creating new ones (safe for producti
 - First request after spin-down takes ~30s
 - 750 hours/month runtime limit
 - No custom domains on free tier
-- **No IPv6 support** — SMTP must use `family: 4` to force IPv4 (see `src/lib/nodemailer.ts`)
+- **No IPv6 support** — SMTP uses `getSocket` with `dns.resolve4()` to force IPv4 connections (see `src/lib/nodemailer.ts`)

@@ -21,18 +21,25 @@ SMTP_FROM="your-email@gmail.com"
 
 ## Setup
 
-Uses `nodemailer` with transport configuration:
+Uses `nodemailer` with transport configuration and a custom `getSocket` to force IPv4 (Render doesn't support IPv6):
 
 ```typescript
+import dns from "dns";
+import net from "net";
 import nodemailer from "nodemailer";
 
 const transporter = nodemailer.createTransport({
   host: SMTP_HOST,
-  port: SMTP_PORT,
-  secure: false, // true for 465
-  auth: {
-    user: SMTP_USER,
-    pass: SMTP_PASS,
+  port: 587,
+  secure: false,
+  auth: { user: SMTP_USER, pass: SMTP_PASS },
+  tls: { rejectUnauthorized: true },
+  getSocket: (options: any, callback: any) => {
+    dns.resolve4(options.host, (err: any, addresses: string[]) => {
+      if (err) return callback(err);
+      const socket = net.createConnection({ host: addresses[0], port: options.port });
+      callback(null, { socket, host: options.host });
+    });
   },
 });
 ```
@@ -77,25 +84,19 @@ npm install nodemailer
 npm install -D @types/nodemailer
 ```
 
-## SMTP Timeout Issue (Render Free Tier)
+## SMTP on Render (IPv6 Fix)
 
-On Render free tier, SMTP connections to Gmail take minutes on cold start, and **Render does not support IPv6** — Nodemailer resolves `smtp.gmail.com` to an IPv6 address, causing `ENETUNREACH` errors.
+Render does not support IPv6. Nodemailer resolves hostnames via `dns.resolve4()` + `dns.resolve6()` independently and picks a random address — if IPv6 is picked, the connection fails with `ENETUNREACH` or hangs until timeout.
 
-### Solution
+**`family: 4` does NOT work** — nodemailer never forwards it to the DNS resolver or `net.connect()`.
 
-**1. Force IPv4** in `src/lib/nodemailer.ts`:
+### Solution: `getSocket` with `dns.resolve4()`
 
-```typescript
-const transporter = nodemailer.createTransport({
-  host: SMTP_HOST,
-  port: 587,
-  secure: false,
-  family: 4,  // Force IPv4 — Render doesn't support IPv6
-  auth: { user: SMTP_USER, pass: SMTP_PASS },
-});
-```
+Use the `getSocket` option to resolve only A records (IPv4) and create the TCP socket directly. This bypasses nodemailer's built-in DNS resolver entirely. See `src/lib/nodemailer.ts`.
 
-**2. `await sendEmailWithTimeout` with 30s timeout** for critical emails (signup, resend verification). Non-critical emails use fire-and-forget `sendEmail`.
+### Email sending strategies
+
+`await sendEmailWithTimeout` with 30s timeout for critical emails (signup, resend verification). Non-critical emails use fire-and-forget `sendEmail`.
 
 ### Which emails use which pattern
 
