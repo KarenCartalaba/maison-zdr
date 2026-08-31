@@ -6,6 +6,7 @@ import routes from '@/routes';
 import { globalLimiter } from "@/lib/rate-limit";
 
 const app = express();
+app.set('trust proxy', 1);
 
 app.use(cors({
   origin: ENV.FRONTEND_URL,

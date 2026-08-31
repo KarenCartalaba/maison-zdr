@@ -88,6 +88,10 @@ app.use(cors({
 }));
 ```
 
+## Trust Proxy
+
+`trust proxy` is enabled (`app.set("trust proxy", 1)`) so `express-rate-limit` reads the real client IP from `X-Forwarded-For` headers set by Render's reverse proxy.
+
 ## Database Migrations
 
 Neon database is serverless — migrations run via CLI:
