@@ -1,5 +1,5 @@
 import { ContactRepository } from "@/repositories/contact.repository";
-import { sendEmail } from "@/lib/nodemailer";
+import { sendEmail } from "@/lib/email";
 import { ENV } from "@/config/env";
 
 const contactRepo = new ContactRepository();

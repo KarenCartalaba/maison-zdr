@@ -2,7 +2,7 @@ import { RegistrationRepository } from "@/repositories/registration.repository";
 import { EventRepository } from "@/repositories/event.repository";
 import { AuthRepository } from "@/repositories/auth.repository";
 import { renderTemplate } from "@/utils/template";
-import { sendEmail } from "@/lib/nodemailer";
+import { sendEmail } from "@/lib/email";
 import { cacheGet, cacheSet, cacheInvalidate, cacheInvalidatePattern } from "@/lib/redis";
 
 const registrationRepo = new RegistrationRepository();

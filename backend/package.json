@@ -30,8 +30,8 @@
     "ioredis": "^6.0.0",
     "jsonwebtoken": "^9.0.3",
     "node-cron": "^4.6.0",
-    "nodemailer": "^8.0.5",
     "pg": "^8.20.0",
+    "resend": "^6.25.0",
     "tsdown": "^0.22.14",
     "zod": "^4.3.6"
   },
@@ -42,7 +42,6 @@
     "@types/express": "^5.0.6",
     "@types/jsonwebtoken": "^9.0.10",
     "@types/node": "^25.6.0",
-    "@types/nodemailer": "^8.0.0",
     "@types/pg": "^8.20.0",
     "@typescript-eslint/eslint-plugin": "^8.59.0",
     "@typescript-eslint/parser": "^8.59.0",

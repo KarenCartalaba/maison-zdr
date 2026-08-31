@@ -1,6 +1,6 @@
 import { prisma } from "@/lib/prisma";
 import { renderTemplate } from "@/utils/template";
-import { sendEmail } from "@/lib/nodemailer";
+import { sendEmail } from "@/lib/email";
 import { redis } from "@/lib/redis";
 
 /**

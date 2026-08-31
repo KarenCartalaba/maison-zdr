@@ -18,6 +18,10 @@ export const ENV = {
     PASS: process.env.SMTP_PASSWORD,
     FROM: process.env.SMTP_FROM,
   },
+  RESEND_API_KEY: process.env.RESEND_API_KEY || '',
+  EMAIL: {
+    FROM: process.env.EMAIL_FROM || 'Maison ZDR <onboarding@resend.dev>',
+  },
   CLOUD_NAME: process.env.CLOUDINARY_CLOUD_NAME,
   CLOUDINARY_API_KEY: process.env.CLOUDINARY_API_KEY,
   CLOUDINARY_SECRET_KEY: process.env.CLOUDINARY_SECRET_KEY,
