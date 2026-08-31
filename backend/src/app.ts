@@ -3,6 +3,7 @@ import cors from 'cors';
 import cookieParser from 'cookie-parser';
 import { ENV } from '@/config/env';
 import routes from '@/routes';
+import { globalLimiter } from "@/lib/rate-limit";
 
 const app = express();
 
@@ -24,7 +25,7 @@ app.get('/', (req: Request, res: Response) => {
   });
 });
 
-app.use('/api', routes);
+app.use('/api', globalLimiter, routes);
 
 app.use((req: Request, res: Response) => {
   res.status(404).json({

@@ -14,6 +14,7 @@ interface AuthContextType {
   signup: (data: SignupInput) => Promise<void>;
   logout: () => Promise<void>;
   refreshUser: () => Promise<void>;
+  updateUser: (patch: Partial<User>) => void;
   isAuthenticated: boolean;
   isAdmin: boolean;
   isModerator: boolean;
@@ -68,6 +69,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     } catch (e: any) {
       console.error("Failed to refresh user:", e);
     }
+  };
+
+  const updateUser = (patch: Partial<User>) => {
+    setUser((prev) => {
+      if (!prev) return prev;
+      const next = { ...prev, ...patch };
+      localStorage.setItem("user", JSON.stringify(next));
+      return next;
+    });
   };
 
   const login = async (data: LoginInput) => {
@@ -168,6 +178,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         signup,
         logout,
         refreshUser,
+        updateUser,
         isAuthenticated: !!user,
         isAdmin: user?.role?.toUpperCase() === "ADMIN",
         isModerator: user?.role?.toUpperCase() === "MODERATOR",

@@ -59,7 +59,9 @@ export async function UpdateProfileService(
           email: updated.email,
           role: updated.role,
           emailVerified: updated.emailVerified,
-          profilePic: (updated as any).profilePic,
+          profilePic: (updated as any).profilePic ?? null,
+          phone: updated.phone ?? null,
+          createdAt: updated.createdAt,
         },
       },
     };

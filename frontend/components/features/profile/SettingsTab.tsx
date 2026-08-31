@@ -36,7 +36,7 @@ const passwordSchema = z.object({
 type PasswordValues = z.infer<typeof passwordSchema>;
 
 export default function SettingsTab() {
-  const { user, refreshUser, isVerified } = useAuth();
+  const { user, updateUser, isVerified } = useAuth();
   const [isUpdating, setIsUpdating] = useState(false);
   const [isChangingPassword, setIsChangingPassword] = useState(false);
   const [showPasswordForm, setShowPasswordForm] = useState(false);
@@ -64,11 +64,13 @@ export default function SettingsTab() {
   const handleSaveChanges = async (data: ProfileValues) => {
     setIsUpdating(true);
     try {
-      await authService.updateProfile({
+      const response = await authService.updateProfile({
         name: `${data.firstName} ${data.lastName}`,
         email: data.email,
       });
-      await refreshUser();
+      if (response.code === 200 && response.data?.user) {
+        updateUser(response.data.user);
+      }
       toast.success("Profile updated successfully");
     } catch (error: any) {
       if (error.errors) {

@@ -74,6 +74,11 @@ axiosInstance.interceptors.response.use(
       error.message = error.response.data.message || error.message;
     }
 
+    // Attach rate limit message so toast.error(error.message) shows the real reason.
+    if (status === 429 && error.response?.data?.message) {
+      error.message = error.response.data.message;
+    }
+
     return Promise.reject(error);
   }
 );
