@@ -42,7 +42,7 @@ export default function AdminHeader() {
             </div>
             <div className="h-10 w-10 rounded-full bg-muted overflow-hidden">
               <img
-                src="/images/profile-placeholder.jpg"
+                src={user?.profilePic || "/images/profile-placeholder.jpg"}
                 alt={user?.name || "Admin"}
                 className="h-full w-full object-cover"
               />

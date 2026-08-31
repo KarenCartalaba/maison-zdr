@@ -13,7 +13,7 @@ interface ProfileHeaderProps {
 }
 
 export default function ProfileHeader({ onEditProfile, eventsAttended = 0 }: ProfileHeaderProps) {
-  const { user, isVerified, refreshUser } = useAuth();
+  const { user, isVerified, updateUser } = useAuth();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [uploading, setUploading] = useState(false);
 
@@ -35,8 +35,10 @@ export default function ProfileHeader({ onEditProfile, eventsAttended = 0 }: Pro
       const reader = new FileReader();
       reader.onload = async () => {
         try {
-          await authService.updateProfile({ imageBase64: reader.result as string });
-          await refreshUser();
+          const response = await authService.updateProfile({ imageBase64: reader.result as string });
+          if (response.code === 200 && response.data?.user) {
+            updateUser(response.data.user);
+          }
           toast.success("Profile picture updated");
         } catch {
           toast.error("Failed to update profile picture");

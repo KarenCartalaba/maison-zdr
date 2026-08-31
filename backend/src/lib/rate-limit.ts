@@ -18,10 +18,10 @@ export const moderateLimiter = rateLimit({
   message: { code: 429, status: "error", message: "Too many requests. Please try again later." },
 });
 
-// Global: 30 requests per minute — for all API routes
+// Global: 100 requests per minute — for all API routes (generous for admin dashboards)
 export const globalLimiter = rateLimit({
   windowMs: 60 * 1000,
-  limit: 30,
+  limit: 100,
   standardHeaders: "draft-7",
   legacyHeaders: false,
   message: { code: 429, status: "error", message: "Too many requests. Please slow down." },

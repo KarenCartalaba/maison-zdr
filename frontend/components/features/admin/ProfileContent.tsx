@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { Controller, useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -11,7 +11,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Field, FieldError, FieldGroup, FieldLabel } from "@/components/ui/field";
-import { User, Mail, Shield, Loader2 } from "lucide-react";
+import { User, Mail, Shield, Loader2, Camera } from "lucide-react";
 import { toast } from "sonner";
 
 const profileSchema = z.object({
@@ -24,8 +24,11 @@ const profileSchema = z.object({
 type ProfileValues = z.infer<typeof profileSchema>;
 
 export default function ProfileContent() {
-  const { user, refreshUser } = useAuth();
+  const { user, updateUser } = useAuth();
   const [isSaving, setIsSaving] = useState(false);
+  const [imageBase64, setImageBase64] = useState<string | null>(null);
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const form = useForm<ProfileValues>({
     resolver: zodResolver(profileSchema),
@@ -38,15 +41,36 @@ export default function ProfileContent() {
     mode: "onBlur",
   });
 
+  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error("Image must be less than 5MB");
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = () => {
+      const result = reader.result as string;
+      setImageBase64(result);
+      setPreviewUrl(result);
+    };
+    reader.readAsDataURL(file);
+  };
+
   const handleSave = async (data: ProfileValues) => {
     setIsSaving(true);
     try {
-      await authService.updateProfile({
+      const response = await authService.updateProfile({
         name: `${data.firstName} ${data.lastName}`,
         email: data.email,
         phone: data.phone,
+        imageBase64: imageBase64 || undefined,
       });
-      await refreshUser();
+      if (response.code === 200 && response.data?.user) {
+        updateUser(response.data.user);
+      }
       toast.success("Profile updated successfully");
     } catch (error: any) {
       if (error.errors) {
@@ -78,13 +102,27 @@ export default function ProfileContent() {
         <Card>
           <CardContent className="p-6">
             <div className="flex flex-col items-center text-center">
-              <div className="h-24 w-24 rounded-full bg-muted overflow-hidden mb-4">
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/*"
+                className="hidden"
+                onChange={handleImageChange}
+              />
+              <button
+                type="button"
+                onClick={() => fileInputRef.current?.click()}
+                className="relative h-24 w-24 rounded-full bg-muted overflow-hidden mb-4 group cursor-pointer"
+              >
                 <img
-                  src="/images/profile-placeholder.jpg"
+                  src={previewUrl || user?.profilePic || "/images/profile-placeholder.jpg"}
                   alt={user?.name || "Admin"}
                   className="h-full w-full object-cover"
                 />
-              </div>
+                <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center rounded-full">
+                  <Camera className="h-5 w-5 text-white" />
+                </div>
+              </button>
               <h2 className="text-lg font-bold">{user?.name || "Aurel Baz"}</h2>
               <p className="text-sm text-muted-foreground">{user?.email || "aurel@maisonzdr.com"}</p>
               <Badge className="mt-2 bg-[#1a5c2a]">Administrator</Badge>
