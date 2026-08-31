@@ -28,11 +28,11 @@ export async function SignupUserService(name: string, email: string, password: s
       expiresAt: expiresAt.toUTCString(),
     });
 
-    await sendEmail({
+    sendEmail({
       to: created.email ?? email,
       subject: "Verify your email address",
       html,
-    });
+    }).catch((err) => console.error("Failed to send verification email:", err));
 
     const { password: _, ...safeUser } = created;
     return {
