@@ -42,11 +42,11 @@ export async function ResendEmailVerificationService(email: string) {
       expiresAt: expiresAt.toUTCString(),
     });
 
-    await sendEmail({
+    sendEmail({
       to: user.email ?? email,
       subject: "Verify your email address",
       html,
-    });
+    }).catch((err) => console.error("Failed to resend verification email:", err));
 
     return {
       code: 200,

@@ -80,11 +80,11 @@ export async function RegisterForEventService(
         guestCount: String(effectiveGuestCount),
       });
 
-      await sendEmail({
+      sendEmail({
         to: user.email,
         subject: `Registration Confirmed: ${event.title}`,
         html,
-      }).catch(console.error);
+      }).catch((err) => console.error("Failed to send registration email:", err));
     }
 
     return {
@@ -127,11 +127,11 @@ export async function CancelRegistrationService(userId: string, eventId: string)
         eventName: event.title,
       });
 
-      await sendEmail({
+      sendEmail({
         to: user.email,
         subject: `Registration Cancelled: ${event.title}`,
         html,
-      }).catch(console.error);
+      }).catch((err) => console.error("Failed to send cancellation email:", err));
     }
 
     return {
