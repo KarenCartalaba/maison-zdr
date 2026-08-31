@@ -79,26 +79,23 @@ npm install -D @types/nodemailer
 
 ## SMTP Timeout Issue (Render Free Tier)
 
-On Render free tier, SMTP connections to Gmail take minutes on cold start. The challenge:
+On Render free tier, SMTP connections to Gmail take minutes on cold start, and **Render does not support IPv6** — Nodemailer resolves `smtp.gmail.com` to an IPv6 address, causing `ENETUNREACH` errors.
 
-- `await sendEmail` blocks the response → 500 errors after minutes of loading
-- Fire-and-forget `sendEmail` → Render may sleep the process before SMTP completes
-- `sendEmailWithTimeout` with short timeout (5s) → kills connection before SMTP establishes
+### Solution
 
-### Solution: `await sendEmailWithTimeout` with 30s timeout
-
-Critical emails (signup verification, resend verification) use `await sendEmailWithTimeout()` with a 30-second timeout. The user waits up to 30s (instead of minutes), and the process stays alive long enough for SMTP to complete.
+**1. Force IPv4** in `src/lib/nodemailer.ts`:
 
 ```typescript
-export const sendEmailWithTimeout = async (opts, timeoutMs = 30000) => {
-  return Promise.race([
-    sendEmail(opts),
-    new Promise<null>((_, reject) =>
-      setTimeout(() => reject(new Error("SMTP timeout")), timeoutMs)
-    ),
-  ]);
-};
+const transporter = nodemailer.createTransport({
+  host: SMTP_HOST,
+  port: 587,
+  secure: false,
+  family: 4,  // Force IPv4 — Render doesn't support IPv6
+  auth: { user: SMTP_USER, pass: SMTP_PASS },
+});
 ```
+
+**2. `await sendEmailWithTimeout` with 30s timeout** for critical emails (signup, resend verification). Non-critical emails use fire-and-forget `sendEmail`.
 
 ### Which emails use which pattern
 
