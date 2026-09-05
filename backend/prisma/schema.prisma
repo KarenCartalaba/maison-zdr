@@ -94,6 +94,7 @@ model Event {
   minParticipants Int      @default(0) @map("min_participants")
   maxParticipants Int      @map("max_participants")
   isCancelled     Boolean  @default(false) @map("is_cancelled")
+  allowReviewsNow Boolean  @default(false) @map("allow_reviews_now")
   eventType       EventType @default(SOCIAL) @map("event_type")
   gallery         String[]
   createdAt       DateTime @default(now())

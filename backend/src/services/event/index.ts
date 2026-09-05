@@ -67,6 +67,7 @@ export async function UpdateEventService(data: {
   maxParticipants?: number;
   eventType?: EventType;
   isCancelled?: boolean;
+  allowReviewsNow?: boolean;
   gallery?: string[];
 }) {
   try {

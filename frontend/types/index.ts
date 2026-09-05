@@ -22,6 +22,7 @@ export interface Event {
   minParticipants: number;
   maxParticipants: number;
   isCancelled: boolean;
+  allowReviewsNow: boolean;
   eventType: EventType;
   gallery: string[];
   createdAt: string;

@@ -809,6 +809,7 @@ const eventSettingsSchema = z.object({
   location: z.string().min(1, "Location is required"),
   maxParticipants: z.number().min(1, "Must be at least 1"),
   isCancelled: z.boolean(),
+  allowReviewsNow: z.boolean(),
 });
 
 type EventSettingsValues = z.infer<typeof eventSettingsSchema>;
@@ -824,6 +825,7 @@ function SettingsTab({ event }: { event: Event }) {
       location: event.location,
       maxParticipants: event.maxParticipants,
       isCancelled: event.isCancelled,
+      allowReviewsNow: event.allowReviewsNow ?? false,
     },
     mode: "onBlur",
   });
@@ -838,6 +840,7 @@ function SettingsTab({ event }: { event: Event }) {
         location: data.location,
         maxParticipants: data.maxParticipants,
         isCancelled: data.isCancelled,
+        allowReviewsNow: data.allowReviewsNow,
       });
       toast.success("Event updated successfully");
     } catch (error: any) {
@@ -927,6 +930,23 @@ function SettingsTab({ event }: { event: Event }) {
                       className="rounded"
                     />
                     <span className="text-sm">Mark as cancelled</span>
+                  </label>
+                </Field>
+              )}
+            />
+            <Controller
+              name="allowReviewsNow"
+              control={form.control}
+              render={({ field }) => (
+                <Field>
+                  <label className="flex items-center gap-2 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={field.value}
+                      onChange={field.onChange}
+                      className="rounded"
+                    />
+                    <span className="text-sm">Allow reviews now</span>
                   </label>
                 </Field>
               )}

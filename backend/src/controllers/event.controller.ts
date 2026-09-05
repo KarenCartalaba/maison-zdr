@@ -23,7 +23,7 @@ export class EventController {
   };
 
   public updateEvent = async (req: Request, res: Response) => {
-    const { id, title, description, location, eventDate, deadline, minParticipants, maxParticipants, eventType, isCancelled, gallery } = req.body ?? {};
+    const { id, title, description, location, eventDate, deadline, minParticipants, maxParticipants, eventType, isCancelled, allowReviewsNow, gallery } = req.body ?? {};
 
     const result = await UpdateEventService({
       id,
@@ -36,6 +36,7 @@ export class EventController {
       maxParticipants,
       eventType,
       isCancelled,
+      allowReviewsNow,
       gallery,
     });
     return res.status(result.code).json(result);

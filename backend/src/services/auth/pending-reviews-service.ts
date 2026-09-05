@@ -3,15 +3,20 @@ import { prisma } from "@/lib/prisma";
 export async function PendingReviewsService(userId: string) {
   try {
     // Find events the user registered for where:
-    // - user hasn't written a review yet
-    // - either checkedIn = true OR the event date has passed
+    // - registration is not cancelled
+    // - the event is not cancelled
+    // - either the event date has passed OR the admin force-opened reviews
     const registrations = await prisma.registration.findMany({
       where: {
         userId,
-        OR: [
-          { checkedIn: true },
-          { event: { eventDate: { lt: new Date() } } },
-        ],
+        status: { not: "CANCELLED" },
+        event: {
+          isCancelled: false,
+          OR: [
+            { eventDate: { lt: new Date() } },
+            { allowReviewsNow: true },
+          ],
+        },
       },
       include: {
         event: {
@@ -21,6 +26,7 @@ export async function PendingReviewsService(userId: string) {
             eventDate: true,
             location: true,
             gallery: true,
+            allowReviewsNow: true,
           },
         },
       },

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Controller, useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -23,12 +23,22 @@ const reviewSchema = z.object({
 
 type ReviewValues = z.infer<typeof reviewSchema>;
 
-export default function MyReviewsTab() {
+interface MyReviewsTabProps {
+  highlightEventId?: string | null;
+}
+
+// Consume-once guard that survives tab-switch remounts (ProfileContent
+// remounts this tab via tabKey, which would reset a plain ref).
+const consumedHighlightEventIds = new Set<string>();
+
+export default function MyReviewsTab({ highlightEventId = null }: MyReviewsTabProps) {
   const [activeFilter, setActiveFilter] = useState<"all" | "5stars">("all");
   const [showWriteModal, setShowWriteModal] = useState(false);
   const [selectedPending, setSelectedPending] = useState<any | null>(null);
   const [showSuccessAlert, setShowSuccessAlert] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [highlightedPendingId, setHighlightedPendingId] = useState<string | null>(null);
+  const highlightConsumedRef = useRef(false);
 
   // Real data state
   const [reviews, setReviews] = useState<any[]>([]);
@@ -65,6 +75,30 @@ export default function MyReviewsTab() {
     form.reset({ rating: 0, title: "", comment: "" });
     setShowWriteModal(true);
   };
+
+  // Deep-link consume-once: auto-open the Write modal for the linked event.
+  useEffect(() => {
+    if (!highlightEventId) return;
+    if (highlightConsumedRef.current || consumedHighlightEventIds.has(highlightEventId)) return;
+    if (loading) return;
+    highlightConsumedRef.current = true;
+    consumedHighlightEventIds.add(highlightEventId);
+    const match = pending.find(
+      (item: any) => item.id === highlightEventId || item.event?.id === highlightEventId
+    );
+    if (!match) return;
+    const isFuture = !!match.eventDate && new Date(match.eventDate) > new Date();
+    const eligible = !isFuture || match.event?.allowReviewsNow === true;
+    if (eligible) {
+      handleWriteReview(match);
+    } else {
+      setHighlightedPendingId(match.id);
+      document
+        .getElementById(`pending-${match.id}`)
+        ?.scrollIntoView({ behavior: "smooth", block: "nearest" });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [highlightEventId, loading, pending]);
 
   const handleSubmitReview = async (data: ReviewValues) => {
     if (!selectedPending) return;
@@ -154,7 +188,11 @@ export default function MyReviewsTab() {
           <p className="text-sm text-muted-foreground mb-4">Share how these nights went while they are still fresh.</p>
           <div className="flex gap-4 overflow-x-auto pb-2">
             {pending.map((item: any) => (
-              <div key={item.id} className="flex items-center gap-3 rounded-lg border bg-white p-3 min-w-[280px]">
+              <div
+                key={item.id}
+                id={`pending-${item.id}`}
+                className={`flex items-center gap-3 rounded-lg border bg-white p-3 min-w-[280px]${highlightedPendingId === item.id ? " ring-2 ring-[#1a5c2a] border-[#1a5c2a]" : ""}`}
+              >
                 <EventImage src={item.gallery?.[0]} title={item.title} className="h-12 w-12 rounded-lg shrink-0" />
                 <div className="flex-1 min-w-0">
                   <p className="font-medium text-sm truncate">{item.title}</p>
@@ -166,6 +204,18 @@ export default function MyReviewsTab() {
                   size="sm"
                   className="bg-[#1a5c2a] hover:bg-[#144a22] shrink-0"
                   onClick={() => handleWriteReview(item)}
+                  disabled={
+                    !!item.eventDate &&
+                    new Date(item.eventDate) > new Date() &&
+                    item.event?.allowReviewsNow !== true
+                  }
+                  title={
+                    !!item.eventDate &&
+                    new Date(item.eventDate) > new Date() &&
+                    item.event?.allowReviewsNow !== true
+                      ? "Reviews open after the event."
+                      : undefined
+                  }
                 >
                   Write
                 </Button>

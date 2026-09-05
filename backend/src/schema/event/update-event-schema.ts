@@ -13,6 +13,7 @@ export const updateEventSchema = z.object({
     maxParticipants: z.number().int().min(1).optional(),
     eventType: z.nativeEnum(EventType).optional(),
     isCancelled: z.boolean().optional(),
+    allowReviewsNow: z.boolean().optional(),
     gallery: z.array(z.string()).optional(),
   }),
 });

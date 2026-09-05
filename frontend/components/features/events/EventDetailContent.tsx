@@ -143,7 +143,11 @@ export default function EventDetailContent({ eventId, initialEvent }: EventDetai
             )}
 
             {/* Reviews */}
-            <ReviewSection eventId={event.id} />
+            <ReviewSection
+              eventId={event.id}
+              eventDate={event.eventDate}
+              allowReviewsNow={event.allowReviewsNow ?? false}
+            />
           </div>
 
           {/* Sidebar */}

@@ -1,3 +1,4 @@
+import { Suspense } from "react";
 import { serverFetchAuth } from "@/lib/api";
 import ProfileContent from "@/components/features/profile/ProfileContent";
 
@@ -15,5 +16,9 @@ export default async function ProfilePage() {
     stats = res.data ?? null;
   } catch {}
 
-  return <ProfileContent initialStats={stats} />;
+  return (
+    <Suspense>
+      <ProfileContent initialStats={stats} />
+    </Suspense>
+  );
 }

@@ -17,6 +17,7 @@ export interface CreateEventData {
 export interface UpdateEventData extends Partial<CreateEventData> {
   id: string;
   isCancelled?: boolean;
+  allowReviewsNow?: boolean;
 }
 
 export const eventService = {

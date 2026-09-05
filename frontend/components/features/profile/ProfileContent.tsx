@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
+import { useSearchParams } from "next/navigation";
 import ProfileHeader from "@/components/features/profile/ProfileHeader";
 import ProfileTabs from "@/components/features/profile/ProfileTabs";
 import AccountOverviewCard from "@/components/features/profile/AccountOverviewCard";
@@ -21,7 +22,11 @@ interface ProfileContentProps {
 }
 
 export default function ProfileContent({ initialStats = null }: ProfileContentProps) {
-  const [activeTab, setActiveTab] = useState<Tab>("events");
+  const searchParams = useSearchParams();
+  const [activeTab, setActiveTab] = useState<Tab>(() =>
+    searchParams.get("tab") === "reviews" ? "reviews" : "events"
+  );
+  const highlightEventId = searchParams.get("event");
   const [tabKey, setTabKey] = useState(0);
   const [profileStats, setProfileStats] = useState(initialStats);
 
@@ -51,7 +56,7 @@ export default function ProfileContent({ initialStats = null }: ProfileContentPr
           <ProfileTabs activeTab={activeTab} onTabChange={handleTabChange} />
           <div className="py-6">
             {activeTab === "events" && <MyEventsTab key={`events-${tabKey}`} />}
-            {activeTab === "reviews" && <MyReviewsTab key={`reviews-${tabKey}`} />}
+            {activeTab === "reviews" && <MyReviewsTab key={`reviews-${tabKey}`} highlightEventId={highlightEventId} />}
             {activeTab === "settings" && <SettingsTab key={`settings-${tabKey}`} />}
           </div>
         </div>

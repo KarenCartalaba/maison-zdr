@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Link from "next/link";
 import { Star } from "lucide-react";
 import { eventService } from "@/services/event.service";
 import ReviewCard from "./ReviewCard";
@@ -8,12 +9,16 @@ import { Skeleton } from "@/components/ui/skeleton";
 
 interface ReviewSectionProps {
   eventId?: string;
+  eventDate?: string;
+  allowReviewsNow?: boolean;
   averageRating?: number;
   totalReviews?: number;
 }
 
 export default function ReviewSection({
   eventId,
+  eventDate,
+  allowReviewsNow = false,
   averageRating: propAvgRating = 0,
   totalReviews: propTotalReviews = 0,
 }: ReviewSectionProps) {
@@ -36,6 +41,21 @@ export default function ReviewSection({
       .catch(() => {})
       .finally(() => setLoading(false));
   }, [eventId]);
+
+  const canReview =
+    (eventDate ? new Date(eventDate) < new Date() : false) ||
+    allowReviewsNow === true;
+
+  const reviewCta = canReview ? (
+    <Link
+      href={eventId ? `/profile?tab=reviews&event=${eventId}` : "/profile"}
+      className="inline-flex items-center justify-center rounded-md bg-[#1a5c2a] px-4 py-2 text-sm font-medium text-white hover:bg-[#144a22]"
+    >
+      Write a Review
+    </Link>
+  ) : (
+    <p className="text-sm text-muted-foreground">Reviews open after the event.</p>
+  );
 
   if (loading) {
     return (
@@ -67,6 +87,7 @@ export default function ReviewSection({
           <h2 className="text-2xl font-bold">Reviews</h2>
         </div>
         <p className="text-muted-foreground">No reviews yet. Be the first to share your experience!</p>
+        <div className="mt-4">{reviewCta}</div>
       </div>
     );
   }
@@ -92,6 +113,8 @@ export default function ReviewSection({
           <span className="text-sm text-muted-foreground">({totalReviews} reviews)</span>
         </div>
       </div>
+
+      <div className="mb-6">{reviewCta}</div>
 
       <div className="space-y-4">
         {reviews.map((review) => (
