@@ -1,45 +1,63 @@
-# Email — Resend
+# Email — Nodemailer
 
 ## Provider
 
-**Resend** (HTTPS email API): https://resend.com
+**Gmail SMTP** (for testing/development): https://support.google.com/mail/answer/7126229
 
-- Free tier: 100 emails/day, 3000/month
-- No SMTP ports needed — uses HTTPS (port 443)
-- Works on Render free tier (which blocks SMTP ports 25, 465, 587)
+For production, use a dedicated email service (SendGrid, Mailgun, AWS SES).
 
 ## Environment Variables
 
 ```env
-RESEND_API_KEY=re_xxxxx
-EMAIL_FROM="Maison ZDR <onboarding@resend.dev>"
+SMTP_HOST=smtp.gmail.com
+SMTP_PORT=587
+SMTP_USER="your-email@gmail.com"
+SMTP_PASSWORD="your-app-password"
+SMTP_FROM="your-email@gmail.com"
 ```
 
-### Custom domain (production)
-
-For production, verify your own domain in Resend dashboard and update `EMAIL_FROM`:
-
-```env
-EMAIL_FROM="Maison ZDR <noreply@yourdomain.com>"
-```
-
-Domain verification requires adding DNS records (SPF, DKIM, DMARC) provided by Resend.
+> **Note**: Gmail requires an App Password (not your regular password).
+> Go to Google Account > Security > 2-Step Verification > App passwords.
 
 ## Setup
 
-Uses `resend` SDK — pure HTTPS, no SMTP involved:
+Uses `nodemailer` with a lazily-initialized transporter (see `src/lib/nodemailer.ts`):
 
 ```typescript
-import { Resend } from "resend";
+import nodemailer, { Transporter } from "nodemailer";
 
-const resend = new Resend(process.env.RESEND_API_KEY);
+let transporter: Transporter | null = null;
 
-await resend.emails.send({
-  from: "Maison ZDR <onboarding@resend.dev>",
-  to: ["user@example.com"],
-  subject: "Hello",
-  html: "<p>Welcome!</p>",
-});
+function buildTransporter(): Transporter {
+  if (!ENV.SMTP.HOST || !ENV.SMTP.PORT) {
+    throw new Error("SMTP_HOST and SMTP_PORT must be configured");
+  }
+  if (!ENV.SMTP.USER || !ENV.SMTP.PASS) {
+    throw new Error("SMTP_USER and SMTP_PASSWORD must be configured");
+  }
+  return nodemailer.createTransport({
+    host: ENV.SMTP.HOST,
+    port: ENV.SMTP.PORT,
+    secure: false,
+    auth: { user: ENV.SMTP.USER, pass: ENV.SMTP.PASS },
+  });
+}
+
+function getTransporter(): Transporter {
+  if (!transporter) {
+    transporter = buildTransporter();
+  }
+  return transporter;
+}
+
+export const sendEmail = async ({ to, subject, html }) => {
+  await getTransporter().sendMail({
+    from: `"${ENV.APP_NAME}" <${ENV.SMTP.FROM}>`,
+    to,
+    subject,
+    html,
+  });
+};
 ```
 
 ## Email Types
@@ -92,9 +110,10 @@ Email-related pages:
 ## Package
 
 ```bash
-npm install resend
+npm install nodemailer
+npm install -D @types/nodemailer
 ```
 
-## Why Not Nodemailer?
+## Render Free Tier Limitation
 
-Render free tier blocks outbound SMTP ports (25, 465, 587) since September 2025. Nodemailer requires SMTP — it cannot work on Render free tier. Resend uses HTTPS (port 443) which is never blocked.
+Render free tier blocks outbound SMTP ports (25, 465, 587) since September 2025. SMTP email works locally and on paid Render instances (or platforms without port blocking). If staying on Render free tier, the alternative is an HTTPS email API (e.g. Resend) — but the codebase itself uses Nodemailer, which is correct wherever SMTP is allowed.

@@ -1,8 +1,8 @@
-import { RegistrationRepository } from "@/repositories/registration.repository";
+﻿import { RegistrationRepository } from "@/repositories/registration.repository";
 import { EventRepository } from "@/repositories/event.repository";
 import { AuthRepository } from "@/repositories/auth.repository";
 import { renderTemplate } from "@/utils/template";
-import { sendEmail } from "@/lib/email";
+import { sendEmail } from "@/lib/nodemailer";
 import { cacheGet, cacheSet, cacheInvalidate, cacheInvalidatePattern } from "@/lib/redis";
 
 const registrationRepo = new RegistrationRepository();
@@ -12,7 +12,7 @@ const authRepo = new AuthRepository();
 // Cache keys
 const REG_BY_EVENT = (eventId: string) => `registrations:event:${eventId}`;
 const REG_BY_USER = (userId: string) => `registrations:user:${userId}`;
-const REG_TTL = 120; // 2 min — registration counts change frequently
+const REG_TTL = 120; // 2 min â€” registration counts change frequently
 
 export async function RegisterForEventService(
   userId: string,

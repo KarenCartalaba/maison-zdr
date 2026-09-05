@@ -1,6 +1,6 @@
-import { prisma } from "@/lib/prisma";
+﻿import { prisma } from "@/lib/prisma";
 import { renderTemplate } from "@/utils/template";
-import { sendEmail } from "@/lib/email";
+import { sendEmail } from "@/lib/nodemailer";
 import { redis } from "@/lib/redis";
 
 /**
@@ -32,7 +32,7 @@ async function markSent(eventId: string, userId: string): Promise<void> {
   try {
     await redis.setex(reminderKey(eventId, userId), 72 * 60 * 60, "1");
   } catch {
-    // Best-effort — if Redis fails we may send a duplicate, which is acceptable
+    // Best-effort â€” if Redis fails we may send a duplicate, which is acceptable
   }
 }
 
@@ -128,11 +128,11 @@ export async function sendEventReminders(): Promise<ReminderResult> {
 
           await markSent(event.id, user.id);
           result.sentCount++;
-          result.details.push(`✅ Sent to ${user.email} for "${event.title}"`);
+          result.details.push(`âœ… Sent to ${user.email} for "${event.title}"`);
         } catch (error) {
           result.failedCount++;
           const msg = error instanceof Error ? error.message : String(error);
-          result.details.push(`❌ Failed for ${user.email} (${event.title}): ${msg}`);
+          result.details.push(`âŒ Failed for ${user.email} (${event.title}): ${msg}`);
           console.error(`Event reminder email failed for ${user.email}:`, error);
         }
       }
@@ -144,7 +144,7 @@ export async function sendEventReminders(): Promise<ReminderResult> {
   } catch (error) {
     console.error("[EventReminder] Critical error:", error);
     result.details.push(
-      `❌ Critical error: ${error instanceof Error ? error.message : String(error)}`
+      `âŒ Critical error: ${error instanceof Error ? error.message : String(error)}`
     );
   }
 

@@ -1,8 +1,8 @@
-import crypto from "crypto";
+﻿import crypto from "crypto";
 import { AuthRepository } from "@/repositories/auth.repository";
 import { hashPassword } from "@/utils/password";
 import { renderTemplate } from "@/utils/template";
-import { sendEmailWithTimeout } from "@/lib/email";
+import { sendEmailWithTimeout } from "@/lib/nodemailer";
 import { cacheInvalidatePattern } from "@/lib/redis";
 
 const authRepo = new AuthRepository();

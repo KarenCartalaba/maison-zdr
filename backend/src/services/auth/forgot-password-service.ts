@@ -1,7 +1,7 @@
-import crypto from "crypto";
+﻿import crypto from "crypto";
 import { AuthRepository } from "@/repositories/auth.repository";
 import { renderTemplate } from "@/utils/template";
-import { sendEmail } from "@/lib/email";
+import { sendEmail } from "@/lib/nodemailer";
 import { ENV } from "@/config/env";
 
 const authRepo = new AuthRepository();

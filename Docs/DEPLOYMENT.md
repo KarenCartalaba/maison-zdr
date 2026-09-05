@@ -30,8 +30,11 @@ GOOGLE_CLIENT_ID=...
 CLOUDINARY_CLOUD_NAME=...
 CLOUDINARY_API_KEY=...
 CLOUDINARY_SECRET_KEY=...
-RESEND_API_KEY=re_xxxxx
-EMAIL_FROM="Maison ZDR <onboarding@resend.dev>"
+SMTP_HOST=smtp.gmail.com
+SMTP_PORT=587
+SMTP_USER=...
+SMTP_PASSWORD=...
+SMTP_FROM=...
 ```
 
 ### Prisma on Render
@@ -72,7 +75,7 @@ NEXT_PUBLIC_GOOGLE_CLIENT_ID=...
 5. Run Prisma migrations on production database
 6. Test all auth flows (signup, login, Google OAuth)
 7. Test image uploads (Cloudinary)
-8. Test email delivery (Resend HTTPS API)
+8. Test email delivery (SMTP)
 
 ## CORS Configuration
 
@@ -105,4 +108,4 @@ This applies all pending migrations without creating new ones (safe for producti
 - First request after spin-down takes ~30s
 - 750 hours/month runtime limit
 - No custom domains on free tier
-- **SMTP ports blocked** — Free tier blocks ports 25, 465, 587. Email uses Resend HTTPS API instead (see `src/lib/email.ts`)
+- **SMTP ports blocked** — Free tier blocks outbound ports 25, 465, 587. SMTP email (see `src/lib/nodemailer.ts`) requires a paid instance or a platform without port blocking
