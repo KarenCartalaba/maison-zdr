@@ -87,9 +87,13 @@ function EmptyState() {
   );
 }
 
-export default function AnalyticsContent() {
-  const [data, setData] = useState<AnalyticsOverview | null>(null);
-  const [loading, setLoading] = useState(true);
+interface AnalyticsContentProps {
+  initialData?: AnalyticsOverview | null;
+}
+
+export default function AnalyticsContent({ initialData = null }: AnalyticsContentProps) {
+  const [data, setData] = useState<AnalyticsOverview | null>(initialData);
+  const [loading, setLoading] = useState(!initialData);
 
   const handleExportReport = () => {
     if (!data) return;
@@ -126,6 +130,10 @@ export default function AnalyticsContent() {
   };
 
   useEffect(() => {
+    if (initialData) {
+      setLoading(false);
+      return;
+    }
     const fetchAnalytics = async () => {
       try {
         setLoading(true);
@@ -140,7 +148,7 @@ export default function AnalyticsContent() {
       }
     };
     fetchAnalytics();
-  }, []);
+  }, [initialData]);
 
   if (loading) return <LoadingSkeleton />;
   if (!data) return <EmptyState />;

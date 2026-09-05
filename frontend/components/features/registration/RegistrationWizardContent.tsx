@@ -44,7 +44,7 @@ const step3Schema = z.object({
 
 type Step3Values = z.infer<typeof step3Schema>;
 
-export default function RegistrationWizardContent() {
+export default function RegistrationWizardContent({ initialEvent = null }: { initialEvent?: any }) {
   const router = useRouter();
   const params = useParams();
   const { user } = useAuth();
@@ -54,9 +54,10 @@ export default function RegistrationWizardContent() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
   const [referenceCode, setReferenceCode] = useState("");
-  const [eventData, setEventData] = useState<any>(null);
+  const [eventData, setEventData] = useState<any>(initialEvent);
 
   useEffect(() => {
+    if (initialEvent) return;
     if (eventId) {
       eventService.getById(eventId)
         .then((res) => {
@@ -64,7 +65,7 @@ export default function RegistrationWizardContent() {
         })
         .catch(() => {});
     }
-  }, [eventId]);
+  }, [eventId, initialEvent]);
 
   // Step 1 form
   const step1Form = useForm<Step1Values>({

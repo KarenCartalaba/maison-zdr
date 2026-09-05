@@ -12,60 +12,60 @@ const loading = () => (
 // Dynamic imports for heavy chart-based components
 export const DynamicDashboardContent = dynamic(
   () => import("@/components/features/admin/DashboardContent"),
-  { loading, ssr: false }
+  { loading }
 );
 
 export const DynamicAnalyticsContent = dynamic(
   () => import("@/components/features/admin/AnalyticsContent"),
-  { loading, ssr: false }
+  { loading }
 );
 
 export const DynamicEventsContent = dynamic(
   () => import("@/components/features/admin/AdminEventsContent"),
-  { loading, ssr: false }
+  { loading }
 );
 
 export const DynamicRegistrationsContent = dynamic(
   () => import("@/components/features/admin/RegistrationsContent"),
-  { loading, ssr: false }
+  { loading }
 );
 
 export const DynamicCheckInsContent = dynamic(
   () => import("@/components/features/admin/CheckInsContent"),
-  { loading, ssr: false }
+  { loading }
 );
 
 export const DynamicReviewsContent = dynamic(
   () => import("@/components/features/admin/ReviewsContent"),
-  { loading, ssr: false }
+  { loading }
 );
 
 export const DynamicUsersContent = dynamic(
   () => import("@/components/features/admin/UsersContent"),
-  { loading, ssr: false }
+  { loading }
 );
 
 export const DynamicSettingsContent = dynamic(
   () => import("@/components/features/admin/SettingsContent"),
-  { loading, ssr: false }
+  { loading }
 );
 
 export const DynamicProfileContent = dynamic(
   () => import("@/components/features/admin/ProfileContent"),
-  { loading, ssr: false }
+  { loading }
 );
 
 export const DynamicEventWorkspaceContent = dynamic(
   () => import("@/components/features/admin/EventWorkspaceContent"),
-  { loading, ssr: false }
+  { loading }
 );
 
 export const DynamicCreateEventContent = dynamic(
   () => import("@/components/features/admin/CreateEventContent"),
-  { loading, ssr: false }
+  { loading }
 );
 
 export const DynamicEditEventContent = dynamic(
   () => import("@/components/features/admin/EditEventContent"),
-  { loading, ssr: false }
+  { loading }
 );

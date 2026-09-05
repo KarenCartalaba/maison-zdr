@@ -182,6 +182,10 @@ export default function DashboardContent({
   });
 
   useEffect(() => {
+    if (initialStats) {
+      setLoading(false);
+      return;
+    }
     async function fetchDashboard() {
       try {
         const [
