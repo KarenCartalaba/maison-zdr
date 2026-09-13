@@ -12,6 +12,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { DataTable, type DataTableColumn } from "@/components/ui/data-table";
 import { Field, FieldError, FieldGroup, FieldLabel } from "@/components/ui/field";
 import {
   ArrowLeft, Loader2, Pencil, Trash2, Calendar, MapPin, Users, Clock,
@@ -289,6 +290,109 @@ function ParticipantsTab({ eventId }: { eventId: string }) {
   const pending = participants.filter((p) => p.status === "PENDING").length;
   const cancelled = participants.filter((p) => p.status === "CANCELLED").length;
 
+  // TanStack Table columns for Participants
+  const participantColumns: DataTableColumn[] = [
+    {
+      id: "guest",
+      header: "GUEST",
+      cell: ({ row }) => (
+        <div>
+          <p className="font-medium">{row.original.user?.name || "Unknown"}</p>
+          <p className="text-xs text-muted-foreground">{row.original.user?.email}</p>
+        </div>
+      ),
+    },
+    {
+      id: "status",
+      header: "STATUS",
+      cell: ({ row }) => (
+        <Badge
+          variant={
+            row.original.status === "CONFIRMED"
+              ? "outline"
+              : row.original.status === "CANCELLED"
+              ? "destructive"
+              : "secondary"
+          }
+          className={
+            row.original.status === "CONFIRMED"
+              ? "text-[#1a5c2a] border-[#1a5c2a]"
+              : ""
+          }
+        >
+          {row.original.status}
+        </Badge>
+      ),
+    },
+    {
+      id: "reference",
+      header: "REFERENCE",
+      cell: ({ row }) => (
+        <span className="text-muted-foreground text-xs">
+          {row.original.referenceNumber || "—"}
+        </span>
+      ),
+    },
+    {
+      id: "checkin",
+      header: "CHECK-IN",
+      cell: ({ row }) =>
+        row.original.checkedIn ? (
+          <CheckCircle2 className="h-4 w-4 text-[#1a5c2a]" />
+        ) : (
+          <span className="text-xs text-muted-foreground">Not checked in</span>
+        ),
+    },
+    {
+      id: "actions",
+      header: "ACTIONS",
+      cell: ({ row }) => {
+        const p = row.original;
+        return (
+          <div className="flex items-center gap-1">
+            {p.status === "CANCELLED" && (
+              <Button
+                variant="ghost"
+                size="sm"
+                className="text-[#1a5c2a] hover:text-[#144a22] hover:bg-green-50"
+                disabled={actionLoading === p.id}
+                onClick={() => handleRestore(p.id)}
+              >
+                {actionLoading === p.id ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  "Restore"
+                )}
+              </Button>
+            )}
+            {p.status !== "CANCELLED" && (
+              <Button
+                variant="ghost"
+                size="sm"
+                className="text-red-500 hover:text-red-700"
+                onClick={() =>
+                  confirm({
+                    title: "Cancel registration",
+                    description: `Cancel ${p.user?.name || "this participant"}'s registration? They can re-register before the deadline.`,
+                    confirmLabel: "Yes, cancel",
+                    onConfirm: () => handleCancel(p.id),
+                  })
+                }
+                disabled={actionLoading === p.id}
+              >
+                {actionLoading === p.id ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  "Cancel"
+                )}
+              </Button>
+            )}
+          </div>
+        );
+      },
+    },
+  ];
+
   if (isLoading) {
     return (
       <div className="flex items-center justify-center py-12">
@@ -346,107 +450,16 @@ function ParticipantsTab({ eventId }: { eventId: string }) {
         </CardHeader>
         <CardContent className="p-0">
           <div className="overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="border-b text-left text-muted-foreground">
-                  <th className="px-6 py-3 font-medium">GUEST</th>
-                  <th className="px-6 py-3 font-medium">STATUS</th>
-                  <th className="px-6 py-3 font-medium">REFERENCE</th>
-                  <th className="px-6 py-3 font-medium">CHECK-IN</th>
-                  <th className="px-6 py-3 font-medium">ACTIONS</th>
-                </tr>
-              </thead>
-              <tbody>
-                {filtered.length === 0 ? (
-                  <tr>
-                    <td colSpan={5} className="px-6 py-12 text-center text-muted-foreground">
-                      <Inbox className="h-8 w-8 mx-auto mb-2 text-muted-foreground" />
-                      {search ? "No participants match your search" : "No participants yet"}
-                    </td>
-                  </tr>
-                ) : (
-                  filtered.map((p) => (
-                    <tr key={p.id} className="border-b last:border-0">
-                      <td className="px-6 py-3">
-                        <div>
-                          <p className="font-medium">{p.user?.name || "Unknown"}</p>
-                          <p className="text-xs text-muted-foreground">{p.user?.email}</p>
-                        </div>
-                      </td>
-                      <td className="px-6 py-3">
-                        <Badge
-                          variant={
-                            p.status === "CONFIRMED"
-                              ? "outline"
-                              : p.status === "CANCELLED"
-                              ? "destructive"
-                              : "secondary"
-                          }
-                          className={
-                            p.status === "CONFIRMED"
-                              ? "text-[#1a5c2a] border-[#1a5c2a]"
-                              : ""
-                          }
-                        >
-                          {p.status}
-                        </Badge>
-                      </td>
-                      <td className="px-6 py-3 text-muted-foreground text-xs">
-                        {p.referenceNumber || "—"}
-                      </td>
-                      <td className="px-6 py-3">
-                        {p.checkedIn ? (
-                          <CheckCircle2 className="h-4 w-4 text-[#1a5c2a]" />
-                        ) : (
-                          <span className="text-xs text-muted-foreground">Not checked in</span>
-                        )}
-                      </td>
-                      <td className="px-6 py-3">
-                        <div className="flex items-center gap-1">
-                          {p.status === "CANCELLED" && (
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              className="text-[#1a5c2a] hover:text-[#144a22] hover:bg-green-50"
-                              disabled={actionLoading === p.id}
-                              onClick={() => handleRestore(p.id)}
-                            >
-                              {actionLoading === p.id ? (
-                                <Loader2 className="h-4 w-4 animate-spin" />
-                              ) : (
-                                "Restore"
-                              )}
-                            </Button>
-                          )}
-                          {p.status !== "CANCELLED" && (
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              className="text-red-500 hover:text-red-700"
-                              onClick={() =>
-                                confirm({
-                                  title: "Cancel registration",
-                                  description: `Cancel ${p.user?.name || "this participant"}'s registration? They can re-register before the deadline.`,
-                                  confirmLabel: "Yes, cancel",
-                                  onConfirm: () => handleCancel(p.id),
-                                })
-                              }
-                              disabled={actionLoading === p.id}
-                            >
-                              {actionLoading === p.id ? (
-                                <Loader2 className="h-4 w-4 animate-spin" />
-                              ) : (
-                                "Cancel"
-                              )}
-                            </Button>
-                          )}
-                        </div>
-                      </td>
-                    </tr>
-                  ))
-                )}
-              </tbody>
-            </table>
+            <DataTable
+              columns={participantColumns}
+              data={filtered}
+              emptyContent={
+                <div className="px-6 py-12 text-center text-muted-foreground">
+                  <Inbox className="h-8 w-8 mx-auto mb-2 text-muted-foreground" />
+                  {search ? "No participants match your search" : "No participants yet"}
+                </div>
+              }
+            />
           </div>
         </CardContent>
       </Card>

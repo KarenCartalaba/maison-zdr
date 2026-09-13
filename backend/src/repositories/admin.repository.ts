@@ -183,7 +183,7 @@ export class AdminRepository {
 
   public getEventReviews = async (eventId: string) => {
     return prisma.review.findMany({
-      where: { eventId, status: "APPROVED" },
+      where: { eventId },
       include: {
         user: { select: { id: true, name: true, profilePic: true } },
       },

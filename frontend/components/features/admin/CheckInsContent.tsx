@@ -7,6 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { DataTable, type DataTableColumn } from "@/components/ui/data-table";
 import { QrCode, Search, CheckCircle2, User, CalendarDays } from "lucide-react";
 import { adminService } from "@/services/admin.service";
 import type { AdminRegistration, CheckInEvent } from "@/types";
@@ -137,6 +138,77 @@ export default function CheckInsContent() {
       reg.user.email.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
+  const checkInColumns: DataTableColumn[] = [
+    {
+      id: "guest",
+      header: "GUEST",
+      cell: ({ row }) => (
+        <div className="flex items-center gap-3">
+          <div className="h-8 w-8 rounded-full bg-muted flex items-center justify-center">
+            <User className="h-4 w-4 text-muted-foreground" />
+          </div>
+          <div>
+            <p className="font-medium">{row.original.user.name}</p>
+            <p className="text-xs text-muted-foreground">
+              {row.original.user.email}
+            </p>
+          </div>
+        </div>
+      ),
+    },
+    {
+      accessorKey: "checkedIn",
+      header: "STATUS",
+      cell: ({ row }) => (
+        <Badge
+          variant={row.original.checkedIn ? "outline" : "secondary"}
+          className={
+            row.original.checkedIn
+              ? "text-[#1a5c2a] border-[#1a5c2a]"
+              : ""
+          }
+        >
+          {row.original.checkedIn ? "Checked In" : "Pending"}
+        </Badge>
+      ),
+    },
+    {
+      id: "checkInTime",
+      header: "CHECK-IN TIME",
+      cell: ({ row }) =>
+        row.original.checkedIn && row.original.checkedInAt
+          ? new Date(row.original.checkedInAt).toLocaleTimeString("en-US", {
+              hour: "2-digit",
+              minute: "2-digit",
+            })
+          : "\u2014",
+    },
+    {
+      id: "table",
+      header: "TABLE",
+      cell: () => "\u2014",
+    },
+    {
+      id: "actions",
+      header: "ACTIONS",
+      cell: ({ row }) =>
+        !row.original.checkedIn ? (
+          <Button
+            variant="outline"
+            size="sm"
+            className="text-[#1a5c2a] border-[#1a5c2a]"
+            onClick={() => handleCheckIn(row.original.id)}
+            disabled={checkInLoadingId === row.original.id}
+          >
+            <CheckCircle2 className="h-4 w-4 mr-1" />
+            {checkInLoadingId === row.original.id
+              ? "Checking in..."
+              : "Check In"}
+          </Button>
+        ) : null,
+    },
+  ];
+
   return (
     <div>
       <div className="flex items-center justify-between mb-6">
@@ -242,78 +314,7 @@ export default function CheckInsContent() {
               </p>
             </div>
           ) : (
-            <div className="overflow-x-auto">
-              <table className="w-full text-sm">
-                <thead>
-                  <tr className="border-b text-left text-muted-foreground">
-                    <th className="px-6 py-3 font-medium">GUEST</th>
-                    <th className="px-6 py-3 font-medium">STATUS</th>
-                    <th className="px-6 py-3 font-medium">CHECK-IN TIME</th>
-                    <th className="px-6 py-3 font-medium">TABLE</th>
-                    <th className="px-6 py-3 font-medium">ACTIONS</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {filteredRegistrations.map((guest) => (
-                    <tr
-                      key={guest.id}
-                      className="border-b last:border-0 hover:bg-muted/50"
-                    >
-                      <td className="px-6 py-3">
-                        <div className="flex items-center gap-3">
-                          <div className="h-8 w-8 rounded-full bg-muted flex items-center justify-center">
-                            <User className="h-4 w-4 text-muted-foreground" />
-                          </div>
-                          <div>
-                            <p className="font-medium">{guest.user.name}</p>
-                            <p className="text-xs text-muted-foreground">
-                              {guest.user.email}
-                            </p>
-                          </div>
-                        </div>
-                      </td>
-                      <td className="px-6 py-3">
-                        <Badge
-                          variant={guest.checkedIn ? "outline" : "secondary"}
-                          className={
-                            guest.checkedIn
-                              ? "text-[#1a5c2a] border-[#1a5c2a]"
-                              : ""
-                          }
-                        >
-                          {guest.checkedIn ? "Checked In" : "Pending"}
-                        </Badge>
-                      </td>
-                      <td className="px-6 py-3 text-muted-foreground">
-                        {guest.checkedIn && guest.checkedInAt
-                          ? new Date(guest.checkedInAt).toLocaleTimeString(
-                              "en-US",
-                              { hour: "2-digit", minute: "2-digit" }
-                            )
-                          : "—"}
-                      </td>
-                      <td className="px-6 py-3 text-muted-foreground">—</td>
-                      <td className="px-6 py-3">
-                        {!guest.checkedIn && (
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            className="text-[#1a5c2a] border-[#1a5c2a]"
-                            onClick={() => handleCheckIn(guest.id)}
-                            disabled={checkInLoadingId === guest.id}
-                          >
-                            <CheckCircle2 className="h-4 w-4 mr-1" />
-                            {checkInLoadingId === guest.id
-                              ? "Checking in..."
-                              : "Check In"}
-                          </Button>
-                        )}
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+            <DataTable columns={checkInColumns} data={filteredRegistrations} />
           )}
         </CardContent>
       </Card>

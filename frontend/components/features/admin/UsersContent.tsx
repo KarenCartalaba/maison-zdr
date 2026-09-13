@@ -17,6 +17,7 @@ import {
   DropdownMenuLabel,
   DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu";
+import { DataTable, type DataTableColumn } from "@/components/ui/data-table";
 import {
   Search,
   Users,
@@ -196,6 +197,141 @@ export default function UsersContent() {
     }
   };
 
+  const usersColumns: DataTableColumn[] = [
+    {
+      accessorKey: "name",
+      header: "USER",
+      cell: ({ row }) => (
+        <div className="flex items-center gap-3">
+          <div className="h-8 w-8 rounded-full bg-muted flex items-center justify-center">
+            <User className="h-4 w-4 text-muted-foreground" />
+          </div>
+          <div>
+            <p className="font-medium">{row.original.name}</p>
+            <p className="text-xs text-muted-foreground">
+              {row.original.email}
+            </p>
+          </div>
+        </div>
+      ),
+    },
+    {
+      accessorKey: "role",
+      header: "ROLE",
+      cell: ({ row }) => (
+        <Badge
+          variant={row.original.role === "ADMIN" ? "default" : row.original.role === "MODERATOR" ? "default" : "secondary"}
+          className={
+            row.original.role === "ADMIN"
+              ? "bg-[#1a5c2a]"
+              : row.original.role === "MODERATOR"
+                ? "bg-blue-600"
+                : ""
+          }
+        >
+          {row.original.role}
+        </Badge>
+      ),
+    },
+    {
+      accessorKey: "emailVerified",
+      header: "EMAIL STATUS",
+      cell: ({ row }) => (
+        <Badge
+          variant={row.original.emailVerified ? "outline" : "secondary"}
+          className={
+            row.original.emailVerified
+              ? "text-[#1a5c2a] border-[#1a5c2a]"
+              : ""
+          }
+        >
+          {row.original.emailVerified ? "Verified" : "Pending"}
+        </Badge>
+      ),
+    },
+    {
+      id: "registrations",
+      header: "REGISTRATIONS",
+      cell: ({ row }) => row.original._count.registrations,
+    },
+    {
+      accessorKey: "createdAt",
+      header: "JOINED",
+      cell: ({ row }) => formatDate(row.original.createdAt),
+    },
+    {
+      id: "actions",
+      header: "ACTIONS",
+      cell: ({ row }) => (
+        <DropdownMenu>
+          <DropdownMenuTrigger className="inline-flex items-center justify-center h-7 w-7 rounded-md hover:bg-muted text-muted-foreground">
+            <MoreHorizontal className="h-4 w-4" />
+          </DropdownMenuTrigger>
+          <DropdownMenuContent>
+            <DropdownMenuItem
+              onClick={() => setSelectedUser(row.original)}
+              disabled={actionLoading === row.original.id}
+            >
+              View Profile
+            </DropdownMenuItem>
+            <DropdownMenuSeparator />
+            <DropdownMenuGroup>
+              <DropdownMenuLabel>Change Role</DropdownMenuLabel>
+              <DropdownMenuItem
+                onClick={() => handleRoleChange(row.original.id, "ADMIN")}
+                disabled={actionLoading === row.original.id}
+              >
+                Make Admin
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                onClick={() => handleRoleChange(row.original.id, "MODERATOR")}
+                disabled={actionLoading === row.original.id}
+              >
+                Make Moderator
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                onClick={() => handleRoleChange(row.original.id, "USER")}
+                disabled={actionLoading === row.original.id}
+              >
+                Make User
+              </DropdownMenuItem>
+            </DropdownMenuGroup>
+            <DropdownMenuSeparator />
+            {!row.original.emailVerified && (
+              <DropdownMenuItem
+                onClick={() => handleVerifyUser(row.original.id)}
+                disabled={actionLoading === row.original.id}
+              >
+                Verify User
+              </DropdownMenuItem>
+            )}
+            <DropdownMenuItem
+              onClick={() => handleSuspendUser(row.original.id)}
+              disabled={actionLoading === row.original.id}
+            >
+              {row.original.suspended ? "Unsuspend User" : "Suspend User"}
+            </DropdownMenuItem>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem
+              onClick={() =>
+                confirm({
+                  title: "Delete user",
+                  description: `Permanently delete "${row.original.name}"? This action cannot be undone.`,
+                  confirmLabel: "Delete",
+                  onConfirm: () => handleDeleteUser(row.original.id, row.original.name),
+                })
+              }
+              disabled={actionLoading === row.original.id}
+              className="text-red-600"
+            >
+              Delete User
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
+      ),
+    },
+  ];
+
   if (loading) return <LoadingSkeleton />;
 
   return (
@@ -281,141 +417,7 @@ export default function UsersContent() {
       ) : (
         <Card>
           <CardContent className="p-0">
-            <div className="overflow-x-auto">
-              <table className="w-full text-sm">
-                <thead>
-                  <tr className="border-b text-left text-muted-foreground">
-                    <th className="px-6 py-3 font-medium">USER</th>
-                    <th className="px-6 py-3 font-medium">ROLE</th>
-                    <th className="px-6 py-3 font-medium">EMAIL STATUS</th>
-                    <th className="px-6 py-3 font-medium">REGISTRATIONS</th>
-                    <th className="px-6 py-3 font-medium">JOINED</th>
-                    <th className="px-6 py-3 font-medium">ACTIONS</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {users.map((u) => (
-                    <tr
-                      key={u.id}
-                      className="border-b last:border-0 hover:bg-muted/50"
-                    >
-                      <td className="px-6 py-3">
-                        <div className="flex items-center gap-3">
-                          <div className="h-8 w-8 rounded-full bg-muted flex items-center justify-center">
-                            <User className="h-4 w-4 text-muted-foreground" />
-                          </div>
-                          <div>
-                            <p className="font-medium">{u.name}</p>
-                            <p className="text-xs text-muted-foreground">
-                              {u.email}
-                            </p>
-                          </div>
-                        </div>
-                      </td>
-                      <td className="px-6 py-3">
-                        <Badge
-                          variant={u.role === "ADMIN" ? "default" : u.role === "MODERATOR" ? "default" : "secondary"}
-                          className={
-                            u.role === "ADMIN"
-                              ? "bg-[#1a5c2a]"
-                              : u.role === "MODERATOR"
-                                ? "bg-blue-600"
-                                : ""
-                          }
-                        >
-                          {u.role}
-                        </Badge>
-                      </td>
-                      <td className="px-6 py-3">
-                        <Badge
-                          variant={u.emailVerified ? "outline" : "secondary"}
-                          className={
-                            u.emailVerified
-                              ? "text-[#1a5c2a] border-[#1a5c2a]"
-                              : ""
-                          }
-                        >
-                          {u.emailVerified ? "Verified" : "Pending"}
-                        </Badge>
-                      </td>
-                      <td className="px-6 py-3 text-muted-foreground">
-                        {u._count.registrations}
-                      </td>
-                      <td className="px-6 py-3 text-muted-foreground">
-                        {formatDate(u.createdAt)}
-                      </td>
-                      <td className="px-6 py-3">
-                        <DropdownMenu>
-                          <DropdownMenuTrigger className="inline-flex items-center justify-center h-7 w-7 rounded-md hover:bg-muted text-muted-foreground">
-                            <MoreHorizontal className="h-4 w-4" />
-                          </DropdownMenuTrigger>
-                          <DropdownMenuContent>
-                            <DropdownMenuItem
-                              onClick={() => setSelectedUser(u)}
-                              disabled={actionLoading === u.id}
-                            >
-                              View Profile
-                            </DropdownMenuItem>
-                            <DropdownMenuSeparator />
-                            <DropdownMenuGroup>
-                              <DropdownMenuLabel>Change Role</DropdownMenuLabel>
-                              <DropdownMenuItem
-                                onClick={() => handleRoleChange(u.id, "ADMIN")}
-                                disabled={actionLoading === u.id}
-                              >
-                                Make Admin
-                              </DropdownMenuItem>
-                              <DropdownMenuItem
-                                onClick={() => handleRoleChange(u.id, "MODERATOR")}
-                                disabled={actionLoading === u.id}
-                              >
-                                Make Moderator
-                              </DropdownMenuItem>
-                              <DropdownMenuItem
-                                onClick={() => handleRoleChange(u.id, "USER")}
-                                disabled={actionLoading === u.id}
-                              >
-                                Make User
-                              </DropdownMenuItem>
-                            </DropdownMenuGroup>
-                            <DropdownMenuSeparator />
-                            {!u.emailVerified && (
-                              <DropdownMenuItem
-                                onClick={() => handleVerifyUser(u.id)}
-                                disabled={actionLoading === u.id}
-                              >
-                                Verify User
-                              </DropdownMenuItem>
-                            )}
-                            <DropdownMenuItem
-                              onClick={() => handleSuspendUser(u.id)}
-                              disabled={actionLoading === u.id}
-                            >
-                              {u.suspended ? "Unsuspend User" : "Suspend User"}
-                            </DropdownMenuItem>
-                            <DropdownMenuSeparator />
-                              <DropdownMenuItem
-                                onClick={() =>
-                                  confirm({
-                                    title: "Delete user",
-                                    description: `Permanently delete "${u.name}"? This action cannot be undone.`,
-                                    confirmLabel: "Delete",
-                                    onConfirm: () => handleDeleteUser(u.id, u.name),
-                                  })
-                                }
-                              disabled={actionLoading === u.id}
-                              className="text-red-600"
-                            >
-                              Delete User
-                            </DropdownMenuItem>
-                          </DropdownMenuContent>
-                        </DropdownMenu>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+            <DataTable columns={usersColumns} data={users} />
           </CardContent>
         </Card>
       )}

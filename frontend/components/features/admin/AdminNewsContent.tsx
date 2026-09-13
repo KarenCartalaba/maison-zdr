@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Plus, Pencil, Trash2, Loader2, X, Save } from "lucide-react";
+import { DataTable, type DataTableColumn } from "@/components/ui/data-table";
 import type { News } from "@/types";
 
 interface AdminNewsContentProps {
@@ -129,6 +130,86 @@ export default function AdminNewsContent({ initialNews = [] }: AdminNewsContentP
       toast.error(getErrorMessage(err, "Failed to delete article"));
     }
   };
+
+  // TanStack Table columns
+  const newsColumns: DataTableColumn[] = [
+    {
+      accessorKey: "title",
+      header: "TITLE",
+      cell: ({ row }) => (
+        <span className="font-medium">{row.original.title}</span>
+      ),
+    },
+    {
+      id: "author",
+      header: "AUTHOR",
+      cell: ({ row }) => (
+        <span className="text-muted-foreground">
+          {row.original.author?.name || "Unknown"}
+        </span>
+      ),
+    },
+    {
+      id: "createdAt",
+      header: "CREATED",
+      cell: ({ row }) => (
+        <span className="text-muted-foreground">
+          {new Date(row.original.createdAt).toLocaleDateString("en-US", {
+            month: "short",
+            day: "numeric",
+            year: "numeric",
+          })}
+        </span>
+      ),
+    },
+    {
+      id: "status",
+      header: "STATUS",
+      cell: ({ row }) => (
+        <Badge
+          variant={row.original.isPublished ? "outline" : "secondary"}
+          className={
+            row.original.isPublished
+              ? "text-[#1a5c2a] border-[#1a5c2a]"
+              : "text-muted-foreground"
+          }
+        >
+          {row.original.isPublished ? "Published" : "Draft"}
+        </Badge>
+      ),
+    },
+    {
+      id: "actions",
+      header: "ACTIONS",
+      cell: ({ row }) => (
+        <div className="flex items-center gap-1">
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-8 w-8"
+            onClick={() => handleEdit(row.original)}
+          >
+            <Pencil className="h-3 w-3" />
+          </Button>
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-8 w-8"
+            onClick={() =>
+              confirm({
+                title: "Delete article",
+                description: `Permanently delete "${row.original.title}"? This action cannot be undone.`,
+                confirmLabel: "Delete",
+                onConfirm: () => handleDelete(row.original.id),
+              })
+            }
+          >
+            <Trash2 className="h-3 w-3 text-red-500" />
+          </Button>
+        </div>
+      ),
+    },
+  ];
 
   if (isLoading) {
     return (
@@ -265,83 +346,13 @@ export default function AdminNewsContent({ initialNews = [] }: AdminNewsContentP
       {/* News Table */}
       <Card>
         <CardContent className="p-0">
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="border-b text-left text-muted-foreground">
-                  <th className="px-6 py-3 font-medium">TITLE</th>
-                  <th className="px-6 py-3 font-medium">AUTHOR</th>
-                  <th className="px-6 py-3 font-medium">CREATED</th>
-                  <th className="px-6 py-3 font-medium">STATUS</th>
-                  <th className="px-6 py-3 font-medium">ACTIONS</th>
-                </tr>
-              </thead>
-              <tbody>
-                {news.length === 0 ? (
-                  <tr>
-                    <td colSpan={5} className="px-6 py-12 text-center text-muted-foreground">
-                      No news articles yet. Create your first article!
-                    </td>
-                  </tr>
-                ) : (
-                  news.map((item) => (
-                    <tr key={item.id} className="border-b last:border-0 hover:bg-muted/50">
-                      <td className="px-6 py-3 font-medium">{item.title}</td>
-                      <td className="px-6 py-3 text-muted-foreground">
-                        {item.author?.name || "Unknown"}
-                      </td>
-                      <td className="px-6 py-3 text-muted-foreground">
-                        {new Date(item.createdAt).toLocaleDateString("en-US", {
-                          month: "short",
-                          day: "numeric",
-                          year: "numeric",
-                        })}
-                      </td>
-                      <td className="px-6 py-3">
-                        <Badge
-                          variant={item.isPublished ? "outline" : "secondary"}
-                          className={
-                            item.isPublished
-                              ? "text-[#1a5c2a] border-[#1a5c2a]"
-                              : "text-muted-foreground"
-                          }
-                        >
-                          {item.isPublished ? "Published" : "Draft"}
-                        </Badge>
-                      </td>
-                      <td className="px-6 py-3">
-                        <div className="flex items-center gap-1">
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="h-8 w-8"
-                            onClick={() => handleEdit(item)}
-                          >
-                            <Pencil className="h-3 w-3" />
-                          </Button>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="h-8 w-8"
-                            onClick={() =>
-                              confirm({
-                                title: "Delete article",
-                                description: `Permanently delete "${item.title}"? This action cannot be undone.`,
-                                confirmLabel: "Delete",
-                                onConfirm: () => handleDelete(item.id),
-                              })
-                            }
-                          >
-                            <Trash2 className="h-3 w-3 text-red-500" />
-                          </Button>
-                        </div>
-                      </td>
-                    </tr>
-                  ))
-                )}
-              </tbody>
-            </table>
-          </div>
+          {news.length === 0 ? (
+            <div className="px-6 py-12 text-center text-muted-foreground">
+              No news articles yet. Create your first article!
+            </div>
+          ) : (
+            <DataTable columns={newsColumns} data={news} />
+          )}
         </CardContent>
       </Card>
     </div>

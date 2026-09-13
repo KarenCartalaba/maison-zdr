@@ -12,6 +12,7 @@ import { Badge } from "@/components/ui/badge";
 import { Plus, Pencil, Trash2, Loader2, LayoutGrid, List } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Pagination } from "@/components/ui/pagination";
+import { DataTable, type DataTableColumn } from "@/components/ui/data-table";
 import type { Event } from "@/types";
 
 const ITEMS_PER_PAGE = 6;
@@ -119,6 +120,104 @@ export default function AdminEventsContent({ initialEvents = [] }: AdminEventsCo
       toast.error(getErrorMessage(err, "Failed to delete event"));
     }
   };
+
+  // TanStack Table columns for list view
+  const eventColumns: DataTableColumn[] = [
+    {
+      id: "cover",
+      header: "Cover",
+      cell: ({ row }) => (
+        <div className="h-10 w-14 rounded overflow-hidden bg-muted">
+          {row.original.gallery?.[0] ? (
+            <img src={row.original.gallery[0]} alt={row.original.title} className="h-full w-full object-cover" />
+          ) : (
+            <div className="w-full h-full bg-gradient-to-br from-[#1a5c2a] to-[#2d8a4e] flex items-center justify-center">
+              <span className="text-xs font-bold text-white/80">{row.original.title.charAt(0).toUpperCase()}</span>
+            </div>
+          )}
+        </div>
+      ),
+    },
+    {
+      accessorKey: "title",
+      header: "TITLE",
+      cell: ({ row }) => (
+        <span className="font-medium">{row.original.title}</span>
+      ),
+    },
+    {
+      id: "date",
+      header: "DATE",
+      cell: ({ row }) => (
+        <span className="text-muted-foreground">
+          {new Date(row.original.eventDate).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}
+        </span>
+      ),
+    },
+    {
+      id: "time",
+      header: "TIME",
+      cell: ({ row }) => (
+        <span className="text-muted-foreground">
+          {new Date(row.original.eventDate).toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit" })}
+        </span>
+      ),
+    },
+    {
+      id: "venue",
+      header: "VENUE",
+      cell: ({ row }) => (
+        <span className="text-muted-foreground">{row.original.location}</span>
+      ),
+    },
+    {
+      id: "type",
+      header: "TYPE",
+      cell: ({ row }) => (
+        <Badge variant="secondary" className="bg-[#e8f5e9] text-[#1a5c2a]">Public · {eventTypeLabels[row.original.eventType] || "Social"}</Badge>
+      ),
+    },
+    {
+      id: "status",
+      header: "STATUS",
+      cell: ({ row }) => (
+        <Badge variant={row.original.isCancelled ? "destructive" : "outline"} className={!row.original.isCancelled ? "text-[#1a5c2a] border-[#1a5c2a]" : ""}>
+          {row.original.isCancelled ? "Cancelled" : "Active"}
+        </Badge>
+      ),
+    },
+    {
+      id: "actions",
+      header: "ACTIONS",
+      cell: ({ row }) => (
+        <div className="flex items-center justify-end gap-1">
+          <Link href={`/admin/events/${row.original.id}`}>
+            <Button variant="ghost" size="sm">···</Button>
+          </Link>
+          <Link href={`/admin/events/${row.original.id}/edit`}>
+            <Button variant="ghost" size="icon" className="h-8 w-8">
+              <Pencil className="h-3 w-3" />
+            </Button>
+          </Link>
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-8 w-8"
+            onClick={() =>
+              confirm({
+                title: "Delete event",
+                description: `Permanently delete "${row.original.title}"? This also removes all its registrations.`,
+                confirmLabel: "Delete",
+                onConfirm: () => handleDelete(row.original.id),
+              })
+            }
+          >
+            <Trash2 className="h-3 w-3 text-red-500" />
+          </Button>
+        </div>
+      ),
+    },
+  ];
 
   const tabs = [
     { id: "all" as const, label: "ALL EVENTS" },
@@ -266,90 +365,17 @@ export default function AdminEventsContent({ initialEvents = [] }: AdminEventsCo
         /* List View */
         <Card>
           <CardContent className="p-0">
-            <div className="overflow-x-auto">
-              <table className="w-full text-sm">
-                <thead>
-                  <tr className="border-b text-left text-muted-foreground">
-                    <th className="px-6 py-3 font-medium">Cover</th>
-                    <th className="px-6 py-3 font-medium">TITLE</th>
-                    <th className="px-6 py-3 font-medium">DATE</th>
-                    <th className="px-6 py-3 font-medium">TIME</th>
-                    <th className="px-6 py-3 font-medium">VENUE</th>
-                    <th className="px-6 py-3 font-medium">TYPE</th>
-                    <th className="px-6 py-3 font-medium">STATUS</th>
-                    <th className="px-6 py-3 font-medium text-right">ACTIONS</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {filteredEvents.length === 0 ? (
-                    <tr>
-                      <td colSpan={8} className="px-6 py-12 text-center text-muted-foreground">
-                        No events found. Create your first event!
-                      </td>
-                    </tr>
-                  ) : (
-                    paginatedEvents.map((event) => (
-                      <tr key={event.id} className="border-b last:border-0 hover:bg-muted/50">
-                        <td className="px-6 py-3">
-                          <div className="h-10 w-14 rounded overflow-hidden bg-muted">
-                            {event.gallery?.[0] ? (
-                              <img src={event.gallery[0]} alt={event.title} className="h-full w-full object-cover" />
-                            ) : (
-                              <div className="w-full h-full bg-gradient-to-br from-[#1a5c2a] to-[#2d8a4e] flex items-center justify-center">
-                                <span className="text-xs font-bold text-white/80">{event.title.charAt(0).toUpperCase()}</span>
-                              </div>
-                            )}
-                          </div>
-                        </td>
-                        <td className="px-6 py-3 font-medium">{event.title}</td>
-                        <td className="px-6 py-3 text-muted-foreground">
-                          {new Date(event.eventDate).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}
-                        </td>
-                        <td className="px-6 py-3 text-muted-foreground">
-                          {new Date(event.eventDate).toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit" })}
-                        </td>
-                        <td className="px-6 py-3 text-muted-foreground">{event.location}</td>
-                        <td className="px-6 py-3">
-                          <Badge variant="secondary" className="bg-[#e8f5e9] text-[#1a5c2a]">Public · {eventTypeLabels[event.eventType] || "Social"}</Badge>
-                        </td>
-                        <td className="px-6 py-3">
-                          <Badge variant={event.isCancelled ? "destructive" : "outline"} className={!event.isCancelled ? "text-[#1a5c2a] border-[#1a5c2a]" : ""}>
-                            {event.isCancelled ? "Cancelled" : "Active"}
-                          </Badge>
-                        </td>
-                        <td className="px-6 py-3">
-                          <div className="flex items-center justify-end gap-1">
-                            <Link href={`/admin/events/${event.id}`}>
-                              <Button variant="ghost" size="sm">···</Button>
-                            </Link>
-                            <Link href={`/admin/events/${event.id}/edit`}>
-                              <Button variant="ghost" size="icon" className="h-8 w-8">
-                                <Pencil className="h-3 w-3" />
-                              </Button>
-                            </Link>
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              className="h-8 w-8"
-                              onClick={() =>
-                                confirm({
-                                  title: "Delete event",
-                                  description: `Permanently delete "${event.title}"? This also removes all its registrations.`,
-                                  confirmLabel: "Delete",
-                                  onConfirm: () => handleDelete(event.id),
-                                })
-                              }
-                            >
-                              <Trash2 className="h-3 w-3 text-red-500" />
-                            </Button>
-                          </div>
-                        </td>
-                      </tr>
-                    ))
-                  )}
-                </tbody>
-              </table>
-            </div>
+            {filteredEvents.length === 0 ? (
+              <div className="px-6 py-12 text-center text-muted-foreground">
+                No events found. Create your first event!
+              </div>
+            ) : (
+            <DataTable
+              columns={eventColumns}
+              data={paginatedEvents}
+              getHeaderClassName={(id) => id === "actions" ? "text-right" : undefined}
+            />
+            )}
           </CardContent>
         </Card>
       )}

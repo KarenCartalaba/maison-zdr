@@ -16,10 +16,10 @@ import {
   DropdownMenuLabel,
   DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu";
+import { DataTable, type DataTableColumn } from "@/components/ui/data-table";
 import { ClipboardList, Download, Search, MoreHorizontal } from "lucide-react";
 import { adminService } from "@/services/admin.service";
 import type { AdminRegistration, RegistrationStats } from "@/types";
-
 const STATUS_FILTERS = ["ALL", "CONFIRMED", "PENDING", "WAITLISTED", "CANCELLED"];
 
 function formatDate(date: string) {
@@ -166,6 +166,107 @@ export default function RegistrationsContent() {
     }
   };
 
+  const registrationColumns: DataTableColumn[] = [
+    {
+      accessorKey: "referenceNumber",
+      header: "REFERENCE",
+      cell: ({ row }) => (
+        <span className="font-mono font-medium">
+          {row.original.referenceNumber || row.original.id.substring(0, 8)}
+        </span>
+      ),
+    },
+    {
+      id: "participant",
+      header: "PARTICIPANT",
+      cell: ({ row }) => (
+        <div>
+          <p className="font-medium">{row.original.user.name}</p>
+          <p className="text-xs text-muted-foreground">
+            {row.original.user.email}
+          </p>
+        </div>
+      ),
+    },
+    {
+      id: "event",
+      header: "EVENT",
+      cell: ({ row }) => row.original.event.title,
+    },
+    {
+      id: "date",
+      header: "DATE",
+      cell: ({ row }) => formatDate(row.original.event.eventDate),
+    },
+    {
+      id: "plusOne",
+      header: "PLUS ONE",
+      cell: ({ row }) => (row.original.hasPlusOne ? "Yes" : "No"),
+    },
+    {
+      accessorKey: "status",
+      header: "STATUS",
+      cell: ({ row }) => (
+        <Badge
+          variant="outline"
+          className={statusBadgeColor(row.original.status)}
+        >
+          {row.original.status}
+        </Badge>
+      ),
+    },
+    {
+      id: "actions",
+      header: "ACTIONS",
+      cell: ({ row }) => (
+        <DropdownMenu>
+          <DropdownMenuTrigger className="inline-flex items-center justify-center h-7 w-7 rounded-md hover:bg-muted text-muted-foreground">
+            <MoreHorizontal className="h-4 w-4" />
+          </DropdownMenuTrigger>
+          <DropdownMenuContent>
+            <DropdownMenuGroup>
+              <DropdownMenuLabel>Change Status</DropdownMenuLabel>
+              <DropdownMenuItem
+                onClick={() =>
+                  handleStatusChange(row.original.id, "CONFIRMED")
+                }
+                disabled={updatingId === row.original.id}
+              >
+                Confirm
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                onClick={() =>
+                  handleStatusChange(row.original.id, "PENDING")
+                }
+                disabled={updatingId === row.original.id}
+              >
+                Set Pending
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                onClick={() =>
+                  handleStatusChange(row.original.id, "WAITLISTED")
+                }
+                disabled={updatingId === row.original.id}
+              >
+                Waitlist
+              </DropdownMenuItem>
+            </DropdownMenuGroup>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem
+              variant="destructive"
+              onClick={() =>
+                handleStatusChange(row.original.id, "CANCELLED")
+              }
+              disabled={updatingId === row.original.id}
+            >
+              Cancel
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
+      ),
+    },
+  ];
+
   const filteredRegistrations = eventFilter === "ALL"
     ? registrations
     : registrations.filter((reg) => reg.event.id === eventFilter);
@@ -277,104 +378,7 @@ export default function RegistrationsContent() {
       ) : (
         <Card>
           <CardContent className="p-0">
-            <div className="overflow-x-auto">
-              <table className="w-full text-sm">
-                <thead>
-                  <tr className="border-b text-left text-muted-foreground">
-                    <th className="px-6 py-3 font-medium">REFERENCE</th>
-                    <th className="px-6 py-3 font-medium">PARTICIPANT</th>
-                    <th className="px-6 py-3 font-medium">EVENT</th>
-                    <th className="px-6 py-3 font-medium">DATE</th>
-                    <th className="px-6 py-3 font-medium">PLUS ONE</th>
-                    <th className="px-6 py-3 font-medium">STATUS</th>
-                    <th className="px-6 py-3 font-medium">ACTIONS</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {filteredRegistrations.map((reg) => (
-                    <tr
-                      key={reg.id}
-                      className="border-b last:border-0 hover:bg-muted/50"
-                    >
-                      <td className="px-6 py-3 font-mono font-medium">
-                        {reg.referenceNumber || reg.id.substring(0, 8)}
-                      </td>
-                      <td className="px-6 py-3">
-                        <div>
-                          <p className="font-medium">{reg.user.name}</p>
-                          <p className="text-xs text-muted-foreground">
-                            {reg.user.email}
-                          </p>
-                        </div>
-                      </td>
-                      <td className="px-6 py-3 text-muted-foreground">
-                        {reg.event.title}
-                      </td>
-                      <td className="px-6 py-3 text-muted-foreground">
-                        {formatDate(reg.event.eventDate)}
-                      </td>
-                      <td className="px-6 py-3 text-muted-foreground">
-                        {reg.hasPlusOne ? "Yes" : "No"}
-                      </td>
-                      <td className="px-6 py-3">
-                        <Badge
-                          variant="outline"
-                          className={statusBadgeColor(reg.status)}
-                        >
-                          {reg.status}
-                        </Badge>
-                      </td>
-                      <td className="px-6 py-3">
-                        <DropdownMenu>
-                          <DropdownMenuTrigger className="inline-flex items-center justify-center h-7 w-7 rounded-md hover:bg-muted text-muted-foreground">
-                            <MoreHorizontal className="h-4 w-4" />
-                          </DropdownMenuTrigger>
-                          <DropdownMenuContent>
-                            <DropdownMenuGroup>
-                              <DropdownMenuLabel>Change Status</DropdownMenuLabel>
-                              <DropdownMenuItem
-                                onClick={() =>
-                                  handleStatusChange(reg.id, "CONFIRMED")
-                                }
-                                disabled={updatingId === reg.id}
-                              >
-                                Confirm
-                              </DropdownMenuItem>
-                              <DropdownMenuItem
-                                onClick={() =>
-                                  handleStatusChange(reg.id, "PENDING")
-                                }
-                                disabled={updatingId === reg.id}
-                              >
-                                Set Pending
-                              </DropdownMenuItem>
-                              <DropdownMenuItem
-                                onClick={() =>
-                                  handleStatusChange(reg.id, "WAITLISTED")
-                                }
-                                disabled={updatingId === reg.id}
-                              >
-                                Waitlist
-                              </DropdownMenuItem>
-                            </DropdownMenuGroup>
-                            <DropdownMenuSeparator />
-                            <DropdownMenuItem
-                              variant="destructive"
-                              onClick={() =>
-                                handleStatusChange(reg.id, "CANCELLED")
-                              }
-                              disabled={updatingId === reg.id}
-                            >
-                              Cancel
-                            </DropdownMenuItem>
-                          </DropdownMenuContent>
-                        </DropdownMenu>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+            <DataTable columns={registrationColumns} data={filteredRegistrations} />
           </CardContent>
         </Card>
       )}

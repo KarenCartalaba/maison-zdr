@@ -19,8 +19,64 @@ import {
   YAxis,
   CartesianGrid,
 } from "recharts";
+import { DataTable, type DataTableColumn } from "@/components/ui/data-table";
 import { adminService } from "@/services/admin.service";
 import type { AnalyticsOverview } from "@/types";
+
+const performanceColumns: DataTableColumn[] = [
+  {
+    accessorKey: "title",
+    header: "EVENT",
+    cell: ({ row }) => (
+      <span className="font-medium">{row.original.title}</span>
+    ),
+  },
+  {
+    id: "registrations",
+    header: "REGISTRATIONS",
+    cell: ({ row }) => (
+      <span>
+        {row.original.registrations} / {row.original.maxParticipants}
+      </span>
+    ),
+  },
+  {
+    id: "fillRate",
+    header: "FILL RATE",
+    cell: ({ row }) => (
+      <div className="flex items-center gap-2">
+        <div className="h-2 w-24 rounded-full bg-muted">
+          <div
+            className="h-full rounded-full bg-[#1a5c2a]"
+            style={{
+              width: `${Math.min(row.original.fillRate, 100)}%`,
+            }}
+          />
+        </div>
+        <span className="text-xs text-muted-foreground">
+          {Math.round(row.original.fillRate)}%
+        </span>
+      </div>
+    ),
+  },
+  {
+    id: "avgRating",
+    header: "AVG. RATING",
+    cell: ({ row }) => (
+      <div className="flex items-center gap-1">
+        <span className="text-yellow-400">★</span>
+        <span>{row.original.avgRating.toFixed(1)}</span>
+      </div>
+    ),
+  },
+  {
+    accessorKey: "reviewCount",
+    header: "REVIEWS",
+    cell: ({ row }) => (
+      <span className="text-muted-foreground">{row.original.reviewCount}</span>
+    ),
+  },
+];
 
 const registrationTrendConfig = {
   registered: { label: "Registered", color: "#1a5c2a" },
@@ -315,56 +371,7 @@ export default function AnalyticsContent({ initialData = null }: AnalyticsConten
             <CardTitle className="text-base">Event Performance</CardTitle>
           </CardHeader>
           <CardContent className="p-0">
-            <div className="overflow-x-auto">
-              <table className="w-full text-sm">
-                <thead>
-                  <tr className="border-b text-left text-muted-foreground">
-                    <th className="px-6 py-3 font-medium">EVENT</th>
-                    <th className="px-6 py-3 font-medium">REGISTRATIONS</th>
-                    <th className="px-6 py-3 font-medium">FILL RATE</th>
-                    <th className="px-6 py-3 font-medium">AVG. RATING</th>
-                    <th className="px-6 py-3 font-medium">REVIEWS</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {data.eventPerformance.map((event, i) => (
-                    <tr
-                      key={i}
-                      className="border-b last:border-0 hover:bg-muted/50"
-                    >
-                      <td className="px-6 py-3 font-medium">{event.title}</td>
-                      <td className="px-6 py-3">
-                        {event.registrations} / {event.maxParticipants}
-                      </td>
-                      <td className="px-6 py-3">
-                        <div className="flex items-center gap-2">
-                          <div className="h-2 w-24 rounded-full bg-muted">
-                            <div
-                              className="h-full rounded-full bg-[#1a5c2a]"
-                              style={{
-                                width: `${Math.min(event.fillRate, 100)}%`,
-                              }}
-                            />
-                          </div>
-                          <span className="text-xs text-muted-foreground">
-                            {Math.round(event.fillRate)}%
-                          </span>
-                        </div>
-                      </td>
-                      <td className="px-6 py-3">
-                        <div className="flex items-center gap-1">
-                          <span className="text-yellow-400">★</span>
-                          <span>{event.avgRating.toFixed(1)}</span>
-                        </div>
-                      </td>
-                      <td className="px-6 py-3 text-muted-foreground">
-                        {event.reviewCount}
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+            <DataTable columns={performanceColumns} data={data.eventPerformance ?? []} />
           </CardContent>
         </Card>
       )}

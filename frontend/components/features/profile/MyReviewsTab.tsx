@@ -88,7 +88,7 @@ export default function MyReviewsTab({ highlightEventId = null }: MyReviewsTabPr
     );
     if (!match) return;
     const isFuture = !!match.eventDate && new Date(match.eventDate) > new Date();
-    const eligible = !isFuture || match.event?.allowReviewsNow === true;
+    const eligible = !isFuture || match.allowReviewsNow === true;
     if (eligible) {
       handleWriteReview(match);
     } else {
@@ -207,12 +207,12 @@ export default function MyReviewsTab({ highlightEventId = null }: MyReviewsTabPr
                   disabled={
                     !!item.eventDate &&
                     new Date(item.eventDate) > new Date() &&
-                    item.event?.allowReviewsNow !== true
+                    item.allowReviewsNow !== true
                   }
                   title={
                     !!item.eventDate &&
                     new Date(item.eventDate) > new Date() &&
-                    item.event?.allowReviewsNow !== true
+                    item.allowReviewsNow !== true
                       ? "Reviews open after the event."
                       : undefined
                   }

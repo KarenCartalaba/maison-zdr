@@ -6,14 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import EventImage from "@/components/ui/event-image";
-import {
-  Table,
-  TableHeader,
-  TableBody,
-  TableRow,
-  TableHead,
-  TableCell,
-} from "@/components/ui/table";
+import { DataTable, type DataTableColumn } from "@/components/ui/data-table";
 import {
   Calendar,
   Users,
@@ -41,7 +34,6 @@ import {
   YAxis,
   CartesianGrid,
 } from "recharts";
-import { useTable, tableFeatures, type ColumnDef, type RowData } from "@tanstack/react-table";
 import { adminService } from "@/services/admin.service";
 
 // Chart configs
@@ -65,11 +57,8 @@ const categoryChartConfig = {
   value: { label: "Registrations", color: "#1a5c2a" },
 } satisfies ChartConfig;
 
-// TanStack Table v9 features — core row model is always included
-const features = tableFeatures({});
-
 // TanStack Table columns for Upcoming Events
-const upcomingColumns: ColumnDef<typeof features, any>[] = [
+const upcomingColumns: DataTableColumn[] = [
   {
     accessorKey: "title",
     header: "Title",
@@ -119,6 +108,66 @@ const upcomingColumns: ColumnDef<typeof features, any>[] = [
     id: "actions",
     header: "Actions",
     cell: () => <Button variant="ghost" size="sm">···</Button>,
+  },
+];
+
+// TanStack Table columns for Recent Registrations
+const recentColumns: DataTableColumn[] = [
+  {
+    id: "referenceNumber",
+    header: "REFERENCE NO.",
+    cell: ({ row }) => (
+      <span className="font-mono font-medium">
+        {row.original.referenceNumber || `MZ-${row.original.id.slice(0, 6).toUpperCase()}`}
+      </span>
+    ),
+  },
+  {
+    id: "participant",
+    header: "PARTICIPANT",
+    cell: ({ row }) => (
+      <div>
+        <p className="font-medium">{row.original.user?.name}</p>
+        <p className="text-xs text-muted-foreground">
+          {row.original.user?.email}
+        </p>
+      </div>
+    ),
+  },
+  {
+    id: "event",
+    header: "Event",
+    cell: ({ row }) => (
+      <span className="text-muted-foreground">
+        {row.original.event?.title}
+      </span>
+    ),
+  },
+  {
+    id: "createdAt",
+    header: "REGISTRATION DATE",
+    cell: ({ row }) => (
+      <span className="text-muted-foreground">
+        {new Date(row.original.createdAt).toLocaleDateString("en-US", {
+          month: "short",
+          day: "numeric",
+          hour: "2-digit",
+          minute: "2-digit",
+        })}
+      </span>
+    ),
+  },
+  {
+    id: "status",
+    header: "STATUS",
+    cell: ({ row }) => (
+      <Badge
+        variant="outline"
+        className="text-[#1a5c2a] border-[#1a5c2a]"
+      >
+        {row.original.status}
+      </Badge>
+    ),
   },
 ];
 
@@ -186,13 +235,6 @@ export default function DashboardContent({
     setTopEvents(initialTop?.events ?? []);
     setLoading(false);
   }, [initialStats, initialTrend, initialStatus, initialAttendance, initialCategories, initialUpcoming, initialRecent, initialTop]);
-
-  // TanStack Table instance
-  const table = useTable({
-    features,
-    data: upcomingEvents,
-    columns: upcomingColumns,
-  });
 
   useEffect(() => {
     if (initialStats) {
@@ -510,88 +552,17 @@ export default function DashboardContent({
           </CardTitle>
         </CardHeader>
         <CardContent className="p-0">
-          <Table>
-            <TableHeader>
-              {table.getHeaderGroups().map((headerGroup) => (
-                <TableRow key={headerGroup.id}>
-                  {headerGroup.headers.map((header) => (
-                    <TableHead key={header.id}>
-                      {header.isPlaceholder ? null : (
-                        <table.FlexRender header={header} />
-                      )}
-                    </TableHead>
-                  ))}
-                </TableRow>
-              ))}
-            </TableHeader>
-            <TableBody>
-              {table.getRowModel().rows.map((row) => (
-                <TableRow key={row.id}>
-                  {row.getAllCells().map((cell) => (
-                    <TableCell key={cell.id}>
-                      <table.FlexRender cell={cell} />
-                    </TableCell>
-                  ))}
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
+          <DataTable columns={upcomingColumns} data={upcomingEvents} />
         </CardContent>
       </Card>
 
-      {/* Recent Registrations Table (shadcn Table) */}
+      {/* Recent Registrations Table (TanStack Table) */}
       <Card className="mb-8">
         <CardHeader>
           <CardTitle className="text-base">Recent Registrations</CardTitle>
         </CardHeader>
         <CardContent className="p-0">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>REFERENCE NO.</TableHead>
-                <TableHead>PARTICIPANT</TableHead>
-                <TableHead>Event</TableHead>
-                <TableHead>REGISTRATION DATE</TableHead>
-                <TableHead>STATUS</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {recentRegistrations.map((reg) => (
-                <TableRow key={reg.id}>
-                  <TableCell className="font-mono font-medium">
-                    {reg.referenceNumber || `MZ-${reg.id.slice(0, 6).toUpperCase()}`}
-                  </TableCell>
-                  <TableCell>
-                    <div>
-                      <p className="font-medium">{reg.user?.name}</p>
-                      <p className="text-xs text-muted-foreground">
-                        {reg.user?.email}
-                      </p>
-                    </div>
-                  </TableCell>
-                  <TableCell className="text-muted-foreground">
-                    {reg.event?.title}
-                  </TableCell>
-                  <TableCell className="text-muted-foreground">
-                    {new Date(reg.createdAt).toLocaleDateString("en-US", {
-                      month: "short",
-                      day: "numeric",
-                      hour: "2-digit",
-                      minute: "2-digit",
-                    })}
-                  </TableCell>
-                  <TableCell>
-                    <Badge
-                      variant="outline"
-                      className="text-[#1a5c2a] border-[#1a5c2a]"
-                    >
-                      {reg.status}
-                    </Badge>
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
+          <DataTable columns={recentColumns} data={recentRegistrations} />
         </CardContent>
       </Card>
 
