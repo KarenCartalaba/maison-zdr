@@ -17,6 +17,12 @@ export default function NewsContent({ initialNews = [] }: NewsContentProps) {
   const [news, setNews] = useState<News[]>(initialNews);
   const [loading, setLoading] = useState(initialNews.length === 0);
 
+  // Always reflect the latest server data (e.g. after a delete + refresh)
+  useEffect(() => {
+    setNews(initialNews);
+    if (initialNews.length > 0) setLoading(false);
+  }, [initialNews]);
+
   useEffect(() => {
     if (initialNews.length > 0) return;
     newsService

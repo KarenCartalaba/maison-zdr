@@ -1,6 +1,8 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { toast } from "sonner";
+import { getErrorMessage } from "@/lib/server-error";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -114,9 +116,12 @@ export default function CheckInsContent() {
         setRegistrations(response.data.registrations);
         setCheckedInCount(response.data.checkedInCount);
         setTotalCount(response.data.totalCount);
+        toast.success("Check-in successful");
+      } else {
+        toast.error(response.message || "Check-in may not have completed");
       }
     } catch (error) {
-      console.error("Failed to check in:", error);
+      toast.error(getErrorMessage(error, "Failed to check in"));
     } finally {
       setCheckInLoadingId(null);
     }

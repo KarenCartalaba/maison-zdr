@@ -1,4 +1,4 @@
-import { serverFetchCached } from "@/lib/api";
+import { serverFetch } from "@/lib/api";
 import NewsDetailContent from "@/components/features/news/NewsDetailContent";
 import type { News } from "@/types";
 
@@ -11,7 +11,7 @@ export default async function NewsDetailPage({
 
   let news = null;
   try {
-    const res = await serverFetchCached<{ data: { news: News } }>(`/api/news/v1/${id}`, 300);
+    const res = await serverFetch<{ data: { news: News } }>(`/api/news/v1/${id}`);
     news = res.data?.news ?? null;
   } catch {}
 

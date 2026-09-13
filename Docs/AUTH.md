@@ -33,7 +33,7 @@ JWT_SECRET=your-secret-here  # Generate at https://jwtsecrets.com/
 
 ```
 1. User submits email + password
-2. Backend verifies credentials
+2. Backend verifies credentials (specific, field-mapped errors)
 3. Backend signs access token (15m) + refresh token (7d)
 4. Backend stores refresh token in Token table
 5. Backend sets httpOnly cookies:
@@ -41,6 +41,21 @@ JWT_SECRET=your-secret-here  # Generate at https://jwtsecrets.com/
    - refreshToken: 7 day expiry
 6. Returns user object (id, email, name, role, profilePic)
 ```
+
+Login failures return distinct 400 errors with an `errors[]` array the
+frontend maps onto the matching input (plus a toast), instead of a generic
+"Invalid credentials":
+
+| Case | `message` | Field error (`path` → `message`) |
+|------|-----------|----------------------------------|
+| Unknown email | No account found with this email address | `body.email` → No account found with this email address |
+| Google-only account (no password) | This account uses Google sign-in | `body.password` → This account was created with Google sign-in. Please use the Google button below. |
+| Wrong password | Incorrect password | `body.password` → Incorrect password. Please try again. |
+| Unverified email (correct password) | Please verify your email first (403) | — |
+
+Note: specific messages allow email-enumeration probing. This is mitigated
+by the `authLimiter` (30 req / 15 min) applied to login, signup,
+forgot-password, resend-verification, and reset-password (see RATE-LIMITING.md).
 
 ### Authenticated Request
 

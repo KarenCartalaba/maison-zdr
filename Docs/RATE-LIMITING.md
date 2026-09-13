@@ -14,13 +14,14 @@ npm install express-rate-limit
 
 ## Configuration (`src/lib/rate-limit.ts`)
 
-Three tiers with different thresholds:
+Four tiers with different thresholds:
 
 | Tier | Window | Limit | Use For |
 |------|--------|-------|---------|
-| **Strict** | 15 min | 5 requests | Login, signup, forgot-password, contact form |
-| **Moderate** | 15 min | 10 requests | Resend verification, token refresh |
-| **Global** | 1 min | 30 requests | All `/api` routes |
+| **Strict** | 15 min | 5 requests | Contact form |
+| **Moderate** | 15 min | 10 requests | (defined, currently unused) |
+| **Auth** | 15 min | 30 requests | Signup, login, forgot-password, resend-verification, reset-password |
+| **Global** | 1 min | 100 requests | All `/api` routes |
 
 ```typescript
 import { rateLimit } from "express-rate-limit";
@@ -43,10 +44,21 @@ export const moderateLimiter = rateLimit({
   message: { code: 429, status: "error", message: "Too many requests. Please try again later." },
 });
 
-// Global: 30 requests per minute
+// Auth: 30 requests per 15 minutes — anonymous auth endpoints.
+// Lenient enough for shared networks, tight enough to blunt credential
+// stuffing and email-enumeration probing (login returns specific errors).
+export const authLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  limit: 30,
+  standardHeaders: "draft-7",
+  legacyHeaders: false,
+  message: { code: 429, status: "error", message: "Too many attempts. Please try again later." },
+});
+
+// Global: 100 requests per minute
 export const globalLimiter = rateLimit({
   windowMs: 60 * 1000,
-  limit: 30,
+  limit: 100,
   standardHeaders: "draft-7",
   legacyHeaders: false,
   message: { code: 429, status: "error", message: "Too many requests. Please slow down." },
@@ -67,12 +79,13 @@ app.use('/api', globalLimiter, routes);
 
 | Route | Limiter | Why |
 |-------|---------|-----|
-| `POST /v1/signup` | strict | Prevent mass account creation |
-| `POST /v1/login` | strict | Prevent brute force attacks |
-| `POST /v1/google-login` | strict | Prevent OAuth abuse |
-| `POST /v1/forgot-password` | strict | Prevent email bombing |
-| `POST /v1/resend-email-verification` | moderate | Prevent email spam |
-| `POST /v1/refresh-token` | moderate | Token refresh abuse |
+| `POST /v1/signup` | auth | Prevent mass account creation |
+| `POST /v1/login` | auth | Prevent brute force + enumeration probing |
+| `POST /v1/forgot-password` | auth | Prevent email bombing |
+| `POST /v1/resend-email-verification` | auth | Prevent email spam |
+| `POST /v1/reset-password` | auth | Prevent token guessing |
+
+Not limited (deliberately): `google-login` (requires a valid Google ID token — can't be abused anonymously), `refresh-token` (interceptor-driven; limiting it would break sessions), `verify-email` link (single-use tokens), and all authenticated-only routes.
 
 ### Contact Routes (`src/routes/contact.routes.ts`)
 
@@ -85,7 +98,7 @@ app.use('/api', globalLimiter, routes);
 | Option | Value | Purpose |
 |--------|-------|---------|
 | `windowMs` | 15 min / 1 min | Time window for counting requests |
-| `limit` | 5 / 10 / 30 | Max requests per window |
+| `limit` | 5 / 10 / 30 / 100 | Max requests per window |
 | `standardHeaders` | `"draft-7"` | Return rate limit info in `Ratelimit` headers |
 | `legacyHeaders` | `false` | Disable old `X-Rate-Limit` headers |
 | `message` | JSON object | Custom error response format |

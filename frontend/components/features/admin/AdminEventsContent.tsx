@@ -1,6 +1,8 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { toast } from "sonner";
+import { getErrorMessage } from "@/lib/server-error";
 import Link from "next/link";
 import { eventService } from "@/services/event.service";
 import { Button } from "@/components/ui/button";
@@ -90,6 +92,7 @@ export default function AdminEventsContent({ initialEvents = [] }: AdminEventsCo
       if (response.code === 200) {
         const newEvents = events.filter((e) => e.id !== id);
         setEvents(newEvents);
+        toast.success("Event deleted");
         // Clamp page if last item on current page was deleted
         const newFilteredCount = newEvents.filter((event) => {
           const eventDate = new Date(event.eventDate);
@@ -113,7 +116,7 @@ export default function AdminEventsContent({ initialEvents = [] }: AdminEventsCo
         }
       }
     } catch (err) {
-      console.error("Failed to delete event:", err);
+      toast.error(getErrorMessage(err, "Failed to delete event"));
     }
   };
 

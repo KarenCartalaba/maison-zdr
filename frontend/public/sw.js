@@ -1,4 +1,14 @@
-const CACHE_NAME = 'zdr-v1';
-self.addEventListener('install', (e) => { e.waitUntil(caches.open(CACHE_NAME).then(c => c.add('/'))) });
-self.addEventListener('fetch', (e) => { e.respondWith(caches.match(e.request).then(r => r || fetch(e.request))) });
-self.addEventListener('activate', (e) => { e.waitUntil(caches.keys().then(ks => Promise.all(ks.filter(k => k !== CACHE_NAME).map(k => caches.delete(k))))) });
+// Minimal service worker: PWA installability only, zero caching.
+// Chrome requires a registered worker with a fetch listener for the install
+// prompt — the listener below intentionally does nothing so every request
+// goes straight to the network and a normal refresh is always fresh.
+self.addEventListener('install', () => { self.skipWaiting(); });
+self.addEventListener('activate', (e) => {
+  // Purge caches left behind by previous worker versions (zdr-v1, zdr-v2)
+  e.waitUntil(
+    caches.keys()
+      .then((ks) => Promise.all(ks.map((k) => caches.delete(k))))
+      .then(() => self.clients.claim())
+  );
+});
+self.addEventListener('fetch', () => {});

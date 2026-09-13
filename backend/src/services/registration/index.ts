@@ -9,6 +9,20 @@ const registrationRepo = new RegistrationRepository();
 const eventRepo = new EventRepository();
 const authRepo = new AuthRepository();
 
+/**
+ * Generate a unique registration reference number (e.g. ZDR-B12-411122).
+ * Retries on collision, then falls back to a uuid-based suffix.
+ */
+async function generateUniqueReferenceNumber(eventId: string): Promise<string> {
+  const prefix = eventId.slice(0, 3).toUpperCase();
+  for (let attempt = 0; attempt < 5; attempt++) {
+    const candidate = `ZDR-${prefix}-${Math.floor(100000 + Math.random() * 900000)}`;
+    const existing = await registrationRepo.findRegistrationByReferenceNumber(candidate);
+    if (!existing) return candidate;
+  }
+  return `ZDR-${prefix}-${crypto.randomUUID().replace(/-/g, "").slice(0, 6).toUpperCase()}`;
+}
+
 // Cache keys
 const REG_BY_EVENT = (eventId: string) => `registrations:event:${eventId}`;
 const REG_BY_USER = (userId: string) => `registrations:user:${userId}`;
@@ -53,6 +67,8 @@ export async function RegisterForEventService(
       return { code: 400, status: "error", message: "Guest name is required for plus-one registration" };
     }
 
+    const referenceNumber = await generateUniqueReferenceNumber(eventId);
+
     const registration = await registrationRepo.createRegistration({
       userId,
       eventId,
@@ -60,6 +76,7 @@ export async function RegisterForEventService(
       guestName,
       guestNames: guestNames ?? (guestName ? [guestName] : []),
       guestCount: effectiveGuestCount,
+      referenceNumber,
     });
 
     // Invalidate registration caches + event cache (counts changed)
@@ -78,6 +95,7 @@ export async function RegisterForEventService(
         hasPlusOne: String(hasPlusOne),
         guestName: guestNames?.join(", ") ?? guestName ?? "",
         guestCount: String(effectiveGuestCount),
+        referenceNumber: registration.referenceNumber ?? "",
       });
 
       sendEmail({

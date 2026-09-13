@@ -1,6 +1,8 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { toast } from "sonner";
+import { getErrorMessage } from "@/lib/server-error";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -125,8 +127,9 @@ export default function ReviewsContent() {
       setActionLoading(id);
       await adminService.updateReviewStatus(id, status);
       fetchData(activeFilter, search);
+      toast.success(`Review ${status.toLowerCase()}`);
     } catch (error) {
-      console.error("Failed to update review status:", error);
+      toast.error(getErrorMessage(error, "Failed to update review status"));
     } finally {
       setActionLoading(null);
     }
@@ -140,8 +143,9 @@ export default function ReviewsContent() {
       setReplyingId(null);
       setReplyText("");
       fetchData(activeFilter, search);
+      toast.success("Reply sent");
     } catch (error) {
-      console.error("Failed to reply:", error);
+      toast.error(getErrorMessage(error, "Failed to send reply"));
     } finally {
       setActionLoading(null);
     }

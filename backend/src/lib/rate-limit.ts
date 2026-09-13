@@ -18,6 +18,17 @@ export const moderateLimiter = rateLimit({
   message: { code: 429, status: "error", message: "Too many requests. Please try again later." },
 });
 
+// Auth: 30 requests per 15 minutes — for anonymous auth endpoints (login, signup,
+// password flows). Lenient enough for shared networks, tight enough to blunt
+// credential stuffing and email-enumeration probing.
+export const authLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  limit: 30,
+  standardHeaders: "draft-7",
+  legacyHeaders: false,
+  message: { code: 429, status: "error", message: "Too many attempts. Please try again later." },
+});
+
 // Global: 100 requests per minute — for all API routes (generous for admin dashboards)
 export const globalLimiter = rateLimit({
   windowMs: 60 * 1000,

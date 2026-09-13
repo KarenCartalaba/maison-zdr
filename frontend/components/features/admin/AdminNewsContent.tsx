@@ -1,7 +1,9 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { toast } from "sonner";
 import { newsService, CreateNewsData } from "@/services/news.service";
+import { getErrorMessage, getFieldErrors } from "@/lib/server-error";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -26,6 +28,18 @@ export default function AdminNewsContent({ initialNews = [] }: AdminNewsContentP
     imageUrl: "",
     isPublished: true,
   });
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
+
+  const updateField = (field: keyof CreateNewsData, value: string | boolean) => {
+    setFormData((prev) => ({ ...prev, [field]: value }));
+    // Clear this field's server error as the user retypes
+    setFieldErrors((prev) => {
+      if (!(field in prev)) return prev;
+      const next = { ...prev };
+      delete next[field];
+      return next;
+    });
+  };
 
   useEffect(() => {
     newsService
@@ -45,20 +59,27 @@ export default function AdminNewsContent({ initialNews = [] }: AdminNewsContentP
       imageUrl: "",
       isPublished: true,
     });
+    setFieldErrors({});
     setIsCreating(false);
     setEditingId(null);
   };
 
   const handleCreate = async () => {
     if (!formData.title || !formData.content) return;
+    setFieldErrors({});
     try {
       const response = await newsService.create(formData);
       if (response.code === 201 && response.data) {
         setNews([response.data.news, ...news]);
         resetForm();
+        toast.success("Article created successfully");
+      } else {
+        toast.error(response.message || "Failed to create article");
       }
     } catch (err) {
-      console.error("Failed to create news:", err);
+      const errors = getFieldErrors(err);
+      setFieldErrors(errors);
+      toast.error(getErrorMessage(err, "Failed to create article"));
     }
   };
 
@@ -76,14 +97,20 @@ export default function AdminNewsContent({ initialNews = [] }: AdminNewsContentP
 
   const handleUpdate = async () => {
     if (!editingId || !formData.title || !formData.content) return;
+    setFieldErrors({});
     try {
       const response = await newsService.update({ id: editingId, ...formData });
       if (response.code === 200 && response.data) {
         setNews(news.map((n) => (n.id === editingId ? response.data!.news : n)));
         resetForm();
+        toast.success("Article updated successfully");
+      } else {
+        toast.error(response.message || "Failed to update article");
       }
     } catch (err) {
-      console.error("Failed to update news:", err);
+      const errors = getFieldErrors(err);
+      setFieldErrors(errors);
+      toast.error(getErrorMessage(err, "Failed to update article"));
     }
   };
 
@@ -93,9 +120,12 @@ export default function AdminNewsContent({ initialNews = [] }: AdminNewsContentP
       const response = await newsService.delete(id);
       if (response.code === 200) {
         setNews(news.filter((n) => n.id !== id));
+        toast.success("Article deleted");
+      } else {
+        toast.error(response.message || "Failed to delete article");
       }
     } catch (err) {
-      console.error("Failed to delete news:", err);
+      toast.error(getErrorMessage(err, "Failed to delete article"));
     }
   };
 
@@ -154,40 +184,52 @@ export default function AdminNewsContent({ initialNews = [] }: AdminNewsContentP
                 <input
                   type="text"
                   value={formData.title}
-                  onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+                  onChange={(e) => updateField("title", e.target.value)}
                   placeholder="Article title"
                   className="w-full px-3 py-2 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#1a5c2a]"
                 />
+                {fieldErrors.title && (
+                  <p className="text-sm text-red-600 mt-1">{fieldErrors.title}</p>
+                )}
               </div>
               <div>
                 <label className="text-sm font-medium mb-1 block">Summary</label>
                 <input
                   type="text"
                   value={formData.summary}
-                  onChange={(e) => setFormData({ ...formData, summary: e.target.value })}
+                  onChange={(e) => updateField("summary", e.target.value)}
                   placeholder="Brief summary (optional)"
                   className="w-full px-3 py-2 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#1a5c2a]"
                 />
+                {fieldErrors.summary && (
+                  <p className="text-sm text-red-600 mt-1">{fieldErrors.summary}</p>
+                )}
               </div>
               <div>
                 <label className="text-sm font-medium mb-1 block">Content *</label>
                 <textarea
                   value={formData.content}
-                  onChange={(e) => setFormData({ ...formData, content: e.target.value })}
+                  onChange={(e) => updateField("content", e.target.value)}
                   placeholder="Article content"
                   rows={8}
                   className="w-full px-3 py-2 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#1a5c2a]"
                 />
+                {fieldErrors.content && (
+                  <p className="text-sm text-red-600 mt-1">{fieldErrors.content}</p>
+                )}
               </div>
               <div>
                 <label className="text-sm font-medium mb-1 block">Image URL</label>
                 <input
                   type="url"
                   value={formData.imageUrl}
-                  onChange={(e) => setFormData({ ...formData, imageUrl: e.target.value })}
+                  onChange={(e) => updateField("imageUrl", e.target.value)}
                   placeholder="https://example.com/image.jpg"
                   className="w-full px-3 py-2 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#1a5c2a]"
                 />
+                {fieldErrors.imageUrl && (
+                  <p className="text-sm text-red-600 mt-1">{fieldErrors.imageUrl}</p>
+                )}
               </div>
               <div className="flex items-center gap-2">
                 <input

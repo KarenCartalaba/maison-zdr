@@ -9,7 +9,10 @@ export class EventRepository {
   public findEventById = async (id: string) => {
     return prisma.event.findUnique({
       where: { id },
-      include: { author: { select: { id: true, name: true, email: true } } },
+      include: {
+        author: { select: { id: true, name: true, email: true } },
+        _count: { select: { registrations: { where: { status: "CONFIRMED" } } } },
+      },
     });
   };
 

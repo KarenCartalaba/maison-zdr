@@ -7,8 +7,31 @@ const authRepo = new AuthRepository();
 export async function LoginCredentialsService(email: string, password: string) {
   try {
     const user = await authRepo.findUserByEmail(email);
-    if (!user || !user.password || !verifyPassword(password, user.password)) {
-      return { code: 400, status: "error", message: "Invalid credentials" };
+    if (!user) {
+      return {
+        code: 400,
+        status: "error",
+        message: "No account found with this email address",
+        errors: [{ path: "body.email", message: "No account found with this email address" }],
+      };
+    }
+
+    if (!user.password) {
+      return {
+        code: 400,
+        status: "error",
+        message: "This account uses Google sign-in",
+        errors: [{ path: "body.password", message: "This account was created with Google sign-in. Please use the Google button below." }],
+      };
+    }
+
+    if (!verifyPassword(password, user.password)) {
+      return {
+        code: 400,
+        status: "error",
+        message: "Incorrect password",
+        errors: [{ path: "body.password", message: "Incorrect password. Please try again." }],
+      };
     }
 
     if (!user.emailVerified) {

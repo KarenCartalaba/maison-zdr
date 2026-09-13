@@ -41,6 +41,7 @@ export interface Event {
 
 export interface Registration {
   id: string;
+  referenceNumber?: string | null;
   status: "CONFIRMED" | "PENDING" | "WAITLISTED" | "CANCELLED";
   hasPlusOne: boolean;
   guestName?: string | null;
@@ -107,6 +108,7 @@ export interface Review {
 
 export interface AdminRegistration {
   id: string;
+  referenceNumber?: string | null;
   status: "CONFIRMED" | "PENDING" | "WAITLISTED" | "CANCELLED";
   hasPlusOne: boolean;
   guestName?: string | null;

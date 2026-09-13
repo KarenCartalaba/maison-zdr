@@ -1,6 +1,8 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { toast } from "sonner";
+import { getErrorMessage } from "@/lib/server-error";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -156,8 +158,9 @@ export default function RegistrationsContent() {
       setUpdatingId(id);
       await adminService.updateRegistrationStatus(id, status);
       fetchData(activeFilter, search);
+      toast.success("Registration status updated");
     } catch (error) {
-      console.error("Failed to update status:", error);
+      toast.error(getErrorMessage(error, "Failed to update status"));
     } finally {
       setUpdatingId(null);
     }
@@ -294,7 +297,7 @@ export default function RegistrationsContent() {
                       className="border-b last:border-0 hover:bg-muted/50"
                     >
                       <td className="px-6 py-3 font-mono font-medium">
-                        {reg.id.substring(0, 8)}
+                        {reg.referenceNumber || reg.id.substring(0, 8)}
                       </td>
                       <td className="px-6 py-3">
                         <div>

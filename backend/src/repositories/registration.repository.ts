@@ -3,8 +3,14 @@ import { RegistrationStatus } from "@/generated/prisma/enums";
 import type { RegisterInput } from "@/schema/registration";
 
 export class RegistrationRepository {
-  public createRegistration = async (data: RegisterInput & { userId: string }) => {
+  public createRegistration = async (data: RegisterInput & { userId: string; referenceNumber?: string }) => {
     return prisma.registration.create({ data });
+  };
+
+  public findRegistrationByReferenceNumber = async (referenceNumber: string) => {
+    return prisma.registration.findUnique({
+      where: { referenceNumber },
+    });
   };
 
   public findRegistration = async (userId: string, eventId: string) => {

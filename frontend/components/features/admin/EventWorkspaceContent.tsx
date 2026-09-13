@@ -376,7 +376,7 @@ function ParticipantsTab({ eventId }: { eventId: string }) {
                         </Badge>
                       </td>
                       <td className="px-6 py-3 text-muted-foreground text-xs">
-                        {(p as any).referenceNumber || "—"}
+                        {p.referenceNumber || "—"}
                       </td>
                       <td className="px-6 py-3">
                         {p.checkedIn ? (

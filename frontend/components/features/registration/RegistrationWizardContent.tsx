@@ -1,6 +1,8 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { toast } from "sonner";
+import { getErrorMessage, getFieldErrors } from "@/lib/server-error";
 import { useRouter, useParams } from "next/navigation";
 import { Controller, useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -133,21 +135,28 @@ export default function RegistrationWizardContent({ initialEvent = null }: { ini
 
       const response = await registrationService.register(eventId, hasPlusOne, guestName, guestNames, guestCount);
 
-      if (response.code === 200 || response.code === 201) {
-        const code = `ZDR-${eventId.slice(0, 3).toUpperCase()}-${Math.floor(100000 + Math.random() * 900000)}`;
+      if ((response.code === 200 || response.code === 201) && response.data) {
+        // Use the server-issued reference number (persisted in the database).
+        // Fall back to a locally generated code only if the server omits it.
+        const code =
+          response.data.registration.referenceNumber ||
+          `ZDR-${eventId.slice(0, 3).toUpperCase()}-${Math.floor(100000 + Math.random() * 900000)}`;
         setReferenceCode(code);
         setSubmitted(true);
       } else {
         throw new Error(response.message || "Registration failed");
       }
     } catch (err: any) {
-      if (err.errors) {
-        err.errors.forEach((e: { path: string; message: string }) => {
-          const fieldName = e.path.replace("body.", "");
-          if (fieldName in step1Form.getValues()) {
-            step1Form.setError(fieldName as keyof Step1Values, { type: "server", message: e.message });
-          }
-        });
+      const fieldErrors = getFieldErrors(err);
+      let mapped = false;
+      for (const [field, message] of Object.entries(fieldErrors)) {
+        if (field in step1Form.getValues()) {
+          step1Form.setError(field as keyof Step1Values, { type: "server", message });
+          mapped = true;
+        }
+      }
+      if (!mapped) {
+        toast.error(getErrorMessage(err, "Registration failed. Please try again."));
       }
     } finally {
       setIsSubmitting(false);

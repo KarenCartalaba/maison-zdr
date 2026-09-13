@@ -17,10 +17,9 @@ export default function NewsDetailContent({ initialNews }: NewsDetailContentProp
   const [news, setNews] = useState<News | null>(initialNews);
   const [loading, setLoading] = useState(!initialNews);
 
+  // Always reflect the latest server data (e.g. null after a delete → "News Not Found")
   useEffect(() => {
-    if (initialNews) return;
-    // If no SSR data, we can't fetch without knowing the ID from URL
-    // This is handled by the server component above
+    setNews(initialNews);
     setLoading(false);
   }, [initialNews]);
 
@@ -117,16 +116,6 @@ export default function NewsDetailContent({ initialNews }: NewsDetailContentProp
             </p>
           )
         ))}
-      </div>
-
-      {/* Footer */}
-      <div className="border-t mt-12 pt-8">
-        <Link href="/news">
-          <Button variant="outline" className="border-[#1a5c2a] text-[#1a5c2a] hover:bg-[#1a5c2a] hover:text-white">
-            <ArrowLeft className="h-4 w-4 mr-2" />
-            Back to All News
-          </Button>
-        </Link>
       </div>
     </div>
   );

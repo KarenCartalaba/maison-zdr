@@ -117,7 +117,7 @@ export async function sendEventReminders(): Promise<ReminderResult> {
               minute: "2-digit",
             }),
             eventLocation: event.location,
-            referenceNumber: registration.id.slice(0, 8).toUpperCase(),
+            referenceNumber: registration.referenceNumber ?? registration.id.slice(0, 8).toUpperCase(),
           });
 
           await sendEmail({

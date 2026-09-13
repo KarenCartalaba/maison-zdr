@@ -546,7 +546,7 @@ export default function DashboardContent({
               {recentRegistrations.map((reg) => (
                 <TableRow key={reg.id}>
                   <TableCell className="font-mono font-medium">
-                    MZ-{reg.id.slice(0, 6).toUpperCase()}
+                    {reg.referenceNumber || `MZ-${reg.id.slice(0, 6).toUpperCase()}`}
                   </TableCell>
                   <TableCell>
                     <div>

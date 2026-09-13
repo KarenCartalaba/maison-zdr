@@ -1,6 +1,8 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { toast } from "sonner";
+import { getErrorMessage } from "@/lib/server-error";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -145,8 +147,9 @@ export default function UsersContent() {
       setActionLoading(id);
       await adminService.updateUserRole(id, role);
       fetchData(activeFilter, search);
+      toast.success("User role updated");
     } catch (error) {
-      console.error("Failed to update user role:", error);
+      toast.error(getErrorMessage(error, "Failed to update user role"));
     } finally {
       setActionLoading(null);
     }
@@ -157,8 +160,9 @@ export default function UsersContent() {
       setActionLoading(id);
       await adminService.verifyUser(id);
       fetchData(activeFilter, search);
+      toast.success("User verified");
     } catch (error) {
-      console.error("Failed to verify user:", error);
+      toast.error(getErrorMessage(error, "Failed to verify user"));
     } finally {
       setActionLoading(null);
     }
@@ -169,8 +173,9 @@ export default function UsersContent() {
       setActionLoading(id);
       await adminService.suspendUser(id);
       fetchData(activeFilter, search);
+      toast.success("User suspension updated");
     } catch (error) {
-      console.error("Failed to suspend/unsuspend user:", error);
+      toast.error(getErrorMessage(error, "Failed to suspend/unsuspend user"));
     } finally {
       setActionLoading(null);
     }
@@ -186,8 +191,9 @@ export default function UsersContent() {
       setActionLoading(id);
       await adminService.deleteUser(id);
       fetchData(activeFilter, search);
+      toast.success("User deleted");
     } catch (error) {
-      console.error("Failed to delete user:", error);
+      toast.error(getErrorMessage(error, "Failed to delete user"));
     } finally {
       setActionLoading(null);
     }
