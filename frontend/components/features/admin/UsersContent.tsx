@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 import { getErrorMessage } from "@/lib/server-error";
+import { useConfirm } from "@/components/ui/confirm-dialog";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -101,6 +102,7 @@ export default function UsersContent() {
   const [actionLoading, setActionLoading] = useState<string | null>(null);
   const [selectedUser, setSelectedUser] = useState<AdminUser | null>(null);
   const searchTimer = useRef<NodeJS.Timeout | null>(null);
+  const { confirm, dialog } = useConfirm();
 
   const fetchData = async (role?: string, searchTerm?: string, isInitial = false) => {
     try {
@@ -182,11 +184,6 @@ export default function UsersContent() {
   };
 
   const handleDeleteUser = async (id: string, name: string) => {
-    const confirmed = window.confirm(
-      `Are you sure you want to delete user "${name}"? This action cannot be undone.`
-    );
-    if (!confirmed) return;
-
     try {
       setActionLoading(id);
       await adminService.deleteUser(id);
@@ -203,6 +200,7 @@ export default function UsersContent() {
 
   return (
     <div>
+      {dialog}
       <div className="flex items-center justify-between mb-6">
         <div>
           <h1 className="text-2xl font-bold">Users</h1>
@@ -396,8 +394,15 @@ export default function UsersContent() {
                               {u.suspended ? "Unsuspend User" : "Suspend User"}
                             </DropdownMenuItem>
                             <DropdownMenuSeparator />
-                            <DropdownMenuItem
-                              onClick={() => handleDeleteUser(u.id, u.name)}
+                              <DropdownMenuItem
+                                onClick={() =>
+                                  confirm({
+                                    title: "Delete user",
+                                    description: `Permanently delete "${u.name}"? This action cannot be undone.`,
+                                    confirmLabel: "Delete",
+                                    onConfirm: () => handleDeleteUser(u.id, u.name),
+                                  })
+                                }
                               disabled={actionLoading === u.id}
                               className="text-red-600"
                             >

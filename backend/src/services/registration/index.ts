@@ -1,6 +1,7 @@
 ﻿import { RegistrationRepository } from "@/repositories/registration.repository";
 import { EventRepository } from "@/repositories/event.repository";
 import { AuthRepository } from "@/repositories/auth.repository";
+import { RegistrationStatus } from "@/generated/prisma/enums";
 import { renderTemplate } from "@/utils/template";
 import { sendEmail } from "@/lib/nodemailer";
 import { cacheGet, cacheSet, cacheInvalidate, cacheInvalidatePattern } from "@/lib/redis";
@@ -68,16 +69,28 @@ export async function RegisterForEventService(
     }
 
     const referenceNumber = await generateUniqueReferenceNumber(eventId);
+    const guestNamesValue = guestNames ?? (guestName ? [guestName] : []);
 
-    const registration = await registrationRepo.createRegistration({
-      userId,
-      eventId,
-      hasPlusOne,
-      guestName,
-      guestNames: guestNames ?? (guestName ? [guestName] : []),
-      guestCount: effectiveGuestCount,
-      referenceNumber,
-    });
+    // Reactivate a previously cancelled registration instead of creating
+    // a duplicate row (userId + eventId is unique). Gets a fresh reference number.
+    const registration = existing
+      ? await registrationRepo.updateRegistration(userId, eventId, {
+          status: RegistrationStatus.CONFIRMED,
+          hasPlusOne,
+          guestName: guestName ?? null,
+          guestNames: guestNamesValue,
+          guestCount: effectiveGuestCount,
+          referenceNumber,
+        })
+      : await registrationRepo.createRegistration({
+          userId,
+          eventId,
+          hasPlusOne,
+          guestName,
+          guestNames: guestNamesValue,
+          guestCount: effectiveGuestCount,
+          referenceNumber,
+        });
 
     // Invalidate registration caches + event cache (counts changed)
     await cacheInvalidate(REG_BY_EVENT(eventId));
@@ -106,7 +119,7 @@ export async function RegisterForEventService(
     }
 
     return {
-      code: 201,
+      code: existing ? 200 : 201,
       status: "success",
       message: "Registration successful",
       data: { registration },

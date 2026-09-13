@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
+import { useConfirm } from "@/components/ui/confirm-dialog";
 import { newsService, CreateNewsData } from "@/services/news.service";
 import { getErrorMessage, getFieldErrors } from "@/lib/server-error";
 import { Button } from "@/components/ui/button";
@@ -29,6 +30,7 @@ export default function AdminNewsContent({ initialNews = [] }: AdminNewsContentP
     isPublished: true,
   });
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
+  const { confirm, dialog } = useConfirm();
 
   const updateField = (field: keyof CreateNewsData, value: string | boolean) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
@@ -115,7 +117,6 @@ export default function AdminNewsContent({ initialNews = [] }: AdminNewsContentP
   };
 
   const handleDelete = async (id: string) => {
-    if (!confirm("Are you sure you want to delete this news article?")) return;
     try {
       const response = await newsService.delete(id);
       if (response.code === 200) {
@@ -139,6 +140,7 @@ export default function AdminNewsContent({ initialNews = [] }: AdminNewsContentP
 
   return (
     <div>
+      {dialog}
       {/* Header */}
       <div className="flex items-center justify-between mb-6">
         <div>
@@ -321,7 +323,14 @@ export default function AdminNewsContent({ initialNews = [] }: AdminNewsContentP
                             variant="ghost"
                             size="icon"
                             className="h-8 w-8"
-                            onClick={() => handleDelete(item.id)}
+                            onClick={() =>
+                              confirm({
+                                title: "Delete article",
+                                description: `Permanently delete "${item.title}"? This action cannot be undone.`,
+                                confirmLabel: "Delete",
+                                onConfirm: () => handleDelete(item.id),
+                              })
+                            }
                           >
                             <Trash2 className="h-3 w-3 text-red-500" />
                           </Button>

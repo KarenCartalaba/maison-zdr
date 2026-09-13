@@ -16,6 +16,7 @@ import {
   Grid3X3,
 } from "lucide-react";
 import { toast } from "sonner";
+import { useConfirm } from "@/components/ui/confirm-dialog";
 import type { Event } from "@/types";
 
 interface EventWithGallery extends Event {
@@ -29,6 +30,7 @@ export default function AdminGalleryContent() {
   const [isUploading, setIsUploading] = useState(false);
   const [deletingIndex, setDeletingIndex] = useState<number | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const { confirm, dialog } = useConfirm();
 
   useEffect(() => {
     fetchEvents();
@@ -100,7 +102,6 @@ export default function AdminGalleryContent() {
 
   const handleDeleteImage = async (index: number) => {
     if (!selectedEvent) return;
-    if (!confirm("Are you sure you want to delete this image?")) return;
 
     setDeletingIndex(index);
     try {
@@ -202,8 +203,15 @@ export default function AdminGalleryContent() {
                   className="h-full w-full object-cover"
                 />
                 <div className="absolute inset-0 bg-black/0 group-hover:bg-black/40 transition-colors" />
-                <button
-                  onClick={() => handleDeleteImage(index)}
+                  <button
+                    onClick={() =>
+                      confirm({
+                        title: "Delete image",
+                        description: "Permanently delete this image from the event gallery?",
+                        confirmLabel: "Delete",
+                        onConfirm: () => handleDeleteImage(index),
+                      })
+                    }
                   disabled={deletingIndex === index}
                   className="absolute top-2 right-2 flex h-8 w-8 items-center justify-center rounded-full bg-white/90 text-red-500 opacity-0 group-hover:opacity-100 transition-opacity disabled:opacity-50 shadow-sm"
                 >
@@ -224,6 +232,7 @@ export default function AdminGalleryContent() {
   // Events grid view
   return (
     <div>
+      {dialog}
       <div className="mb-8">
         <h1 className="text-3xl font-bold">Manage Gallery</h1>
         <p className="text-muted-foreground mt-2">

@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { getErrorMessage } from "@/lib/server-error";
+import { useConfirm } from "@/components/ui/confirm-dialog";
 import Link from "next/link";
 import { eventService } from "@/services/event.service";
 import { Button } from "@/components/ui/button";
@@ -23,6 +24,7 @@ export default function AdminEventsContent({ initialEvents = [] }: AdminEventsCo
   const [events, setEvents] = useState<Event[]>(initialEvents);
   const [isLoading, setIsLoading] = useState(initialEvents.length === 0);
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
+  const { confirm, dialog } = useConfirm();
   const [activeTab, setActiveTab] = useState<"all" | "ongoing" | "upcoming" | "past" | "cancelled">("all");
   const [currentPage, setCurrentPage] = useState(1);
 
@@ -85,8 +87,6 @@ export default function AdminEventsContent({ initialEvents = [] }: AdminEventsCo
   }, [activeTab]);
 
   const handleDelete = async (id: string) => {
-    if (!confirm("Are you sure you want to delete this event?")) return;
-
     try {
       const response = await eventService.delete(id);
       if (response.code === 200) {
@@ -138,6 +138,7 @@ export default function AdminEventsContent({ initialEvents = [] }: AdminEventsCo
 
   return (
     <div>
+      {dialog}
       {/* Header */}
       <div className="flex items-center justify-between mb-6">
         <div>
@@ -244,7 +245,14 @@ export default function AdminEventsContent({ initialEvents = [] }: AdminEventsCo
                     <Button
                       variant="outline"
                       size="icon"
-                      onClick={() => handleDelete(event.id)}
+                      onClick={() =>
+                        confirm({
+                          title: "Delete event",
+                          description: `Permanently delete "${event.title}"? This also removes all its registrations.`,
+                          confirmLabel: "Delete",
+                          onConfirm: () => handleDelete(event.id),
+                        })
+                      }
                     >
                       <Trash2 className="h-4 w-4 text-red-500" />
                     </Button>
@@ -323,7 +331,14 @@ export default function AdminEventsContent({ initialEvents = [] }: AdminEventsCo
                               variant="ghost"
                               size="icon"
                               className="h-8 w-8"
-                              onClick={() => handleDelete(event.id)}
+                              onClick={() =>
+                                confirm({
+                                  title: "Delete event",
+                                  description: `Permanently delete "${event.title}"? This also removes all its registrations.`,
+                                  confirmLabel: "Delete",
+                                  onConfirm: () => handleDelete(event.id),
+                                })
+                              }
                             >
                               <Trash2 className="h-3 w-3 text-red-500" />
                             </Button>

@@ -42,6 +42,24 @@ export class RegistrationRepository {
     });
   };
 
+  public updateRegistration = async (
+    userId: string,
+    eventId: string,
+    data: {
+      status?: RegistrationStatus;
+      hasPlusOne?: boolean;
+      guestName?: string | null;
+      guestNames?: string[];
+      guestCount?: number;
+      referenceNumber?: string;
+    }
+  ) => {
+    return prisma.registration.update({
+      where: { userId_eventId: { userId, eventId } },
+      data,
+    });
+  };
+
   public countConfirmedRegistrations = async (eventId: string) => {
     const result = await prisma.registration.aggregate({
       where: { eventId, status: "CONFIRMED" },

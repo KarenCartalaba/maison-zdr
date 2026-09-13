@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState, useCallback } from "react";
+import { useConfirm } from "@/components/ui/confirm-dialog";
 import { useParams, useRouter } from "next/navigation";
 import { Controller, useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -22,6 +23,7 @@ import { adminService } from "@/services/admin.service";
 import { galleryService } from "@/services/gallery.service";
 import type { Event, AdminRegistration, AdminReview } from "@/types";
 import { toast } from "sonner";
+import { getErrorMessage } from "@/lib/server-error";
 
 type Tab = "overview" | "participants" | "reviews" | "highlights" | "settings";
 
@@ -227,6 +229,8 @@ function ParticipantsTab({ eventId }: { eventId: string }) {
   const [isLoading, setIsLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [actionLoading, setActionLoading] = useState<string | null>(null);
+  const [checkingInId, setCheckingInId] = useState<string | null>(null);
+  const { confirm, dialog } = useConfirm();
 
   const fetchParticipants = useCallback(async () => {
     try {
@@ -247,17 +251,28 @@ function ParticipantsTab({ eventId }: { eventId: string }) {
   }, [fetchParticipants]);
 
   const handleCancel = async (registrationId: string) => {
-    if (!confirm("Are you sure you want to cancel this registration?")) return;
     try {
       setActionLoading(registrationId);
       await adminService.updateRegistrationStatus(registrationId, "CANCELLED");
       toast.success("Registration cancelled");
       fetchParticipants();
     } catch (err) {
-      console.error("Failed to cancel registration:", err);
       toast.error("Failed to cancel registration");
     } finally {
       setActionLoading(null);
+    }
+  };
+
+  const handleCheckIn = async (registrationId: string) => {
+    try {
+      setCheckingInId(registrationId);
+      await adminService.checkIn(registrationId);
+      toast.success("Checked in successfully");
+      fetchParticipants();
+    } catch (err) {
+      toast.error(getErrorMessage(err, "Failed to check in"));
+    } finally {
+      setCheckingInId(null);
     }
   };
 
@@ -284,6 +299,7 @@ function ParticipantsTab({ eventId }: { eventId: string }) {
 
   return (
     <div className="space-y-6">
+      {dialog}
       {/* Stats */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         <Card>
@@ -386,21 +402,45 @@ function ParticipantsTab({ eventId }: { eventId: string }) {
                         )}
                       </td>
                       <td className="px-6 py-3">
-                        {p.status !== "CANCELLED" && (
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            className="text-red-500 hover:text-red-700"
-                            onClick={() => handleCancel(p.id)}
-                            disabled={actionLoading === p.id}
-                          >
-                            {actionLoading === p.id ? (
-                              <Loader2 className="h-4 w-4 animate-spin" />
-                            ) : (
-                              "Cancel"
-                            )}
-                          </Button>
-                        )}
+                        <div className="flex items-center gap-1">
+                          {!p.checkedIn && p.status !== "CANCELLED" && (
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="text-[#1a5c2a] hover:text-[#144a22] hover:bg-green-50"
+                              disabled={checkingInId === p.id}
+                              onClick={() => handleCheckIn(p.id)}
+                            >
+                              {checkingInId === p.id ? (
+                                <Loader2 className="h-4 w-4 animate-spin" />
+                              ) : (
+                                "Check in"
+                              )}
+                            </Button>
+                          )}
+                          {p.status !== "CANCELLED" && (
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="text-red-500 hover:text-red-700"
+                              onClick={() =>
+                                confirm({
+                                  title: "Cancel registration",
+                                  description: `Cancel ${p.user?.name || "this participant"}'s registration? They can re-register before the deadline.`,
+                                  confirmLabel: "Yes, cancel",
+                                  onConfirm: () => handleCancel(p.id),
+                                })
+                              }
+                              disabled={actionLoading === p.id}
+                            >
+                              {actionLoading === p.id ? (
+                                <Loader2 className="h-4 w-4 animate-spin" />
+                              ) : (
+                                "Cancel"
+                              )}
+                            </Button>
+                          )}
+                        </div>
                       </td>
                     </tr>
                   ))
@@ -635,6 +675,7 @@ function HighlightsTab({ event }: { event: Event }) {
   const [isUploading, setIsUploading] = useState(false);
   const [deletingUrl, setDeletingUrl] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const { confirm, dialog } = useConfirm();
 
   const handleUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -695,8 +736,6 @@ function HighlightsTab({ event }: { event: Event }) {
   };
 
   const handleDelete = async (imageUrl: string) => {
-    if (!confirm("Are you sure you want to delete this image?")) return;
-
     try {
       setDeletingUrl(imageUrl);
 
@@ -722,6 +761,7 @@ function HighlightsTab({ event }: { event: Event }) {
 
   return (
     <Card>
+      {dialog}
       <CardHeader>
         <div className="flex items-center justify-between">
           <CardTitle className="text-base">
@@ -782,7 +822,14 @@ function HighlightsTab({ event }: { event: Event }) {
                   <Button
                     variant="destructive"
                     size="sm"
-                    onClick={() => handleDelete(url)}
+                    onClick={() =>
+                      confirm({
+                        title: "Delete image",
+                        description: "Permanently delete this image from the event gallery?",
+                        confirmLabel: "Delete",
+                        onConfirm: () => handleDelete(url),
+                      })
+                    }
                     disabled={deletingUrl === url}
                   >
                     {deletingUrl === url ? (

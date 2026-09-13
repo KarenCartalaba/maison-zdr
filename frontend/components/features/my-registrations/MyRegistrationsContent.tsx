@@ -2,7 +2,11 @@
 
 import { useEffect, useState } from "react";
 import { useAuth } from "@/context/AuthContext";
+import { toast } from "sonner";
+import { getErrorMessage } from "@/lib/server-error";
+import { useConfirm } from "@/components/ui/confirm-dialog";
 import { registrationService } from "@/services/registration.service";
+import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Loader2, Calendar, MapPin } from "lucide-react";
@@ -17,6 +21,28 @@ export default function MyRegistrationsContent({ initialRegistrations = [] }: My
   const { user } = useAuth();
   const [registrations, setRegistrations] = useState<Registration[]>(initialRegistrations);
   const [isLoading, setIsLoading] = useState(initialRegistrations.length === 0);
+  const [cancellingId, setCancellingId] = useState<string | null>(null);
+  const { confirm, dialog } = useConfirm();
+
+  const handleCancel = async (registration: Registration) => {
+    if (!registration.eventId) return;
+    try {
+      setCancellingId(registration.id);
+      const res = await registrationService.cancel(registration.eventId);
+      if (res.code === 200) {
+        setRegistrations((prev) =>
+          prev.map((r) => (r.id === registration.id ? { ...r, status: "CANCELLED" } : r))
+        );
+        toast.success("Registration cancelled");
+      } else {
+        toast.error(res.message || "Failed to cancel registration");
+      }
+    } catch (err) {
+      toast.error(getErrorMessage(err, "Failed to cancel registration"));
+    } finally {
+      setCancellingId(null);
+    }
+  };
 
   useEffect(() => {
     if (initialRegistrations.length > 0) return; // Already have SSR data
@@ -48,6 +74,7 @@ export default function MyRegistrationsContent({ initialRegistrations = [] }: My
 
   return (
     <div className="container mx-auto px-4 py-8">
+      {dialog}
       <div className="mb-8">
         <h1 className="text-3xl font-bold">My Registrations</h1>
         <p className="text-muted-foreground mt-2">View your event registrations</p>
@@ -85,9 +112,29 @@ export default function MyRegistrationsContent({ initialRegistrations = [] }: My
                     <p className="text-sm text-muted-foreground mt-1">Plus-one: {registration.guestName}</p>
                   )}
                 </div>
-                <Badge variant={registration.status === "CONFIRMED" ? "default" : "destructive"}>
-                  {registration.status}
-                </Badge>
+                <div className="flex flex-col items-end gap-2 shrink-0">
+                  <Badge variant={registration.status === "CONFIRMED" ? "default" : "destructive"}>
+                    {registration.status}
+                  </Badge>
+                  {registration.status !== "CANCELLED" && !registration.event?.isCancelled && (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                      disabled={cancellingId === registration.id}
+                      onClick={() =>
+                        confirm({
+                          title: "Cancel registration",
+                          description: `Cancel your registration for "${registration.event?.title || "this event"}"? You can re-register any time before the deadline.`,
+                          confirmLabel: "Yes, cancel",
+                          onConfirm: () => handleCancel(registration),
+                        })
+                      }
+                    >
+                      {cancellingId === registration.id ? "Cancelling…" : "Cancel registration"}
+                    </Button>
+                  )}
+                </div>
               </CardContent>
             </Card>
           ))}
