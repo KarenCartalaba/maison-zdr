@@ -1,4 +1,5 @@
 import { AuthRepository } from "@/repositories/auth.repository";
+import { invalidateUserCache } from "./get-me-service";
 
 const authRepo = new AuthRepository();
 
@@ -26,6 +27,7 @@ export async function VerifyEmailService(token: string) {
 
     await authRepo.updateUser(user.id, { emailVerified: new Date() });
     await authRepo.consumeToken(record.id);
+    await invalidateUserCache(user.id);
 
     return {
       code: 200,

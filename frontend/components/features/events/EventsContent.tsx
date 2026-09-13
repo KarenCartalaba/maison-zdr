@@ -24,6 +24,12 @@ export default function EventsContent({ initialEvents = [] }: EventsContentProps
   const [searchTerm, setSearchTerm] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
 
+  // Always reflect the latest server data (e.g. after a delete + refresh)
+  useEffect(() => {
+    setEvents(initialEvents);
+    if (initialEvents.length > 0) setLoading(false);
+  }, [initialEvents]);
+
   useEffect(() => {
     if (initialEvents.length > 0) return; // Already have SSR data
     eventService.getAll()

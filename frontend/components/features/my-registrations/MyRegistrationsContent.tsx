@@ -24,6 +24,12 @@ export default function MyRegistrationsContent({ initialRegistrations = [] }: My
   const [cancellingId, setCancellingId] = useState<string | null>(null);
   const { confirm, dialog } = useConfirm();
 
+  // Always reflect the latest server data (e.g. after a delete + refresh)
+  useEffect(() => {
+    setRegistrations(initialRegistrations);
+    if (initialRegistrations.length > 0) setIsLoading(false);
+  }, [initialRegistrations]);
+
   const handleCancel = async (registration: Registration) => {
     if (!registration.eventId) return;
     try {

@@ -132,7 +132,7 @@ export default function EventWorkspaceContent() {
         {activeTab === "participants" && <ParticipantsTab eventId={eventId} />}
         {activeTab === "reviews" && <ReviewsTab eventId={eventId} />}
         {activeTab === "highlights" && <HighlightsTab event={event} />}
-        {activeTab === "settings" && <SettingsTab event={event} />}
+        {activeTab === "settings" && <SettingsTab event={event} onUpdated={(updated) => { setEvent(updated); setActiveTab("overview"); }} />}
       </div>
     </div>
   );
@@ -229,7 +229,6 @@ function ParticipantsTab({ eventId }: { eventId: string }) {
   const [isLoading, setIsLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [actionLoading, setActionLoading] = useState<string | null>(null);
-  const [checkingInId, setCheckingInId] = useState<string | null>(null);
   const { confirm, dialog } = useConfirm();
 
   const fetchParticipants = useCallback(async () => {
@@ -263,18 +262,19 @@ function ParticipantsTab({ eventId }: { eventId: string }) {
     }
   };
 
-  const handleCheckIn = async (registrationId: string) => {
+  const handleRestore = async (registrationId: string) => {
     try {
-      setCheckingInId(registrationId);
-      await adminService.checkIn(registrationId);
-      toast.success("Checked in successfully");
+      setActionLoading(registrationId);
+      await adminService.updateRegistrationStatus(registrationId, "CONFIRMED");
+      toast.success("Registration restored");
       fetchParticipants();
     } catch (err) {
-      toast.error(getErrorMessage(err, "Failed to check in"));
+      toast.error(getErrorMessage(err, "Failed to restore registration"));
     } finally {
-      setCheckingInId(null);
+      setActionLoading(null);
     }
   };
+
 
   const filtered = participants.filter((p) => {
     if (!search) return true;
@@ -403,18 +403,18 @@ function ParticipantsTab({ eventId }: { eventId: string }) {
                       </td>
                       <td className="px-6 py-3">
                         <div className="flex items-center gap-1">
-                          {!p.checkedIn && p.status !== "CANCELLED" && (
+                          {p.status === "CANCELLED" && (
                             <Button
                               variant="ghost"
                               size="sm"
                               className="text-[#1a5c2a] hover:text-[#144a22] hover:bg-green-50"
-                              disabled={checkingInId === p.id}
-                              onClick={() => handleCheckIn(p.id)}
+                              disabled={actionLoading === p.id}
+                              onClick={() => handleRestore(p.id)}
                             >
-                              {checkingInId === p.id ? (
+                              {actionLoading === p.id ? (
                                 <Loader2 className="h-4 w-4 animate-spin" />
                               ) : (
-                                "Check in"
+                                "Restore"
                               )}
                             </Button>
                           )}
@@ -861,7 +861,7 @@ const eventSettingsSchema = z.object({
 
 type EventSettingsValues = z.infer<typeof eventSettingsSchema>;
 
-function SettingsTab({ event }: { event: Event }) {
+function SettingsTab({ event, onUpdated }: { event: Event; onUpdated: (event: Event) => void }) {
   const [isUpdating, setIsUpdating] = useState(false);
 
   const form = useForm<EventSettingsValues>({
@@ -880,7 +880,7 @@ function SettingsTab({ event }: { event: Event }) {
   const handleSubmit = async (data: EventSettingsValues) => {
     setIsUpdating(true);
     try {
-      await eventService.update({
+      const response = await eventService.update({
         id: event.id,
         title: data.title,
         description: data.description,
@@ -889,7 +889,12 @@ function SettingsTab({ event }: { event: Event }) {
         isCancelled: data.isCancelled,
         allowReviewsNow: data.allowReviewsNow,
       });
-      toast.success("Event updated successfully");
+      if (response.code === 200 && response.data) {
+        onUpdated(response.data.event);
+        toast.success("Event updated successfully");
+      } else {
+        toast.error(response.message || "Failed to update event");
+      }
     } catch (error: any) {
       if (error.errors) {
         error.errors.forEach((err: { path: string; message: string }) => {
@@ -967,34 +972,39 @@ function SettingsTab({ event }: { event: Event }) {
             <Controller
               name="isCancelled"
               control={form.control}
-              render={({ field }) => (
-                <Field>
+              render={({ field, fieldState }) => (
+                <Field data-invalid={fieldState.invalid}>
                   <label className="flex items-center gap-2 cursor-pointer">
                     <input
                       type="checkbox"
                       checked={field.value}
                       onChange={field.onChange}
                       className="rounded"
+                      aria-invalid={fieldState.invalid}
                     />
                     <span className="text-sm">Mark as cancelled</span>
                   </label>
+                  {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
                 </Field>
               )}
             />
             <Controller
               name="allowReviewsNow"
               control={form.control}
-              render={({ field }) => (
-                <Field>
+              render={({ field, fieldState }) => (
+                <Field data-invalid={fieldState.invalid}>
                   <label className="flex items-center gap-2 cursor-pointer">
                     <input
                       type="checkbox"
                       checked={field.value}
                       onChange={field.onChange}
                       className="rounded"
+                      aria-invalid={fieldState.invalid}
                     />
                     <span className="text-sm">Allow reviews now</span>
                   </label>
+                  <p className="text-xs text-muted-foreground">Lets customers submit reviews before the event date has passed.</p>
+                  {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
                 </Field>
               )}
             />

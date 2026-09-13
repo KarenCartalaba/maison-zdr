@@ -95,6 +95,12 @@ export default function AnalyticsContent({ initialData = null }: AnalyticsConten
   const [data, setData] = useState<AnalyticsOverview | null>(initialData);
   const [loading, setLoading] = useState(!initialData);
 
+  // Always reflect the latest server data
+  useEffect(() => {
+    setData(initialData);
+    setLoading(false);
+  }, [initialData]);
+
   const handleExportReport = () => {
     if (!data) return;
     const lines: string[] = [];

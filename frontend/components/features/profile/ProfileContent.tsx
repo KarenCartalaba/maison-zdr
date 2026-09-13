@@ -30,6 +30,11 @@ export default function ProfileContent({ initialStats = null }: ProfileContentPr
   const [tabKey, setTabKey] = useState(0);
   const [profileStats, setProfileStats] = useState(initialStats);
 
+  // Always reflect the latest server data
+  useEffect(() => {
+    setProfileStats(initialStats);
+  }, [initialStats]);
+
   useEffect(() => {
     if (initialStats) return; // Already have SSR data
     authService.getProfileStats().then((res) => {

@@ -174,6 +174,19 @@ export default function DashboardContent({
     !initialStats
   );
 
+  // Always reflect the latest server data (e.g. after a delete + refresh)
+  useEffect(() => {
+    setStats(initialStats);
+    setRegistrationTrend(initialTrend?.trend ?? []);
+    setRegistrationStatus(initialStatus?.status ?? []);
+    setAttendanceTrend(initialAttendance?.trend ?? []);
+    setTopCategories(initialCategories?.categories ?? []);
+    setUpcomingEvents(initialUpcoming?.events ?? []);
+    setRecentRegistrations(initialRecent?.registrations ?? []);
+    setTopEvents(initialTop?.events ?? []);
+    setLoading(false);
+  }, [initialStats, initialTrend, initialStatus, initialAttendance, initialCategories, initialUpcoming, initialRecent, initialTop]);
+
   // TanStack Table instance
   const table = useTable({
     features,

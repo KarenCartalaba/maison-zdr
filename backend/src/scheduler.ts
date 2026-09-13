@@ -1,5 +1,5 @@
 import cron from "node-cron";
-import { sendEventReminders } from "@/services/email/event-reminder-service";
+import { sendEventReminders } from "@/services/email";
 
 let isRunning = false;
 

@@ -19,6 +19,12 @@ export default function EventDetailContent({ eventId, initialEvent }: EventDetai
   const [loading, setLoading] = useState(!initialEvent);
   const [error, setError] = useState(false);
 
+  // Always reflect the latest server data (e.g. null after a delete → "Event not found")
+  useEffect(() => {
+    setEvent(initialEvent || null);
+    setLoading(false);
+  }, [initialEvent]);
+
   useEffect(() => {
     if (initialEvent) return; // Already have SSR data
     eventService.getById(eventId)

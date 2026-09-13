@@ -46,14 +46,16 @@ const redis = new Redis(process.env.REDIS_URL, {
 
 ## Where Caching Is Used
 
-| Service | Key Pattern | TTL |
-|---------|------------|-----|
-| GetMe | `user:{id}` | 10 min |
+| Service area | Key patterns | TTL |
+|--------------|-------------|-----|
+| User profile | `user:{id}` | 10 min |
 | Events list | `events:all` | 5 min |
 | Event detail | `event:{id}` | 5 min |
-| News list | `news:all` | 5 min |
+| News lists | `news:all`, `news:published` | 5 min |
 | News detail | `news:{id}` | 5 min |
-| Admin dashboard | `admin:dashboard:{id}` | 5 min |
+| Registrations | `registrations:event:{id}`, `registrations:user:{id}` | 2 min |
+| Admin dashboard | `admin:*` (stats, trends, workspace, participants, reviews, regs, users, checkins, analytics) | 2 min |
+| Reminder dedup | `reminder:sent:{eventId}:{userId}` | 72 h |
 
 ## Cache Invalidation
 

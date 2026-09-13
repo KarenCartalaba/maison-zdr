@@ -37,12 +37,12 @@ export async function PendingReviewsService(userId: string) {
       where: { userId },
       select: { eventId: true },
     });
-    const reviewedSet = new Set(reviewedEventIds.map((r) => r.eventId));
+    const reviewedSet = new Set(reviewedEventIds.map((r: { eventId: string }) => r.eventId));
 
     // Filter out events already reviewed
     const pending = registrations
-      .filter((reg) => !reviewedSet.has(reg.eventId))
-      .map((reg) => reg.event);
+      .filter((reg: { eventId: string }) => !reviewedSet.has(reg.eventId))
+      .map((reg: { event: unknown }) => reg.event);
 
     return {
       code: 200,

@@ -2,6 +2,7 @@ import { OAuth2Client } from "google-auth-library";
 import { AuthRepository } from "@/repositories/auth.repository";
 import { signAccessToken, signRefreshToken, TokenExpiry } from "@/lib/jwt";
 import { ENV } from "@/config/env";
+import { cacheInvalidatePattern } from "@/lib/redis";
 
 const authRepo = new AuthRepository();
 const googleClient = new OAuth2Client(ENV.GOOGLE_CLIENT_ID);
@@ -43,6 +44,9 @@ export async function GoogleLoginService(idToken: string) {
         });
       }
     }
+
+    // Invalidate admin users cache so new/linked user appears immediately
+    await cacheInvalidatePattern("admin:users:*");
 
     if (!user) {
       return { code: 500, status: "error", message: "Failed to create user" };

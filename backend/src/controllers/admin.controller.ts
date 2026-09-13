@@ -28,7 +28,7 @@ import {
   SuspendUserService,
   GetAnalyticsOverviewService,
 } from "@/services/admin";
-import { TriggerRemindersService } from "@/services/email/event-reminder-service";
+import { TriggerRemindersService } from "@/services/email";
 
 export class AdminController {
   // ==================== Dashboard Stats ====================

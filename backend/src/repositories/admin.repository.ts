@@ -228,7 +228,13 @@ export class AdminRepository {
   };
 
   public updateRegistrationStatus = async (id: string, status: string) => {
-    return prisma.registration.update({ where: { id }, data: { status: status as any } });
+    // Cancelling voids the whole attendance record (clears any stale check-in)
+    const data: any = { status: status as any };
+    if (status === "CANCELLED") {
+      data.checkedIn = false;
+      data.checkedInAt = null;
+    }
+    return prisma.registration.update({ where: { id }, data });
   };
 
   // ==================== Check-ins ====================

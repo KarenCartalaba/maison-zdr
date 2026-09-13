@@ -36,9 +36,10 @@ export class RegistrationRepository {
   };
 
   public cancelRegistration = async (userId: string, eventId: string) => {
+    // Cancelling voids the whole attendance record (clears any stale check-in)
     return prisma.registration.update({
       where: { userId_eventId: { userId, eventId } },
-      data: { status: RegistrationStatus.CANCELLED },
+      data: { status: RegistrationStatus.CANCELLED, checkedIn: false, checkedInAt: null },
     });
   };
 
@@ -52,6 +53,8 @@ export class RegistrationRepository {
       guestNames?: string[];
       guestCount?: number;
       referenceNumber?: string;
+      checkedIn?: boolean;
+      checkedInAt?: Date | null;
     }
   ) => {
     return prisma.registration.update({

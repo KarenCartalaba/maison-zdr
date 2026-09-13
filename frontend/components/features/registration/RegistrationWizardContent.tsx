@@ -58,6 +58,11 @@ export default function RegistrationWizardContent({ initialEvent = null }: { ini
   const [referenceCode, setReferenceCode] = useState("");
   const [eventData, setEventData] = useState<any>(initialEvent);
 
+  // Always reflect the latest server data
+  useEffect(() => {
+    setEventData(initialEvent);
+  }, [initialEvent]);
+
   useEffect(() => {
     if (initialEvent) return;
     if (eventId) {

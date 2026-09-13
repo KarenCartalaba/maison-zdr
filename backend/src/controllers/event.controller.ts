@@ -11,8 +11,8 @@ export class EventController {
       title,
       description,
       location,
-      eventDate: new Date(eventDate),
-      deadline: new Date(deadline),
+      eventDate,
+      deadline,
       minParticipants,
       maxParticipants,
       authorId,
@@ -72,7 +72,7 @@ export class EventController {
 
       const totalReviews = reviews.length;
       const avgRating = totalReviews > 0
-        ? Math.round((reviews.reduce((sum, r) => sum + r.rating, 0) / totalReviews) * 10) / 10
+        ? Math.round((reviews.reduce((sum: number, r: { rating: number }) => sum + r.rating, 0) / totalReviews) * 10) / 10
         : 0;
 
       return res.status(200).json({
