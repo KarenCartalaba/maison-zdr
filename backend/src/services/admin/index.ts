@@ -235,9 +235,10 @@ export async function UpdateEventService(
 
     const updated = await adminRepo.updateEvent(eventId, updateData);
 
-    // Invalidate event + admin caches
+    // Invalidate event + admin + public list caches
     await cacheInvalidatePattern(`event:${eventId}*`);
     await cacheInvalidatePattern("admin:*");
+    await cacheInvalidatePattern("events:*");
 
     return {
       code: 200,
@@ -280,6 +281,9 @@ export async function UpdateRegistrationStatusService(id: string, status: string
     const updated = await adminRepo.updateRegistrationStatus(id, status);
     await cacheInvalidatePattern("admin:regs:*");
     await cacheInvalidatePattern("admin:*");
+    // Registration status affects public slot counts (events:all, event:{id})
+    await cacheInvalidatePattern(`event:${registration.eventId}*`);
+    await cacheInvalidatePattern("events:*");
     return { code: 200, status: "success", message: "Registration status updated", data: { registration: updated } };
   } catch (error) {
     console.error("UpdateRegistrationStatusService error", error);
