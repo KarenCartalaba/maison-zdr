@@ -1,13 +1,13 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 import { getErrorMessage } from "@/lib/server-error";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Star, Search, MessageSquare, Inbox } from "lucide-react";
+import { Star, Search, MessageSquare, Inbox, Loader2 } from "lucide-react";
 import { adminService } from "@/services/admin.service";
 import type { AdminReview, ReviewStats } from "@/types";
 
@@ -84,15 +84,21 @@ export default function ReviewsContent() {
   const [reviews, setReviews] = useState<AdminReview[]>([]);
   const [stats, setStats] = useState<ReviewStats | null>(null);
   const [loading, setLoading] = useState(true);
+  const [searching, setSearching] = useState(false);
   const [search, setSearch] = useState("");
   const [activeFilter, setActiveFilter] = useState("ALL");
   const [replyingId, setReplyingId] = useState<string | null>(null);
   const [replyText, setReplyText] = useState("");
   const [actionLoading, setActionLoading] = useState<string | null>(null);
+  const searchTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  const fetchData = async (status?: string, searchTerm?: string) => {
+  const fetchData = async (status?: string, searchTerm?: string, isInitial = false) => {
     try {
-      setLoading(true);
+      if (isInitial) {
+        setLoading(true);
+      } else {
+        setSearching(true);
+      }
       const response = await adminService.getReviews({
         status: status !== "ALL" ? status : undefined,
         search: searchTerm || undefined,
@@ -105,21 +111,28 @@ export default function ReviewsContent() {
       console.error("Failed to fetch reviews:", error);
     } finally {
       setLoading(false);
+      setSearching(false);
     }
   };
 
   useEffect(() => {
-    fetchData(activeFilter, search);
+    fetchData(activeFilter, search, true);
+    return () => {
+      if (searchTimer.current) clearTimeout(searchTimer.current);
+    };
   }, []);
 
   const handleFilterChange = (filter: string) => {
     setActiveFilter(filter);
-    fetchData(filter, search);
+    fetchData(filter, search, true);
   };
 
   const handleSearch = (value: string) => {
     setSearch(value);
-    fetchData(activeFilter, value);
+    if (searchTimer.current) clearTimeout(searchTimer.current);
+    searchTimer.current = setTimeout(() => {
+      fetchData(activeFilter, value);
+    }, 400);
   };
 
   const handleStatusChange = async (id: string, status: string) => {
@@ -151,7 +164,7 @@ export default function ReviewsContent() {
     }
   };
 
-  if (loading) return <LoadingSkeleton />;
+  if (loading && reviews.length === 0) return <LoadingSkeleton />;
 
   const positivePercentage =
     stats && stats.total > 0
@@ -229,6 +242,7 @@ export default function ReviewsContent() {
             onChange={(e) => handleSearch(e.target.value)}
             className="border-0 bg-transparent outline-none w-full"
           />
+          {searching && <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />}
         </div>
         <div className="flex gap-2">
           {STATUS_FILTERS.map((filter) => (

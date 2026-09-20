@@ -4,7 +4,6 @@ import Link from "next/link";
 import { useAuth } from "@/context/AuthContext";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
 import { Calendar, MapPin } from "lucide-react";
 import type { Event } from "@/types";
 
@@ -46,7 +45,12 @@ export default function EventCard({ event }: EventCardProps) {
   const buttonState = getButtonState();
 
   return (
-    <Card className="overflow-hidden border-none shadow-md">
+    <Link
+      href={`/events/${event.id}`}
+      className="block h-full rounded-lg focus:outline-none focus-visible:ring-2 focus-visible:ring-[#1a5c2a]"
+      aria-label={`View details for ${event.title}`}
+    >
+    <Card className="overflow-hidden border-none shadow-md h-full cursor-pointer transition-shadow hover:shadow-lg">
       <div className="relative h-48 bg-muted">
         {event.gallery?.[0] ? (
           <img
@@ -93,12 +97,11 @@ export default function EventCard({ event }: EventCardProps) {
             />
           </div>
         </div>
-        <Link href={`/events/${event.id}`}>
-          <Button className="w-full bg-[#1a5c2a] hover:bg-[#144a22]">
-            {buttonState.text}
-          </Button>
-        </Link>
+        <div className="inline-flex w-full items-center justify-center gap-2 whitespace-nowrap rounded-md bg-[#1a5c2a] px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-[#144a22]">
+          {buttonState.text}
+        </div>
       </CardContent>
     </Card>
+    </Link>
   );
 }

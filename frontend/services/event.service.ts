@@ -1,6 +1,6 @@
 import axiosInstance from "@/services/axios";
 import { API_ENDPOINTS } from "@/constants";
-import type { ApiResponse, Event, RegistrationData } from "@/types";
+import type { ApiResponse, Event, RegistrationData, Review } from "@/types";
 
 export interface CreateEventData {
   title: string;
@@ -68,7 +68,7 @@ export const eventService = {
 
   getReviews: async (eventId: string) => {
     const response = await axiosInstance.get<
-      ApiResponse<{ reviews: any[]; averageRating: number; totalReviews: number }>
+      ApiResponse<{ reviews: Review[]; averageRating: number; totalReviews: number }>
     >(API_ENDPOINTS.EVENTS.REVIEWS(eventId));
     return response.data;
   },

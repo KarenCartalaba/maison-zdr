@@ -93,7 +93,7 @@ export interface Review {
   title?: string;
   comment: string;
   status: "PENDING" | "APPROVED" | "REJECTED";
-  reply?: string;
+  reply?: string | null;
   createdAt: string;
   user: {
     id: string;

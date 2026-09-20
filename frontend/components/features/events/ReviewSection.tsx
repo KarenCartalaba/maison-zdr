@@ -129,6 +129,7 @@ export default function ReviewSection({
             rating={review.rating}
             title={review.title}
             comment={review.comment}
+            reply={review.reply}
           />
         ))}
       </div>

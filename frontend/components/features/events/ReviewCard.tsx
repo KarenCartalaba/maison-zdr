@@ -6,9 +6,10 @@ interface ReviewCardProps {
   rating: number;
   title?: string;
   comment: string;
+  reply?: string | null;
 }
 
-export default function ReviewCard({ name, date, rating, title, comment }: ReviewCardProps) {
+export default function ReviewCard({ name, date, rating, title, comment, reply }: ReviewCardProps) {
   return (
     <div className="rounded-lg border p-5 space-y-3">
       <div className="flex items-center justify-between">
@@ -27,6 +28,12 @@ export default function ReviewCard({ name, date, rating, title, comment }: Revie
       </div>
       {title && <h5 className="font-medium">{title}</h5>}
       <p className="text-sm text-muted-foreground">{comment}</p>
+      {reply && (
+        <div className="mt-3 p-3 bg-muted rounded-lg">
+          <p className="text-xs font-medium text-muted-foreground mb-1">Reply:</p>
+          <p className="text-sm">{reply}</p>
+        </div>
+      )}
     </div>
   );
 }

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 import { getErrorMessage } from "@/lib/server-error";
 import { Card, CardContent } from "@/components/ui/card";
@@ -17,7 +17,7 @@ import {
   DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu";
 import { DataTable, type DataTableColumn } from "@/components/ui/data-table";
-import { ClipboardList, Download, Search, MoreHorizontal } from "lucide-react";
+import { ClipboardList, Download, Search, MoreHorizontal, Loader2 } from "lucide-react";
 import { adminService } from "@/services/admin.service";
 import type { AdminRegistration, RegistrationStats } from "@/types";
 const STATUS_FILTERS = ["ALL", "CONFIRMED", "PENDING", "WAITLISTED", "CANCELLED"];
@@ -93,10 +93,12 @@ export default function RegistrationsContent() {
   const [registrations, setRegistrations] = useState<AdminRegistration[]>([]);
   const [stats, setStats] = useState<RegistrationStats | null>(null);
   const [loading, setLoading] = useState(true);
+  const [searching, setSearching] = useState(false);
   const [search, setSearch] = useState("");
   const [activeFilter, setActiveFilter] = useState("ALL");
   const [updatingId, setUpdatingId] = useState<string | null>(null);
   const [eventFilter, setEventFilter] = useState("ALL");
+  const searchTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const handleExportCsv = () => {
     const headers = ["Reference", "Guest", "Email", "Event", "Date", "Status"];
@@ -121,9 +123,13 @@ export default function RegistrationsContent() {
     URL.revokeObjectURL(url);
   };
 
-  const fetchData = async (status?: string, searchTerm?: string) => {
+  const fetchData = async (status?: string, searchTerm?: string, isInitial = false) => {
     try {
-      setLoading(true);
+      if (isInitial) {
+        setLoading(true);
+      } else {
+        setSearching(true);
+      }
       const response = await adminService.getRegistrations({
         status: status !== "ALL" ? status : undefined,
         search: searchTerm || undefined,
@@ -136,21 +142,28 @@ export default function RegistrationsContent() {
       console.error("Failed to fetch registrations:", error);
     } finally {
       setLoading(false);
+      setSearching(false);
     }
   };
 
   useEffect(() => {
-    fetchData(activeFilter, search);
+    fetchData(activeFilter, search, true);
+    return () => {
+      if (searchTimer.current) clearTimeout(searchTimer.current);
+    };
   }, []);
 
   const handleFilterChange = (filter: string) => {
     setActiveFilter(filter);
-    fetchData(filter, search);
+    fetchData(filter, search, true);
   };
 
   const handleSearch = (value: string) => {
     setSearch(value);
-    fetchData(activeFilter, value);
+    if (searchTimer.current) clearTimeout(searchTimer.current);
+    searchTimer.current = setTimeout(() => {
+      fetchData(activeFilter, value);
+    }, 400);
   };
 
   const handleStatusChange = async (id: string, status: string) => {
@@ -275,7 +288,7 @@ export default function RegistrationsContent() {
     new Map(registrations.map((reg) => [reg.event.id, reg.event])).values()
   );
 
-  if (loading) return <LoadingSkeleton />;
+  if (loading && registrations.length === 0) return <LoadingSkeleton />;
 
   return (
     <div>
@@ -302,6 +315,7 @@ export default function RegistrationsContent() {
             onChange={(e) => handleSearch(e.target.value)}
             className="border-0 bg-transparent outline-none w-full"
           />
+          {searching && <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />}
         </div>
         <div className="flex gap-2">
           <select
