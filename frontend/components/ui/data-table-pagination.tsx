@@ -3,6 +3,7 @@
 import { ChevronLeft, ChevronRight } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
+import { useLanguage } from "@/context/LanguageContext"
 
 interface DataTablePaginationProps {
   table: {
@@ -20,6 +21,7 @@ interface DataTablePaginationProps {
 const PAGE_SIZE_OPTIONS = [6, 10, 25, 50] as const
 
 export function DataTablePagination({ table, className }: DataTablePaginationProps) {
+  const { t } = useLanguage()
   const pageCount = table.getPageCount()
   const pagination = table.state?.pagination ?? { pageIndex: 0, pageSize: 10 }
 
@@ -32,7 +34,7 @@ export function DataTablePagination({ table, className }: DataTablePaginationPro
       aria-label="Pagination"
     >
       <div className="flex items-center gap-2">
-        <span className="text-sm text-muted-foreground">Rows per page</span>
+        <span className="text-sm text-muted-foreground">{t.pagination.rowsPerPage}</span>
         <select
           value={pagination.pageSize}
           onChange={(e) => {
@@ -50,7 +52,7 @@ export function DataTablePagination({ table, className }: DataTablePaginationPro
 
       <div className="flex items-center gap-4">
         <span className="text-sm text-muted-foreground font-medium">
-          Page {pagination.pageIndex + 1} of {pageCount}
+          {t.pagination.pageOf} {pagination.pageIndex + 1} {t.pagination.of} {pageCount}
         </span>
         <div className="flex items-center gap-1">
           <Button
@@ -60,7 +62,7 @@ export function DataTablePagination({ table, className }: DataTablePaginationPro
             onClick={() => table.previousPage()}
           >
             <ChevronLeft className="mr-1 h-4 w-4" />
-            Previous
+            {t.pagination.previous}
           </Button>
           <Button
             variant="outline"
@@ -68,7 +70,7 @@ export function DataTablePagination({ table, className }: DataTablePaginationPro
             disabled={!table.getCanNextPage()}
             onClick={() => table.nextPage()}
           >
-            Next
+            {t.pagination.next}
             <ChevronRight className="ml-1 h-4 w-4" />
           </Button>
         </div>

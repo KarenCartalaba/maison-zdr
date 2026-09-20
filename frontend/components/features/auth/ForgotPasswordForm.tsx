@@ -11,6 +11,7 @@ import { Input } from "@/components/ui/input";
 import { Field, FieldError, FieldGroup, FieldLabel } from "@/components/ui/field";
 import { Loader2, CheckCircle2, ArrowLeft } from "lucide-react";
 import { toast } from "sonner";
+import { useLanguage } from "@/context/LanguageContext";
 
 const forgotPasswordSchema = z.object({
   email: z.string().min(1, "Email is required").email("Invalid email address"),
@@ -19,6 +20,7 @@ const forgotPasswordSchema = z.object({
 type ForgotPasswordValues = z.infer<typeof forgotPasswordSchema>;
 
 export default function ForgotPasswordForm() {
+  const { t } = useLanguage();
   const [isLoading, setIsLoading] = useState(false);
   const [isSubmitted, setIsSubmitted] = useState(false);
 
@@ -53,13 +55,13 @@ export default function ForgotPasswordForm() {
     return (
       <div className="text-center space-y-4">
         <CheckCircle2 className="h-12 w-12 text-[#1a5c2a] mx-auto" />
-        <h1 className="text-2xl font-bold">Check your email</h1>
+        <h1 className="text-2xl font-bold">{t.auth.checkEmailTitle}</h1>
         <p className="text-sm text-muted-foreground">
-          If an account exists with that email, you&apos;ll receive a password reset link shortly.
+          {t.auth.checkEmailDesc}
         </p>
         <Link href="/login" className="inline-flex items-center text-sm text-muted-foreground hover:text-foreground">
           <ArrowLeft className="mr-1 h-4 w-4" />
-          Back to login
+          {t.auth.backToLogin}
         </Link>
       </div>
     );
@@ -68,8 +70,8 @@ export default function ForgotPasswordForm() {
   return (
     <>
       <div className="text-center mb-8">
-        <h1 className="text-2xl font-bold">Forgot your password?</h1>
-        <p className="text-sm text-muted-foreground mt-1">Enter your email and we&apos;ll send you a reset link.</p>
+        <h1 className="text-2xl font-bold">{t.auth.forgotPasswordTitle}</h1>
+        <p className="text-sm text-muted-foreground mt-1">{t.auth.forgotPasswordDesc}</p>
       </div>
 
       <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4" noValidate>
@@ -79,12 +81,12 @@ export default function ForgotPasswordForm() {
             control={form.control}
             render={({ field, fieldState }) => (
               <Field data-invalid={fieldState.invalid}>
-                <FieldLabel htmlFor="forgot-email">Email</FieldLabel>
+                <FieldLabel htmlFor="forgot-email">{t.auth.emailLabel}</FieldLabel>
                 <Input
                   {...field}
                   id="forgot-email"
                   type="email"
-                  placeholder="Enter your email"
+                  placeholder={t.auth.enterEmailPlaceholder}
                   autoComplete="email"
                   aria-invalid={fieldState.invalid}
                 />
@@ -96,15 +98,15 @@ export default function ForgotPasswordForm() {
 
         <Button type="submit" className="w-full bg-[#1a5c2a] hover:bg-[#144a22]" disabled={isLoading}>
           {isLoading ? (
-            <><Loader2 className="mr-2 h-4 w-4 animate-spin" />Sending...</>
+            <><Loader2 className="mr-2 h-4 w-4 animate-spin" />{t.auth.sendingLink}</>
           ) : (
-            "Send Reset Link"
+            t.auth.sendResetLink
           )}
         </Button>
 
         <p className="text-center text-sm text-muted-foreground">
           <Link href="/login" className="font-semibold text-foreground hover:underline">
-            Back to login
+            {t.auth.backToLogin}
           </Link>
         </p>
       </form>

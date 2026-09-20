@@ -12,16 +12,35 @@ import { CalendarDays, Grid, List } from "lucide-react";
 import { authService } from "@/services/auth.service";
 import { Skeleton } from "@/components/ui/skeleton";
 import EventImage from "@/components/ui/event-image";
+import { useLanguage } from "@/context/LanguageContext";
 
-const FILTERS = ["All", "Upcoming", "Attended", "Cancelled"];
+const FILTER_KEYS = ["All", "Upcoming", "Attended", "Cancelled"] as const;
 
 export default function MyEventsTab() {
+  const { t, dateLocale } = useLanguage();
   const [selectedFilter, setSelectedFilter] = useState("All");
   const [viewMode, setViewMode] = useState<"list" | "grid">("list");
   const [registrations, setRegistrations] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [cancellingId, setCancellingId] = useState<string | null>(null);
   const { confirm, dialog } = useConfirm();
+
+  const filterLabels: Record<string, string> = {
+    All: t.profile.filterAll,
+    Upcoming: t.profile.filterUpcoming,
+    Attended: t.profile.filterAttended,
+    Cancelled: t.profile.filterCancelled,
+  };
+
+  const statusLabel = (status: string) => {
+    const map: Record<string, string> = {
+      Attended: t.profile.statusAttended,
+      Cancelled: t.profile.statusCancelled,
+      Upcoming: t.profile.statusUpcoming,
+      Registered: t.profile.statusRegistered,
+    };
+    return map[status] || status;
+  };
 
   useEffect(() => {
     authService.getMyRegistrations()
@@ -49,12 +68,12 @@ export default function MyEventsTab() {
         setRegistrations((prev) =>
           prev.map((r) => (r.id === registration.id ? { ...r, status: "CANCELLED" } : r))
         );
-        toast.success("Registration cancelled");
+        toast.success(t.profile.registrationCancelled);
       } else {
-        toast.error(res.message || "Failed to cancel registration");
+        toast.error(res.message || t.profile.failedCancelRegistration);
       }
     } catch (err) {
-      toast.error(getErrorMessage(err, "Failed to cancel registration"));
+      toast.error(getErrorMessage(err, t.profile.failedCancelRegistration));
     } finally {
       setCancellingId(null);
     }
@@ -72,8 +91,8 @@ export default function MyEventsTab() {
     return (
       <div>
         <div className="mb-6">
-          <h2 className="text-2xl font-bold">My Events</h2>
-          <p className="text-sm text-muted-foreground mt-1">Track your registration, attendance, and event history.</p>
+          <h2 className="text-2xl font-bold">{t.profile.myEventsHeading}</h2>
+          <p className="text-sm text-muted-foreground mt-1">{t.profile.myEventsSubtitle}</p>
         </div>
         <div className="space-y-4">
           {Array.from({ length: 3 }).map((_, i) => (
@@ -95,14 +114,14 @@ export default function MyEventsTab() {
     <div>
       {dialog}
       <div className="mb-6">
-        <h2 className="text-2xl font-bold">My Events</h2>
-        <p className="text-sm text-muted-foreground mt-1">Track your registration, attendance, and event history.</p>
+        <h2 className="text-2xl font-bold">{t.profile.myEventsHeading}</h2>
+        <p className="text-sm text-muted-foreground mt-1">{t.profile.myEventsSubtitle}</p>
       </div>
 
       {/* Filter tabs + View toggle */}
       <div className="flex items-center justify-between mb-8 border-b">
         <div className="flex gap-4">
-          {FILTERS.map((filter) => (
+          {FILTER_KEYS.map((filter) => (
             <button
               key={filter}
               onClick={() => setSelectedFilter(filter)}
@@ -112,7 +131,7 @@ export default function MyEventsTab() {
                   : "border-transparent text-muted-foreground hover:text-foreground"
               }`}
             >
-              {filter}
+              {filterLabels[filter]}
             </button>
           ))}
         </div>
@@ -135,8 +154,8 @@ export default function MyEventsTab() {
       {filteredEvents.length === 0 ? (
         <div className="text-center py-12 text-muted-foreground">
           <CalendarDays className="h-12 w-12 mx-auto mb-4 opacity-50" />
-          <p className="font-medium">No events found</p>
-          <p className="text-sm mt-1">Register for events to see them here.</p>
+          <p className="font-medium">{t.profile.noEventsFound}</p>
+          <p className="text-sm mt-1">{t.profile.registerForEvents}</p>
         </div>
       ) : viewMode === "grid" ? (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -151,17 +170,17 @@ export default function MyEventsTab() {
                     : event.status === "Cancelled" ? "text-red-500 border-red-500"
                     : event.status === "Upcoming" ? "text-blue-500 border-blue-500"
                     : "text-muted-foreground"
-                  }`}>{event.status}</Badge>
+                  }`}>{statusLabel(event.status)}</Badge>
                 </div>
                 <div className="flex items-center gap-4 mt-1 text-sm text-muted-foreground">
                   <span className="flex items-center gap-1">
                     <CalendarDays className="h-4 w-4" />
-                    {new Date(event.eventDate).toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" })}
+                    {new Date(event.eventDate).toLocaleDateString(dateLocale, { weekday: "short", month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" })}
                   </span>
                 </div>
                 <p className="text-sm text-muted-foreground mt-1">{event.location}</p>
               <Link href={`/events/${event.id}`}>
-                <Button variant="outline" size="sm" className="mt-3 w-full">View Details →</Button>
+                <Button variant="outline" size="sm" className="mt-3 w-full">{t.profile.viewDetails}</Button>
               </Link>
               {event.registration?.status !== "CANCELLED" && !event.isCancelled && (
                 <Button
@@ -171,14 +190,14 @@ export default function MyEventsTab() {
                   disabled={cancellingId === event.registration?.id}
                   onClick={() =>
                     confirm({
-                      title: "Cancel registration",
-                      description: `Cancel your registration for "${event.title}"? You can re-register any time before the deadline.`,
-                      confirmLabel: "Yes, cancel",
+                      title: t.profile.confirmCancelTitle,
+                      description: t.profile.confirmCancelDescription.replace("{title}", event.title),
+                      confirmLabel: t.profile.confirmYesCancel,
                       onConfirm: () => handleCancel(event.registration),
                     })
                   }
                 >
-                  {cancellingId === event.registration?.id ? "Cancelling…" : "Cancel registration"}
+                  {cancellingId === event.registration?.id ? t.profile.cancelling : t.profile.cancelRegistration}
                 </Button>
               )}
               </div>
@@ -198,19 +217,19 @@ export default function MyEventsTab() {
                     : event.status === "Cancelled" ? "text-red-500 border-red-500"
                     : event.status === "Upcoming" ? "text-blue-500 border-blue-500"
                     : "text-muted-foreground"
-                  }`}>{event.status}</Badge>
+                  }`}>{statusLabel(event.status)}</Badge>
                 </div>
                 <div className="flex items-center gap-4 mt-1 text-sm text-muted-foreground">
                   <span className="flex items-center gap-1">
                     <CalendarDays className="h-4 w-4" />
-                    {new Date(event.eventDate).toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" })}
+                    {new Date(event.eventDate).toLocaleDateString(dateLocale, { weekday: "short", month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" })}
                   </span>
                 </div>
                 <p className="text-sm text-muted-foreground mt-1">{event.location}</p>
               </div>
               <div className="flex flex-col gap-2 shrink-0">
                 <Link href={`/events/${event.id}`}>
-                  <Button variant="outline" size="sm">View Details →</Button>
+                  <Button variant="outline" size="sm">{t.profile.viewDetails}</Button>
                 </Link>
                 {event.registration?.status !== "CANCELLED" && !event.isCancelled && (
                   <Button
@@ -220,14 +239,14 @@ export default function MyEventsTab() {
                     disabled={cancellingId === event.registration?.id}
                     onClick={() =>
                       confirm({
-                        title: "Cancel registration",
-                        description: `Cancel your registration for "${event.title}"? You can re-register any time before the deadline.`,
-                        confirmLabel: "Yes, cancel",
+                        title: t.profile.confirmCancelTitle,
+                        description: t.profile.confirmCancelDescription.replace("{title}", event.title),
+                        confirmLabel: t.profile.confirmYesCancel,
                         onConfirm: () => handleCancel(event.registration),
                       })
                     }
                   >
-                    {cancellingId === event.registration?.id ? "Cancelling…" : "Cancel"}
+                    {cancellingId === event.registration?.id ? t.profile.cancelling : t.profile.cancel}
                   </Button>
                 )}
               </div>

@@ -4,14 +4,17 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Save, Bell, Shield, Globe, Palette } from "lucide-react";
+import { useLanguage } from "@/context/LanguageContext";
 
 export default function SettingsContent() {
+  const { t } = useLanguage();
+
   return (
     <div>
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h1 className="text-2xl font-bold">Settings</h1>
-          <p className="text-sm text-muted-foreground">Manage system and notification settings</p>
+          <h1 className="text-2xl font-bold">{t.adminSettings.title}</h1>
+          <p className="text-sm text-muted-foreground">{t.adminSettings.subtitle}</p>
         </div>
       </div>
 
@@ -21,12 +24,12 @@ export default function SettingsContent() {
           <CardHeader>
             <CardTitle className="text-base flex items-center gap-2">
               <Globe className="h-4 w-4" />
-              General
+              {t.adminSettings.general}
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
             <div>
-              <label className="text-sm font-medium">Venue Name</label>
+              <label className="text-sm font-medium">{t.adminSettings.venueName}</label>
               <input
                 type="text"
                 defaultValue="Maison ZDR"
@@ -34,7 +37,7 @@ export default function SettingsContent() {
               />
             </div>
             <div>
-              <label className="text-sm font-medium">Contact Email</label>
+              <label className="text-sm font-medium">{t.adminSettings.contactEmail}</label>
               <input
                 type="email"
                 defaultValue="contact@maisonzdr.com"
@@ -42,7 +45,7 @@ export default function SettingsContent() {
               />
             </div>
             <div>
-              <label className="text-sm font-medium">Default Timezone</label>
+              <label className="text-sm font-medium">{t.adminSettings.defaultTimezone}</label>
               <select className="w-full mt-1 px-3 py-2 border rounded-lg text-sm">
                 <option>Europe/Paris (CET)</option>
                 <option>Europe/London (GMT)</option>
@@ -51,7 +54,7 @@ export default function SettingsContent() {
             </div>
             <Button className="bg-[#1a5c2a] hover:bg-[#144a22]">
               <Save className="h-4 w-4 mr-2" />
-              Save Changes
+              {t.adminSettings.saveChanges}
             </Button>
           </CardContent>
         </Card>
@@ -61,15 +64,15 @@ export default function SettingsContent() {
           <CardHeader>
             <CardTitle className="text-base flex items-center gap-2">
               <Bell className="h-4 w-4" />
-              Notifications
+              {t.adminSettings.notifications}
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
             {[
-              { label: "New registration alerts", description: "Get notified when someone registers", enabled: true },
-              { label: "Event reminders", description: "24h before event starts", enabled: true },
-              { label: "Weekly report", description: "Summary of registrations and check-ins", enabled: false },
-              { label: "New review alerts", description: "Get notified when a review is submitted", enabled: true },
+              { label: t.adminSettings.notifRegistrationTitle, description: t.adminSettings.notifRegistrationDesc, enabled: true },
+              { label: t.adminSettings.notifReminderTitle, description: t.adminSettings.notifReminderDesc, enabled: true },
+              { label: t.adminSettings.notifWeeklyTitle, description: t.adminSettings.notifWeeklyDesc, enabled: false },
+              { label: t.adminSettings.notifReviewTitle, description: t.adminSettings.notifReviewDesc, enabled: true },
             ].map((item, i) => (
               <div key={i} className="flex items-center justify-between py-2 border-b last:border-0">
                 <div>
@@ -89,21 +92,21 @@ export default function SettingsContent() {
           <CardHeader>
             <CardTitle className="text-base flex items-center gap-2">
               <Shield className="h-4 w-4" />
-              Security
+              {t.adminSettings.security}
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="flex items-center justify-between py-2">
               <div>
-                <p className="text-sm font-medium">Two-Factor Authentication</p>
-                <p className="text-xs text-muted-foreground">Add an extra layer of security</p>
+                <p className="text-sm font-medium">{t.adminSettings.twoFactor}</p>
+                <p className="text-xs text-muted-foreground">{t.adminSettings.twoFactorDesc}</p>
               </div>
-              <Badge variant="outline" className="text-yellow-600 border-yellow-600">Not Enabled</Badge>
+              <Badge variant="outline" className="text-yellow-600 border-yellow-600">{t.adminSettings.twoFactorNotEnabled}</Badge>
             </div>
             <div className="flex items-center justify-between py-2">
               <div>
-                <p className="text-sm font-medium">Session Timeout</p>
-                <p className="text-xs text-muted-foreground">Auto-logout after inactivity</p>
+                <p className="text-sm font-medium">{t.adminSettings.sessionTimeout}</p>
+                <p className="text-xs text-muted-foreground">{t.adminSettings.sessionTimeoutDesc}</p>
               </div>
               <select className="px-3 py-1 border rounded text-sm">
                 <option>30 minutes</option>
@@ -113,8 +116,8 @@ export default function SettingsContent() {
             </div>
             <div className="flex items-center justify-between py-2">
               <div>
-                <p className="text-sm font-medium">Login Notifications</p>
-                <p className="text-xs text-muted-foreground">Alert on new device login</p>
+                <p className="text-sm font-medium">{t.adminSettings.loginNotifications}</p>
+                <p className="text-xs text-muted-foreground">{t.adminSettings.loginNotificationsDesc}</p>
               </div>
               <div className="h-5 w-9 rounded-full relative cursor-pointer bg-[#1a5c2a]">
                 <div className="absolute top-0.5 left-4 h-4 w-4 rounded-full bg-white" />
@@ -128,12 +131,12 @@ export default function SettingsContent() {
           <CardHeader>
             <CardTitle className="text-base flex items-center gap-2">
               <Palette className="h-4 w-4" />
-              Appearance
+              {t.adminSettings.appearance}
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
             <div>
-              <label className="text-sm font-medium">Primary Color</label>
+              <label className="text-sm font-medium">{t.adminSettings.primaryColor}</label>
               <div className="flex items-center gap-2 mt-2">
                 <div className="h-8 w-8 rounded bg-[#1a5c2a] border-2 border-foreground cursor-pointer" />
                 <div className="h-8 w-8 rounded bg-blue-600 border-2 border-transparent cursor-pointer" />
@@ -142,14 +145,14 @@ export default function SettingsContent() {
               </div>
             </div>
             <div>
-              <label className="text-sm font-medium">Logo</label>
+              <label className="text-sm font-medium">{t.adminSettings.logo}</label>
               <div className="mt-2 flex items-center gap-4">
                 <div className="h-12 w-12 rounded bg-muted flex items-center justify-center font-bold text-lg">Z</div>
-                <Button variant="outline" size="sm">Upload New Logo</Button>
+                <Button variant="outline" size="sm">{t.adminSettings.uploadLogo}</Button>
               </div>
             </div>
             <div>
-              <label className="text-sm font-medium">Footer Text</label>
+              <label className="text-sm font-medium">{t.adminSettings.footerText}</label>
               <input
                 type="text"
                 defaultValue="© 2026 Maison ZDR. All rights reserved."

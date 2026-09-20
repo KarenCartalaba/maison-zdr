@@ -3,10 +3,12 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useAuth } from "@/context/AuthContext";
+import { useLanguage } from "@/context/LanguageContext";
 import { authService } from "@/services/auth.service";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Lock, CheckCircle, XCircle } from "lucide-react";
+import { formatDate } from "@/lib/format-date";
 
 interface RegistrationSidebarProps {
   eventId: string;
@@ -28,6 +30,7 @@ export default function RegistrationSidebar({
   deadline,
 }: RegistrationSidebarProps) {
   const { user, isAuthenticated, isVerified, isLoading } = useAuth();
+  const { t, dateLocale } = useLanguage();
   const [alreadyRegistered, setAlreadyRegistered] = useState(false);
   const [checkingRegistration, setCheckingRegistration] = useState(false);
   const available = maxParticipants - registeredCount;
@@ -61,7 +64,7 @@ export default function RegistrationSidebar({
     <Card className="border shadow-md">
       <CardContent className="p-6 space-y-4">
         <div className="flex items-center justify-between text-sm">
-          <span className="font-medium">Registration availability</span>
+          <span className="font-medium">{t.events.registrationAvailability}</span>
           <span className="text-muted-foreground">{Math.round(percentage)}%</span>
         </div>
         <div className="h-2 w-full rounded-full bg-muted">
@@ -74,27 +77,27 @@ export default function RegistrationSidebar({
         <div className="grid grid-cols-3 gap-4 text-center">
           <div className="rounded-lg border p-3">
             <div className="text-2xl font-bold">{maxParticipants}</div>
-            <div className="text-xs text-muted-foreground">Max</div>
+            <div className="text-xs text-muted-foreground">{t.events.max}</div>
           </div>
           <div className="rounded-lg border p-3">
             <div className="text-2xl font-bold">{registeredCount}</div>
-            <div className="text-xs text-muted-foreground">Registered</div>
+            <div className="text-xs text-muted-foreground">{t.events.registered}</div>
           </div>
           <div className="rounded-lg border p-3">
             <div className="text-2xl font-bold">{available}</div>
-            <div className="text-xs text-muted-foreground">Available</div>
+            <div className="text-xs text-muted-foreground">{t.events.available}</div>
           </div>
         </div>
 
         <div className="flex items-center justify-between text-sm">
-          <span className="text-muted-foreground">Status</span>
+          <span className="text-muted-foreground">{t.events.status}</span>
           <span className="font-medium">{status}</span>
         </div>
 
         <div className="flex items-center justify-between text-sm">
-          <span className="text-muted-foreground">Registration Deadline</span>
+          <span className="text-muted-foreground">{t.events.registrationDeadline}</span>
           <span className="font-medium">
-            {new Date(deadline).toLocaleDateString("en-US", {
+            {formatDate(deadline, dateLocale, {
               month: "short",
               day: "numeric",
               year: "numeric",
@@ -107,12 +110,12 @@ export default function RegistrationSidebar({
         {/* Registration button logic */}
         {isLoading || checkingRegistration ? (
           <Button className="w-full" disabled>
-            Loading...
+            {t.events.loading}
           </Button>
         ) : !isAuthenticated ? (
           <Link href="/login">
             <Button className="w-full bg-[#1a5c2a] hover:bg-[#144a22]">
-              Login to Register
+              {t.events.loginToRegister}
             </Button>
           </Link>
         ) : !isVerified ? (
@@ -120,35 +123,35 @@ export default function RegistrationSidebar({
             <Link href="/verify-email">
               <Button variant="outline" className="w-full">
                 <Lock className="h-4 w-4 mr-2" />
-                Verify Email to Register
+                {t.events.verifyEmailToRegister}
               </Button>
             </Link>
             <p className="text-xs text-muted-foreground text-center">
-              You must verify your email to register for events
+              {t.events.mustVerifyEmail}
             </p>
           </div>
         ) : isCancelled ? (
           <Button className="w-full" disabled>
             <XCircle className="h-4 w-4 mr-2" />
-            Event Cancelled
+            {t.events.eventCancelled}
           </Button>
         ) : isFull ? (
           <Button className="w-full" disabled>
-            Event Full
+            {t.events.eventFull}
           </Button>
         ) : alreadyRegistered ? (
           <Button className="w-full" disabled variant="secondary">
             <CheckCircle className="h-4 w-4 mr-2" />
-            Already Registered
+            {t.events.alreadyRegistered}
           </Button>
         ) : isDeadlinePassed ? (
           <Button className="w-full" disabled>
-            Registration Closed
+            {t.events.registrationClosed}
           </Button>
         ) : (
           <Link href={`/events/${eventId}/register`}>
             <Button className="w-full bg-[#1a5c2a] hover:bg-[#144a22]">
-              Register Event
+              {t.events.registerEvent}
             </Button>
           </Link>
         )}

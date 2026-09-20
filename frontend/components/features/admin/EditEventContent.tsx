@@ -11,6 +11,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
 import { Loader2, ImagePlus } from "lucide-react";
+import { useLanguage } from "@/context/LanguageContext";
 import type { Event } from "@/types";
 import { toast } from "sonner";
 
@@ -35,6 +36,7 @@ export default function EditEventContent() {
   const [coverImage, setCoverImage] = useState<File | null>(null);
   const [coverPreview, setCoverPreview] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const { t } = useLanguage();
 
   const {
     register,
@@ -79,7 +81,7 @@ export default function EditEventContent() {
     const file = e.target.files?.[0];
     if (!file) return;
     if (file.size > 5 * 1024 * 1024) {
-      toast.error("Image must be less than 5MB");
+      toast.error(t.adminEventsForm.coverHint);
       return;
     }
     setCoverImage(file);
@@ -104,7 +106,7 @@ export default function EditEventContent() {
             gallery = [uploadRes.data.url];
           }
         } catch (uploadErr: any) {
-          toast.error(uploadErr.response?.data?.message || "Failed to upload image");
+          toast.error(uploadErr.response?.data?.message || t.adminEventsForm.updateError);
           return;
         }
       }
@@ -116,11 +118,11 @@ export default function EditEventContent() {
         deadline: new Date(data.deadline).toISOString(),
       });
       if (response.code === 200) {
-        toast.success("Event updated successfully");
+        toast.success(t.adminEventsForm.updateSuccess);
         router.push("/admin/events");
       }
     } catch (err: any) {
-      toast.error(err.response?.data?.message || "Failed to update event");
+      toast.error(err.response?.data?.message || t.adminEventsForm.updateError);
     } finally {
       setIsSubmitting(false);
     }
@@ -137,7 +139,7 @@ export default function EditEventContent() {
   if (!event) {
     return (
       <div className="text-center py-16">
-        <p className="text-muted-foreground">Event not found</p>
+        <p className="text-muted-foreground">{t.adminEventsForm.notFound}</p>
       </div>
     );
   }
@@ -145,16 +147,16 @@ export default function EditEventContent() {
   return (
     <div className="max-w-2xl">
       <div className="mb-8">
-        <h1 className="text-3xl font-bold">Edit Event</h1>
-        <p className="text-muted-foreground mt-2">Update event details</p>
+        <h1 className="text-3xl font-bold">{t.adminEventsForm.editTitle}</h1>
+        <p className="text-muted-foreground mt-2">{t.adminEventsForm.editSubtitle}</p>
       </div>
 
       <Card>
         <CardContent className="p-6">
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
             <div className="space-y-2">
-              <label className="text-sm font-medium">Cover Image</label>
-              <div 
+              <label className="text-sm font-medium">{t.adminEventsForm.coverImage}</label>
+              <div
                 className="border-2 border-dashed rounded-lg p-8 text-center cursor-pointer hover:border-[#1a5c2a] transition-colors"
                 onClick={() => fileInputRef.current?.click()}
               >
@@ -163,15 +165,15 @@ export default function EditEventContent() {
                 ) : (
                   <>
                     <ImagePlus className="h-10 w-10 mx-auto text-muted-foreground mb-2" />
-                    <p className="text-sm text-muted-foreground">Click to upload cover image</p>
-                    <p className="text-xs text-muted-foreground mt-1">JPG, PNG up to 5MB</p>
+                    <p className="text-sm text-muted-foreground">{t.adminEventsForm.coverClick}</p>
+                    <p className="text-xs text-muted-foreground mt-1">{t.adminEventsForm.coverHint}</p>
                   </>
                 )}
               </div>
-              <input 
+              <input
                 ref={fileInputRef}
-                type="file" 
-                accept="image/*" 
+                type="file"
+                accept="image/*"
                 className="hidden"
                 onChange={handleImageSelect}
               />
@@ -179,7 +181,7 @@ export default function EditEventContent() {
 
             <div className="space-y-2">
               <label htmlFor="title" className="text-sm font-medium">
-                Title
+                {t.adminEventsForm.labelTitle}
               </label>
               <Input id="title" {...register("title")} />
               {errors.title && (
@@ -189,7 +191,7 @@ export default function EditEventContent() {
 
             <div className="space-y-2">
               <label htmlFor="description" className="text-sm font-medium">
-                Description
+                {t.adminEventsForm.labelDescription}
               </label>
               <textarea
                 id="description"
@@ -203,7 +205,7 @@ export default function EditEventContent() {
 
             <div className="space-y-2">
               <label htmlFor="location" className="text-sm font-medium">
-                Location
+                {t.adminEventsForm.labelLocation}
               </label>
               <Input id="location" {...register("location")} />
               {errors.location && (
@@ -214,7 +216,7 @@ export default function EditEventContent() {
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
                 <label htmlFor="eventDate" className="text-sm font-medium">
-                  Event Date
+                  {t.adminEventsForm.labelEventDate}
                 </label>
                 <Input id="eventDate" type="datetime-local" {...register("eventDate")} />
                 {errors.eventDate && (
@@ -224,7 +226,7 @@ export default function EditEventContent() {
 
               <div className="space-y-2">
                 <label htmlFor="deadline" className="text-sm font-medium">
-                  Registration Deadline
+                  {t.adminEventsForm.labelDeadline}
                 </label>
                 <Input id="deadline" type="datetime-local" {...register("deadline")} />
                 {errors.deadline && (
@@ -236,7 +238,7 @@ export default function EditEventContent() {
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
                 <label htmlFor="minParticipants" className="text-sm font-medium">
-                  Min Participants
+                  {t.adminEventsForm.labelMinParticipants}
                 </label>
                 <Input
                   id="minParticipants"
@@ -247,7 +249,7 @@ export default function EditEventContent() {
 
               <div className="space-y-2">
                 <label htmlFor="maxParticipants" className="text-sm font-medium">
-                  Max Participants
+                  {t.adminEventsForm.labelMaxParticipants}
                 </label>
                 <Input
                   id="maxParticipants"
@@ -262,14 +264,14 @@ export default function EditEventContent() {
                 {isSubmitting ? (
                   <>
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Updating...
+                    {t.adminEventsForm.updating}
                   </>
                 ) : (
-                  "Update Event"
+                  t.adminEventsForm.btnUpdate
                 )}
               </Button>
               <Button type="button" variant="outline" onClick={() => router.back()}>
-                Cancel
+                {t.adminEventsForm.btnCancel}
               </Button>
             </div>
           </form>

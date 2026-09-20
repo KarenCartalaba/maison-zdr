@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 import { getErrorMessage } from "@/lib/server-error";
 import { useConfirm } from "@/components/ui/confirm-dialog";
@@ -33,22 +33,9 @@ import {
   Loader2,
 } from "lucide-react";
 import { adminService } from "@/services/admin.service";
+import { useLanguage } from "@/context/LanguageContext";
+import { formatDate } from "@/lib/format-date";
 import type { AdminUser, UserStats } from "@/types";
-
-const FILTER_OPTIONS = [
-  { label: "All", value: "ALL" },
-  { label: "Admin", value: "ADMIN" },
-  { label: "Verified", value: "VERIFIED" },
-  { label: "Unverified", value: "UNVERIFIED" },
-];
-
-function formatDate(date: string) {
-  return new Date(date).toLocaleDateString("en-US", {
-    month: "short",
-    day: "numeric",
-    year: "numeric",
-  });
-}
 
 function LoadingSkeleton() {
   return (
@@ -82,13 +69,13 @@ function LoadingSkeleton() {
   );
 }
 
-function EmptyState() {
+function EmptyState({ t }: { t: any }) {
   return (
     <div className="flex flex-col items-center justify-center py-16">
       <Inbox className="h-12 w-12 text-muted-foreground mb-4" />
-      <h3 className="text-lg font-medium mb-1">No users found</h3>
+      <h3 className="text-lg font-medium mb-1">{t.adminUsers.emptyTitle}</h3>
       <p className="text-sm text-muted-foreground">
-        There are no users matching your criteria.
+        {t.adminUsers.emptyDesc}
       </p>
     </div>
   );
@@ -105,6 +92,14 @@ export default function UsersContent() {
   const [selectedUser, setSelectedUser] = useState<AdminUser | null>(null);
   const searchTimer = useRef<NodeJS.Timeout | null>(null);
   const { confirm, dialog } = useConfirm();
+  const { t, dateLocale } = useLanguage();
+
+  const FILTER_OPTIONS = useMemo(() => [
+    { label: t.adminUsers.filterAll, value: "ALL" },
+    { label: t.adminUsers.filterAdmin, value: "ADMIN" },
+    { label: t.adminUsers.filterVerified, value: "VERIFIED" },
+    { label: t.adminUsers.filterUnverified, value: "UNVERIFIED" },
+  ], [t]);
 
   const fetchData = async (role?: string, searchTerm?: string, isInitial = false) => {
     try {
@@ -151,9 +146,9 @@ export default function UsersContent() {
       setActionLoading(id);
       await adminService.updateUserRole(id, role);
       fetchData(activeFilter, search);
-      toast.success("User role updated");
+      toast.success(t.adminUsers.roleUpdated);
     } catch (error) {
-      toast.error(getErrorMessage(error, "Failed to update user role"));
+      toast.error(getErrorMessage(error, t.adminUsers.roleError));
     } finally {
       setActionLoading(null);
     }
@@ -164,9 +159,9 @@ export default function UsersContent() {
       setActionLoading(id);
       await adminService.verifyUser(id);
       fetchData(activeFilter, search);
-      toast.success("User verified");
+      toast.success(t.adminUsers.verifiedSuccess);
     } catch (error) {
-      toast.error(getErrorMessage(error, "Failed to verify user"));
+      toast.error(getErrorMessage(error, t.adminUsers.verifiedError));
     } finally {
       setActionLoading(null);
     }
@@ -177,31 +172,31 @@ export default function UsersContent() {
       setActionLoading(id);
       await adminService.suspendUser(id);
       fetchData(activeFilter, search);
-      toast.success("User suspension updated");
+      toast.success(t.adminUsers.suspendSuccess);
     } catch (error) {
-      toast.error(getErrorMessage(error, "Failed to suspend/unsuspend user"));
+      toast.error(getErrorMessage(error, t.adminUsers.suspendError));
     } finally {
       setActionLoading(null);
     }
   };
 
-  const handleDeleteUser = async (id: string, name: string) => {
+  const handleDeleteUser = async (id: string) => {
     try {
       setActionLoading(id);
       await adminService.deleteUser(id);
       fetchData(activeFilter, search);
-      toast.success("User deleted");
+      toast.success(t.adminUsers.deleteSuccess);
     } catch (error) {
-      toast.error(getErrorMessage(error, "Failed to delete user"));
+      toast.error(getErrorMessage(error, t.adminUsers.deleteError));
     } finally {
       setActionLoading(null);
     }
   };
 
-  const usersColumns: DataTableColumn[] = [
+  const usersColumns: DataTableColumn[] = useMemo(() => [
     {
       accessorKey: "name",
-      header: ({ column }) => <DataTableColumnHeader column={column} title="USER" />,
+      header: ({ column }) => <DataTableColumnHeader column={column} title={t.adminUsers.colUser} />,
       cell: ({ row }) => (
         <div className="flex items-center gap-3">
           <div className="h-8 w-8 rounded-full bg-muted flex items-center justify-center">
@@ -218,7 +213,7 @@ export default function UsersContent() {
     },
     {
       accessorKey: "role",
-      header: "ROLE",
+      header: t.adminUsers.colRole,
       cell: ({ row }) => (
         <Badge
           variant={row.original.role === "ADMIN" ? "default" : row.original.role === "MODERATOR" ? "default" : "secondary"}
@@ -236,7 +231,7 @@ export default function UsersContent() {
     },
     {
       accessorKey: "emailVerified",
-      header: "EMAIL STATUS",
+      header: t.adminUsers.colEmailStatus,
       cell: ({ row }) => (
         <Badge
           variant={row.original.emailVerified ? "outline" : "secondary"}
@@ -246,23 +241,23 @@ export default function UsersContent() {
               : ""
           }
         >
-          {row.original.emailVerified ? "Verified" : "Pending"}
+          {row.original.emailVerified ? t.adminUsers.modalVerified : t.adminUsers.modalPending}
         </Badge>
       ),
     },
     {
       id: "registrations",
-      header: "REGISTRATIONS",
-      cell: ({ row }) => row.original._count.registrations,
+      header: t.adminUsers.colRegistrations,
+      cell: ({ row }) => row.original._count.registrations.toLocaleString(dateLocale),
     },
     {
       accessorKey: "createdAt",
-      header: ({ column }) => <DataTableColumnHeader column={column} title="JOINED" />,
-      cell: ({ row }) => formatDate(row.original.createdAt),
+      header: ({ column }) => <DataTableColumnHeader column={column} title={t.adminUsers.colJoined} />,
+      cell: ({ row }) => formatDate(row.original.createdAt, dateLocale),
     },
     {
       id: "actions",
-      header: "ACTIONS",
+      header: t.adminUsers.colActions,
       cell: ({ row }) => (
         <DropdownMenu>
           <DropdownMenuTrigger className="inline-flex items-center justify-center h-7 w-7 rounded-md hover:bg-muted text-muted-foreground">
@@ -273,28 +268,28 @@ export default function UsersContent() {
               onClick={() => setSelectedUser(row.original)}
               disabled={actionLoading === row.original.id}
             >
-              View Profile
+              {t.adminUsers.viewProfile}
             </DropdownMenuItem>
             <DropdownMenuSeparator />
             <DropdownMenuGroup>
-              <DropdownMenuLabel>Change Role</DropdownMenuLabel>
+              <DropdownMenuLabel>{t.adminUsers.changeRole}</DropdownMenuLabel>
               <DropdownMenuItem
                 onClick={() => handleRoleChange(row.original.id, "ADMIN")}
                 disabled={actionLoading === row.original.id}
               >
-                Make Admin
+                {t.adminUsers.makeAdmin}
               </DropdownMenuItem>
               <DropdownMenuItem
                 onClick={() => handleRoleChange(row.original.id, "MODERATOR")}
                 disabled={actionLoading === row.original.id}
               >
-                Make Moderator
+                {t.adminUsers.makeModerator}
               </DropdownMenuItem>
               <DropdownMenuItem
                 onClick={() => handleRoleChange(row.original.id, "USER")}
                 disabled={actionLoading === row.original.id}
               >
-                Make User
+                {t.adminUsers.makeUser}
               </DropdownMenuItem>
             </DropdownMenuGroup>
             <DropdownMenuSeparator />
@@ -303,35 +298,35 @@ export default function UsersContent() {
                 onClick={() => handleVerifyUser(row.original.id)}
                 disabled={actionLoading === row.original.id}
               >
-                Verify User
+                {t.adminUsers.verifyUser}
               </DropdownMenuItem>
             )}
             <DropdownMenuItem
               onClick={() => handleSuspendUser(row.original.id)}
               disabled={actionLoading === row.original.id}
             >
-              {row.original.suspended ? "Unsuspend User" : "Suspend User"}
+              {row.original.suspended ? t.adminUsers.unsuspendUser : t.adminUsers.suspendUser}
             </DropdownMenuItem>
             <DropdownMenuSeparator />
             <DropdownMenuItem
               onClick={() =>
                 confirm({
-                  title: "Delete user",
-                  description: `Permanently delete "${row.original.name}"? This action cannot be undone.`,
-                  confirmLabel: "Delete",
-                  onConfirm: () => handleDeleteUser(row.original.id, row.original.name),
+                  title: t.adminUsers.deleteTitle,
+                  description: t.adminUsers.deleteDesc.replace("{name}", row.original.name),
+                  confirmLabel: t.adminUsers.deleteConfirm,
+                  onConfirm: () => handleDeleteUser(row.original.id),
                 })
               }
               disabled={actionLoading === row.original.id}
               className="text-red-600"
             >
-              Delete User
+              {t.adminUsers.deleteUser}
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
       ),
     },
-  ];
+  ], [t, dateLocale, actionLoading, confirm]);
 
   if (loading) return <LoadingSkeleton />;
 
@@ -340,9 +335,9 @@ export default function UsersContent() {
       {dialog}
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h1 className="text-2xl font-bold">Users</h1>
+          <h1 className="text-2xl font-bold">{t.adminUsers.title}</h1>
           <p className="text-sm text-muted-foreground">
-            Manage user accounts and roles
+            {t.adminUsers.subtitle}
           </p>
         </div>
       </div>
@@ -352,25 +347,25 @@ export default function UsersContent() {
         <div className="grid grid-cols-3 gap-4 mb-6">
           <Card>
             <CardContent className="p-4 text-center">
-              <p className="text-2xl font-bold">{stats.total.toLocaleString()}</p>
-              <p className="text-xs text-muted-foreground">Total Users</p>
+              <p className="text-2xl font-bold">{stats.total.toLocaleString(dateLocale)}</p>
+              <p className="text-xs text-muted-foreground">{t.adminUsers.statsTotal}</p>
             </CardContent>
           </Card>
           <Card>
             <CardContent className="p-4 text-center">
               <p className="text-2xl font-bold text-[#1a5c2a]">
-                {stats.verified.toLocaleString()}
+                {stats.verified.toLocaleString(dateLocale)}
               </p>
-              <p className="text-xs text-muted-foreground">Verified</p>
+              <p className="text-xs text-muted-foreground">{t.adminUsers.statsVerified}</p>
             </CardContent>
           </Card>
           <Card>
             <CardContent className="p-4 text-center">
               <p className="text-2xl font-bold text-yellow-600">
-                {stats.unverified.toLocaleString()}
+                {stats.unverified.toLocaleString(dateLocale)}
               </p>
               <p className="text-xs text-muted-foreground">
-                Pending Verification
+                {t.adminUsers.statsUnverified}
               </p>
             </CardContent>
           </Card>
@@ -382,7 +377,7 @@ export default function UsersContent() {
         <div className="flex items-center gap-2 border rounded-lg px-3 py-2 flex-1 max-w-sm">
           <Search className="h-4 w-4 text-muted-foreground" />
           <Input
-            placeholder="Search users..."
+            placeholder={t.adminUsers.searchPlaceholder}
             value={search}
             onChange={(e) => handleSearch(e.target.value)}
             className="border-0 bg-transparent outline-none w-full"
@@ -412,7 +407,7 @@ export default function UsersContent() {
       {users.length === 0 ? (
         <Card>
           <CardContent className="p-0">
-            <EmptyState />
+            <EmptyState t={t} />
           </CardContent>
         </Card>
       ) : (
@@ -441,7 +436,7 @@ export default function UsersContent() {
             onClick={(e) => e.stopPropagation()}
           >
             <div className="flex items-center justify-between mb-6">
-              <h2 className="text-lg font-bold">User Profile</h2>
+              <h2 className="text-lg font-bold">{t.adminUsers.modalTitle}</h2>
               <Button
                 variant="ghost"
                 size="sm"
@@ -463,7 +458,7 @@ export default function UsersContent() {
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2 text-sm text-muted-foreground">
                   <Shield className="h-4 w-4" />
-                  Role
+                  {t.adminUsers.modalRole}
                 </div>
                 <Badge
                   variant={selectedUser.role === "ADMIN" ? "default" : selectedUser.role === "MODERATOR" ? "default" : "secondary"}
@@ -482,7 +477,7 @@ export default function UsersContent() {
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2 text-sm text-muted-foreground">
                   <Mail className="h-4 w-4" />
-                  Email Status
+                  {t.adminUsers.modalEmailStatus}
                 </div>
                 <Badge
                   variant={selectedUser.emailVerified ? "outline" : "secondary"}
@@ -492,26 +487,26 @@ export default function UsersContent() {
                       : ""
                   }
                 >
-                  {selectedUser.emailVerified ? "Verified" : "Pending"}
+                  {selectedUser.emailVerified ? t.adminUsers.modalVerified : t.adminUsers.modalPending}
                 </Badge>
               </div>
 
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2 text-sm text-muted-foreground">
                   <Ban className="h-4 w-4" />
-                  Suspended
+                  {t.adminUsers.modalSuspended}
                 </div>
                 <Badge
                   variant={selectedUser.suspended ? "destructive" : "outline"}
                 >
-                  {selectedUser.suspended ? "Yes" : "No"}
+                  {selectedUser.suspended ? t.adminUsers.modalYes : t.adminUsers.modalNo}
                 </Badge>
               </div>
 
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2 text-sm text-muted-foreground">
                   <Users className="h-4 w-4" />
-                  Registrations
+                  {t.adminUsers.modalRegistrations}
                 </div>
                 <span className="text-sm font-medium">
                   {selectedUser._count.registrations}
@@ -521,17 +516,17 @@ export default function UsersContent() {
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2 text-sm text-muted-foreground">
                   <Calendar className="h-4 w-4" />
-                  Member Since
+                  {t.adminUsers.modalMemberSince}
                 </div>
                 <span className="text-sm font-medium">
-                  {formatDate(selectedUser.createdAt)}
+                  {formatDate(selectedUser.createdAt, dateLocale)}
                 </span>
               </div>
             </div>
 
             <div className="mt-6 flex justify-end">
               <Button variant="outline" onClick={() => setSelectedUser(null)}>
-                Close
+                {t.adminUsers.modalClose}
               </Button>
             </div>
           </div>

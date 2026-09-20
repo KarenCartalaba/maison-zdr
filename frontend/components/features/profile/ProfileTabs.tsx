@@ -1,6 +1,7 @@
 "use client";
 
 import { CalendarDays, Star, Settings } from "lucide-react";
+import { useLanguage } from "@/context/LanguageContext";
 
 type Tab = "events" | "reviews" | "settings";
 
@@ -9,13 +10,15 @@ interface ProfileTabsProps {
   onTabChange: (tab: Tab) => void;
 }
 
-const tabs = [
-  { id: "events" as const, label: "My Events", icon: CalendarDays },
-  { id: "reviews" as const, label: "My Reviews", icon: Star },
-  { id: "settings" as const, label: "Settings", icon: Settings },
-];
-
 export default function ProfileTabs({ activeTab, onTabChange }: ProfileTabsProps) {
+  const { t } = useLanguage();
+
+  const tabs = [
+    { id: "events" as const, label: t.profile.myEvents, icon: CalendarDays },
+    { id: "reviews" as const, label: t.profile.myReviews, icon: Star },
+    { id: "settings" as const, label: t.profile.settings, icon: Settings },
+  ];
+
   return (
     <div className="flex gap-6 border-b">
       {tabs.map((tab) => (

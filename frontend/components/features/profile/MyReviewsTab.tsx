@@ -14,6 +14,7 @@ import { Field, FieldError, FieldGroup, FieldLabel } from "@/components/ui/field
 import { Star, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import EventImage from "@/components/ui/event-image";
+import { useLanguage } from "@/context/LanguageContext";
 
 const reviewSchema = z.object({
   rating: z.number().min(1, "Please select a rating").max(5, "Rating must be at most 5"),
@@ -32,6 +33,7 @@ interface MyReviewsTabProps {
 const consumedHighlightEventIds = new Set<string>();
 
 export default function MyReviewsTab({ highlightEventId = null }: MyReviewsTabProps) {
+  const { t, dateLocale } = useLanguage();
   const [activeFilter, setActiveFilter] = useState<"all" | "5stars">("all");
   const [showWriteModal, setShowWriteModal] = useState(false);
   const [selectedPending, setSelectedPending] = useState<any | null>(null);
@@ -123,7 +125,7 @@ export default function MyReviewsTab({ highlightEventId = null }: MyReviewsTabPr
 
       setShowSuccessAlert(true);
       setTimeout(() => setShowSuccessAlert(false), 3000);
-      toast.success("Review submitted successfully!");
+      toast.success(t.profile.reviewSubmitted);
     } catch (error: any) {
       if (error.errors) {
         error.errors.forEach((err: { path: string; message: string }) => {
@@ -133,7 +135,7 @@ export default function MyReviewsTab({ highlightEventId = null }: MyReviewsTabPr
           }
         });
       } else {
-        toast.error(error.message || "Failed to submit review");
+        toast.error(error.message || t.profile.failedSubmitReview);
       }
     } finally {
       setIsSubmitting(false);
@@ -145,9 +147,9 @@ export default function MyReviewsTab({ highlightEventId = null }: MyReviewsTabPr
     return (
       <div>
         <div className="mb-6">
-          <h2 className="text-2xl font-bold">My Reviews</h2>
+          <h2 className="text-2xl font-bold">{t.profile.myReviewsHeading}</h2>
           <p className="text-sm text-muted-foreground mt-1">
-            View and manage your event reviews and ratings.
+            {t.profile.myReviewsSubtitle}
           </p>
         </div>
         <div className="space-y-4">
@@ -175,17 +177,17 @@ export default function MyReviewsTab({ highlightEventId = null }: MyReviewsTabPr
   return (
     <div>
       <div className="mb-6">
-        <h2 className="text-2xl font-bold">My Reviews</h2>
+        <h2 className="text-2xl font-bold">{t.profile.myReviewsHeading}</h2>
         <p className="text-sm text-muted-foreground mt-1">
-          View and manage your event reviews and ratings.
+          {t.profile.myReviewsSubtitle}
         </p>
       </div>
 
       {/* Waiting on your review */}
       {pending.length > 0 && (
         <div className="rounded-lg border-2 border-dashed border-[#1a5c2a]/30 bg-[#1a5c2a]/5 p-6 mb-8">
-          <h3 className="font-semibold text-[#1a5c2a] mb-1">Waiting on your review</h3>
-          <p className="text-sm text-muted-foreground mb-4">Share how these nights went while they are still fresh.</p>
+          <h3 className="font-semibold text-[#1a5c2a] mb-1">{t.profile.waitingOnReview}</h3>
+          <p className="text-sm text-muted-foreground mb-4">{t.profile.waitingOnReviewDesc}</p>
           <div className="flex gap-4 overflow-x-auto pb-2">
             {pending.map((item: any) => (
               <div
@@ -197,7 +199,7 @@ export default function MyReviewsTab({ highlightEventId = null }: MyReviewsTabPr
                 <div className="flex-1 min-w-0">
                   <p className="font-medium text-sm truncate">{item.title}</p>
                   <p className="text-xs text-muted-foreground">
-                    {new Date(item.eventDate).toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" })}
+                    {new Date(item.eventDate).toLocaleDateString(dateLocale, { weekday: "short", month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" })}
                   </p>
                 </div>
                 <Button
@@ -213,11 +215,11 @@ export default function MyReviewsTab({ highlightEventId = null }: MyReviewsTabPr
                     !!item.eventDate &&
                     new Date(item.eventDate) > new Date() &&
                     item.allowReviewsNow !== true
-                      ? "Reviews open after the event."
+                      ? t.profile.reviewsOpenAfter
                       : undefined
                   }
                 >
-                  Write
+                  {t.profile.write}
                 </Button>
               </div>
             ))}
@@ -235,7 +237,7 @@ export default function MyReviewsTab({ highlightEventId = null }: MyReviewsTabPr
               : "border hover:bg-muted"
           }`}
         >
-          All Reviews
+          {t.profile.allReviews}
         </button>
         <button
           onClick={() => setActiveFilter("5stars")}
@@ -245,7 +247,7 @@ export default function MyReviewsTab({ highlightEventId = null }: MyReviewsTabPr
               : "border hover:bg-muted"
           }`}
         >
-          5 Stars
+          {t.profile.fiveStars}
         </button>
       </div>
 
@@ -253,8 +255,8 @@ export default function MyReviewsTab({ highlightEventId = null }: MyReviewsTabPr
       {filteredReviews.length === 0 ? (
         <div className="text-center py-12 text-muted-foreground">
           <Star className="h-12 w-12 mx-auto mb-4 opacity-50" />
-          <p className="font-medium">No reviews yet</p>
-          <p className="text-sm mt-1">Attend events and share your experience.</p>
+          <p className="font-medium">{t.profile.noReviewsYet}</p>
+          <p className="text-sm mt-1">{t.profile.attendAndShare}</p>
         </div>
       ) : (
         <div className="space-y-4">
@@ -266,7 +268,7 @@ export default function MyReviewsTab({ highlightEventId = null }: MyReviewsTabPr
                   <div className="flex-1">
                     <p className="font-semibold">{review.event?.title}</p>
                     <p className="text-sm text-muted-foreground">
-                      {review.event?.eventDate ? new Date(review.event.eventDate).toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" }) : ""}
+                      {review.event?.eventDate ? new Date(review.event.eventDate).toLocaleDateString(dateLocale, { weekday: "short", month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" }) : ""}
                     </p>
                   </div>
                 </div>
@@ -283,7 +285,7 @@ export default function MyReviewsTab({ highlightEventId = null }: MyReviewsTabPr
                       ))}
                     </div>
                     <span className="text-sm text-muted-foreground">
-                      Posted {new Date(review.createdAt).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}
+                      {t.profile.posted} {new Date(review.createdAt).toLocaleDateString(dateLocale, { month: "short", day: "numeric", year: "numeric" })}
                     </span>
                   </div>
                   {review.title && <h4 className="font-semibold">{review.title}</h4>}
@@ -304,8 +306,8 @@ export default function MyReviewsTab({ highlightEventId = null }: MyReviewsTabPr
                 <div className="flex items-center gap-3">
                   <EventImage src={selectedPending.gallery?.[0]} title={selectedPending.title} className="h-12 w-12 rounded-lg" />
                   <div>
-                    <h3 className="text-lg font-bold">Write a Review</h3>
-                    <p className="text-sm text-muted-foreground">{selectedPending.title} - {new Date(selectedPending.eventDate).toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" })}</p>
+                    <h3 className="text-lg font-bold">{t.profile.writeReview}</h3>
+                    <p className="text-sm text-muted-foreground">{selectedPending.title} - {new Date(selectedPending.eventDate).toLocaleDateString(dateLocale, { weekday: "short", month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" })}</p>
                   </div>
                 </div>
                 <Button variant="ghost" size="icon" onClick={() => setShowWriteModal(false)}>
@@ -321,7 +323,7 @@ export default function MyReviewsTab({ highlightEventId = null }: MyReviewsTabPr
                     control={form.control}
                     render={({ field, fieldState }) => (
                       <Field data-invalid={fieldState.invalid}>
-                        <FieldLabel>How would you rate your experience?</FieldLabel>
+                        <FieldLabel>{t.profile.rateExperience}</FieldLabel>
                         <div className="flex items-center gap-2">
                           <div className="flex gap-1">
                             {[1, 2, 3, 4, 5].map((star) => (
@@ -337,7 +339,7 @@ export default function MyReviewsTab({ highlightEventId = null }: MyReviewsTabPr
                               </button>
                             ))}
                           </div>
-                          <span className="text-sm text-muted-foreground">Tap to rate</span>
+                          <span className="text-sm text-muted-foreground">{t.profile.tapToRate}</span>
                         </div>
                         {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
                       </Field>
@@ -350,11 +352,11 @@ export default function MyReviewsTab({ highlightEventId = null }: MyReviewsTabPr
                     control={form.control}
                     render={({ field, fieldState }) => (
                       <Field data-invalid={fieldState.invalid}>
-                        <FieldLabel htmlFor="review-title">Title (optional)</FieldLabel>
+                        <FieldLabel htmlFor="review-title">{t.profile.titleOptional}</FieldLabel>
                         <Input
                           {...field}
                           id="review-title"
-                          placeholder="Summarize your experience"
+                          placeholder={t.profile.summarizeExperience}
                           aria-invalid={fieldState.invalid}
                         />
                         {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
@@ -368,15 +370,15 @@ export default function MyReviewsTab({ highlightEventId = null }: MyReviewsTabPr
                     control={form.control}
                     render={({ field, fieldState }) => (
                       <Field data-invalid={fieldState.invalid}>
-                        <FieldLabel htmlFor="review-comment">Tell us about your experience</FieldLabel>
+                        <FieldLabel htmlFor="review-comment">{t.profile.tellAboutExperience}</FieldLabel>
                         <Textarea
                           {...field}
                           id="review-comment"
-                          placeholder="Share your experience..."
+                          placeholder={t.profile.shareExperience}
                           rows={4}
                           aria-invalid={fieldState.invalid}
                         />
-                        <p className="text-xs text-muted-foreground mt-1">Reviews need to be at least 20 characters.</p>
+                        <p className="text-xs text-muted-foreground mt-1">{t.profile.reviewMinChars}</p>
                         {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
                       </Field>
                     )}
@@ -384,12 +386,12 @@ export default function MyReviewsTab({ highlightEventId = null }: MyReviewsTabPr
                 </FieldGroup>
 
                 <div className="flex justify-end gap-4 mt-6">
-                  <Button type="button" variant="outline" onClick={() => setShowWriteModal(false)}>Back</Button>
+                  <Button type="button" variant="outline" onClick={() => setShowWriteModal(false)}>{t.profile.back}</Button>
                   <Button type="submit" className="bg-[#1a5c2a] hover:bg-[#144a22]" disabled={isSubmitting}>
                     {isSubmitting ? (
-                      <><Loader2 className="mr-2 h-4 w-4 animate-spin" />Submitting...</>
+                      <><Loader2 className="mr-2 h-4 w-4 animate-spin" />{t.profile.submitting}</>
                     ) : (
-                      "Post Review"
+                      t.profile.postReview
                     )}
                   </Button>
                 </div>
@@ -408,8 +410,8 @@ export default function MyReviewsTab({ highlightEventId = null }: MyReviewsTabPr
                 <Button variant="ghost" size="icon" onClick={() => setShowSuccessAlert(false)}>✕</Button>
               </div>
               <div>
-                <h3 className="font-bold text-[#1a5c2a] text-lg">Review Posted</h3>
-                <p className="text-muted-foreground mt-2">Thank you for sharing your experience with us.</p>
+                <h3 className="font-bold text-[#1a5c2a] text-lg">{t.profile.reviewPosted}</h3>
+                <p className="text-muted-foreground mt-2">{t.profile.thankYouReview}</p>
               </div>
             </CardContent>
           </Card>

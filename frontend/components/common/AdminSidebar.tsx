@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
+import { useLanguage } from "@/context/LanguageContext";
 import { ROUTES } from "@/constants";
 import {
   LayoutDashboard,
@@ -20,21 +21,22 @@ import {
 import { cn } from "@/lib/utils";
 
 const allSidebarLinks = [
-  { label: "Dashboard", href: ROUTES.ADMIN, icon: LayoutDashboard, adminOnly: false },
-  { label: "Events", href: ROUTES.ADMIN_EVENTS, icon: Calendar, adminOnly: false },
-  { label: "News", href: ROUTES.ADMIN_NEWS, icon: Newspaper, adminOnly: true },
-  { label: "Registrations", href: ROUTES.ADMIN_REGISTRATIONS, icon: ClipboardList, adminOnly: false },
-  { label: "Check-ins", href: ROUTES.ADMIN_CHECKINS, icon: QrCode, adminOnly: false },
-  { label: "Reviews", href: ROUTES.ADMIN_REVIEWS, icon: Star, adminOnly: false },
-  { label: "Users", href: ROUTES.ADMIN_USERS, icon: Users, adminOnly: true },
-  { label: "Analytics", href: ROUTES.ADMIN_ANALYTICS, icon: BarChart3, adminOnly: true },
-  { label: "Settings", href: ROUTES.ADMIN_SETTINGS, icon: Settings, adminOnly: true },
-  { label: "Profile", href: ROUTES.ADMIN_PROFILE, icon: User, adminOnly: false },
-];
+  { labelKey: "dashboard", href: ROUTES.ADMIN, icon: LayoutDashboard, adminOnly: false },
+  { labelKey: "events", href: ROUTES.ADMIN_EVENTS, icon: Calendar, adminOnly: false },
+  { labelKey: "news", href: ROUTES.ADMIN_NEWS, icon: Newspaper, adminOnly: true },
+  { labelKey: "registrations", href: ROUTES.ADMIN_REGISTRATIONS, icon: ClipboardList, adminOnly: false },
+  { labelKey: "checkins", href: ROUTES.ADMIN_CHECKINS, icon: QrCode, adminOnly: false },
+  { labelKey: "reviews", href: ROUTES.ADMIN_REVIEWS, icon: Star, adminOnly: false },
+  { labelKey: "users", href: ROUTES.ADMIN_USERS, icon: Users, adminOnly: true },
+  { labelKey: "analytics", href: ROUTES.ADMIN_ANALYTICS, icon: BarChart3, adminOnly: true },
+  { labelKey: "settings", href: ROUTES.ADMIN_SETTINGS, icon: Settings, adminOnly: true },
+  { labelKey: "profile", href: ROUTES.ADMIN_PROFILE, icon: User, adminOnly: false },
+] as const;
 
 export default function AdminSidebar() {
   const pathname = usePathname();
   const { user, isAdmin, logout } = useAuth();
+  const { t } = useLanguage();
 
   const sidebarLinks = allSidebarLinks.filter(
     (link) => isAdmin || !link.adminOnly
@@ -71,7 +73,7 @@ export default function AdminSidebar() {
               )}
             >
               <link.icon className="h-4 w-4" />
-              {link.label}
+              {t.sidebar[link.labelKey]}
             </Link>
           );
         })}
@@ -90,7 +92,7 @@ export default function AdminSidebar() {
             </div>
             <div className="min-w-0">
               <p className="text-sm font-medium truncate">{user?.name || "Admin"}</p>
-              <p className="text-xs text-white/60">{user?.role === "ADMIN" ? "General Manager" : "Moderator"}</p>
+              <p className="text-xs text-white/60">{user?.role === "ADMIN" ? t.sidebar.generalManager : t.sidebar.moderator}</p>
             </div>
           </div>
           <button

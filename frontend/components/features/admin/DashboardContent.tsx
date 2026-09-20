@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -36,33 +36,28 @@ import {
   CartesianGrid,
 } from "recharts";
 import { adminService } from "@/services/admin.service";
+import { useLanguage } from "@/context/LanguageContext";
 
-// Chart configs
-const registrationChartConfig = {
-  registrations: { label: "Registrations", color: "#1a5c2a" },
-} satisfies ChartConfig;
-
-const statusChartConfig = {
-  Confirmed: { label: "Confirmed", color: "#1a5c2a" },
-  Pending: { label: "Pending", color: "#4ade80" },
-  Waitlisted: { label: "Waitlisted", color: "#86efac" },
-  Cancelled: { label: "Cancelled", color: "#d1d5db" },
-} satisfies ChartConfig;
-
-const attendanceChartConfig = {
-  registered: { label: "Registered", color: "#d1d5db" },
-  attended: { label: "Attended", color: "#1a5c2a" },
-} satisfies ChartConfig;
-
-const categoryChartConfig = {
-  value: { label: "Registrations", color: "#1a5c2a" },
-} satisfies ChartConfig;
+// Chart configs and table columns are built inside the component
+// (via useMemo) so labels follow the active locale.
 
 // TanStack Table columns for Upcoming Events
-const upcomingColumns: DataTableColumn[] = [
+function buildUpcomingColumns(
+  t: {
+    colTitle: string;
+    colDate: string;
+    colParticipants: string;
+    colStatus: string;
+    colActions: string;
+    cancelled: string;
+    upcoming: string;
+  },
+  dateLocale: string
+): DataTableColumn[] {
+  return [
   {
     accessorKey: "title",
-    header: ({ column }) => <DataTableColumnHeader column={column} title="Title" />,
+    header: ({ column }) => <DataTableColumnHeader column={column} title={t.colTitle} />,
     cell: ({ row }) => (
       <div className="flex items-center gap-3">
         <div className="h-10 w-14 rounded overflow-hidden">
@@ -74,9 +69,9 @@ const upcomingColumns: DataTableColumn[] = [
   },
   {
     accessorKey: "eventDate",
-    header: "Date",
+    header: t.colDate,
     cell: ({ row }) =>
-      new Date(row.original.eventDate).toLocaleDateString("en-US", {
+      new Date(row.original.eventDate).toLocaleDateString(dateLocale, {
         month: "short",
         day: "numeric",
         hour: "2-digit",
@@ -85,13 +80,13 @@ const upcomingColumns: DataTableColumn[] = [
   },
   {
     id: "participants",
-    header: "Participants",
+    header: t.colParticipants,
     cell: ({ row }) =>
       `${row.original._count?.registrations || 0} / ${row.original.maxParticipants}`,
   },
   {
     accessorKey: "isCancelled",
-    header: "Status",
+    header: t.colStatus,
     cell: ({ row }) => (
       <Badge
         variant="outline"
@@ -101,22 +96,33 @@ const upcomingColumns: DataTableColumn[] = [
             : "text-[#1a5c2a] border-[#1a5c2a]"
         }
       >
-        {row.original.isCancelled ? "Cancelled" : "Upcoming"}
+        {row.original.isCancelled ? t.cancelled : t.upcoming}
       </Badge>
     ),
   },
   {
     id: "actions",
-    header: "Actions",
+    header: t.colActions,
     cell: () => <Button variant="ghost" size="sm">···</Button>,
   },
-];
+  ];
+}
 
 // TanStack Table columns for Recent Registrations
-const recentColumns: DataTableColumn[] = [
+function buildRecentColumns(
+  t: {
+    colRefNo: string;
+    colParticipant: string;
+    colEvent: string;
+    colRegDate: string;
+    colStatus: string;
+  },
+  dateLocale: string
+): DataTableColumn[] {
+  return [
   {
     id: "referenceNumber",
-    header: "REFERENCE NO.",
+    header: t.colRefNo,
     cell: ({ row }) => (
       <span className="font-mono font-medium">
         {row.original.referenceNumber || `MZ-${row.original.id.slice(0, 6).toUpperCase()}`}
@@ -125,7 +131,7 @@ const recentColumns: DataTableColumn[] = [
   },
   {
     id: "participant",
-    header: "PARTICIPANT",
+    header: t.colParticipant,
     cell: ({ row }) => (
       <div>
         <p className="font-medium">{row.original.user?.name}</p>
@@ -137,7 +143,7 @@ const recentColumns: DataTableColumn[] = [
   },
   {
     id: "event",
-    header: "Event",
+    header: t.colEvent,
     cell: ({ row }) => (
       <span className="text-muted-foreground">
         {row.original.event?.title}
@@ -146,10 +152,10 @@ const recentColumns: DataTableColumn[] = [
   },
   {
     id: "createdAt",
-    header: ({ column }) => <DataTableColumnHeader column={column} title="REGISTRATION DATE" />,
+    header: ({ column }) => <DataTableColumnHeader column={column} title={t.colRegDate} />,
     cell: ({ row }) => (
       <span className="text-muted-foreground">
-        {new Date(row.original.createdAt).toLocaleDateString("en-US", {
+        {new Date(row.original.createdAt).toLocaleDateString(dateLocale, {
           month: "short",
           day: "numeric",
           hour: "2-digit",
@@ -160,7 +166,7 @@ const recentColumns: DataTableColumn[] = [
   },
   {
     id: "status",
-    header: "STATUS",
+    header: t.colStatus,
     cell: ({ row }) => (
       <Badge
         variant="outline"
@@ -170,7 +176,8 @@ const recentColumns: DataTableColumn[] = [
       </Badge>
     ),
   },
-];
+  ];
+}
 
 interface DashboardContentProps {
   initialStats?: {
@@ -222,6 +229,46 @@ export default function DashboardContent({
   );
   const [loading, setLoading] = useState(
     !initialStats
+  );
+  const { t, dateLocale } = useLanguage();
+
+  // Localized chart configs + table columns (rebuilt on locale switch)
+  const registrationChartConfig = useMemo(() => ({
+    registrations: { label: t.dashboard.registrations, color: "#1a5c2a" },
+  } satisfies ChartConfig), [t]);
+  const attendanceChartConfig = useMemo(() => ({
+    registered: { label: t.dashboard.registered, color: "#d1d5db" },
+    attended: { label: t.dashboard.attended, color: "#1a5c2a" },
+  } satisfies ChartConfig), [t]);
+  const categoryChartConfig = useMemo(() => ({
+    value: { label: t.dashboard.registrations, color: "#1a5c2a" },
+  } satisfies ChartConfig), [t]);
+  const upcomingColumns = useMemo(
+    () => buildUpcomingColumns(t.dashboard, dateLocale),
+    [t, dateLocale]
+  );
+  const recentColumns = useMemo(
+    () => buildRecentColumns(t.dashboard, dateLocale),
+    [t, dateLocale]
+  );
+
+  // Map backend English labels (months, statuses, categories) to locale
+  const localizedTrend = useMemo(
+    () => registrationTrend.map((d) => ({ ...d, month: t.months[d.month as keyof typeof t.months] ?? d.month })),
+    [registrationTrend, t]
+  );
+  const localizedStatus = useMemo(
+    () => registrationStatus.map((s) => ({ ...s, name: t.statuses[s.name as keyof typeof t.statuses] ?? s.name })),
+    [registrationStatus, t]
+  );
+  const statusChartConfig = useMemo(() => (
+    Object.fromEntries(
+      localizedStatus.map((s) => [s.name, { label: s.name, color: s.fill }])
+    ) as ChartConfig
+  ), [localizedStatus]);
+  const localizedCategories = useMemo(
+    () => topCategories.map((c) => ({ ...c, name: t.categories[c.name as keyof typeof t.categories] ?? c.name })),
+    [topCategories, t]
   );
 
   // Always reflect the latest server data (e.g. after a delete + refresh)
@@ -287,7 +334,7 @@ export default function DashboardContent({
       <div className="flex items-center justify-center min-h-[60vh]">
         <div className="flex flex-col items-center gap-3">
           <div className="h-8 w-8 animate-spin rounded-full border-4 border-[#1a5c2a] border-t-transparent" />
-          <p className="text-sm text-muted-foreground">Loading dashboard...</p>
+          <p className="text-sm text-muted-foreground">{t.dashboard.loading}</p>
         </div>
       </div>
     );
@@ -304,34 +351,34 @@ export default function DashboardContent({
       <div className="flex items-center justify-between mb-8">
         <div>
           <p className="text-sm text-muted-foreground">
-            Admin panel ·{" "}
-            {new Date().toLocaleDateString("en-US", {
+            {t.dashboard.adminPanel} ·{" "}
+            {new Date().toLocaleDateString(dateLocale, {
               weekday: "long",
               year: "numeric",
               month: "long",
               day: "numeric",
             })}
           </p>
-          <h1 className="text-3xl font-bold">Welcome back, Admin</h1>
+          <h1 className="text-3xl font-bold">{t.dashboard.welcome}</h1>
         </div>
         <div className="flex gap-3">
           <Link href="/admin/analytics">
             <Button variant="outline">
               <BarChart3 className="h-4 w-4 mr-2" />
-              View Analytics
+              {t.dashboard.viewAnalytics}
             </Button>
           </Link>
           <Link href="/admin/events/create">
             <Button className="bg-[#1a5c2a] hover:bg-[#144a22]">
               <Plus className="h-4 w-4 mr-2" />
-              Create Event
+              {t.dashboard.createEvent}
             </Button>
           </Link>
         </div>
       </div>
 
       {/* Venue Operations Live Feed */}
-      <h2 className="text-lg font-semibold mb-4">Venue Operations Live Feed</h2>
+      <h2 className="text-lg font-semibold mb-4">{t.dashboard.liveFeed}</h2>
 
       {/* Stat Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
@@ -339,33 +386,33 @@ export default function DashboardContent({
           <CardContent className="p-6">
             <div className="flex items-center justify-between mb-2">
               <span className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
-                Total Events
+                {t.dashboard.totalEvents}
               </span>
               <Calendar className="h-4 w-4 text-muted-foreground" />
             </div>
             <div className="text-3xl font-bold">{stats?.totalEvents ?? "—"}</div>
-            <p className="text-xs text-[#1a5c2a] mt-1">▲ +12% this month</p>
+            <p className="text-xs text-[#1a5c2a] mt-1">{t.dashboard.eventsUp}</p>
           </CardContent>
         </Card>
         <Card>
           <CardContent className="p-6">
             <div className="flex items-center justify-between mb-2">
               <span className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
-                Total Registrations
+                {t.dashboard.totalRegistrations}
               </span>
               <Users className="h-4 w-4 text-muted-foreground" />
             </div>
             <div className="text-3xl font-bold">
               {stats?.totalRegistrations ?? "—"}
             </div>
-            <p className="text-xs text-[#1a5c2a] mt-1">▲ +45% this month</p>
+            <p className="text-xs text-[#1a5c2a] mt-1">{t.dashboard.regsUp}</p>
           </CardContent>
         </Card>
         <Card>
           <CardContent className="p-6">
             <div className="flex items-center justify-between mb-2">
               <span className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
-                Ongoing Events
+                {t.dashboard.ongoingEvents}
               </span>
               <PlayCircle className="h-4 w-4 text-muted-foreground" />
             </div>
@@ -373,7 +420,7 @@ export default function DashboardContent({
               {stats?.ongoingEvents ?? "—"}
             </div>
             <p className="text-xs text-muted-foreground mt-1">
-              Live at Bar & Lounge
+              {t.dashboard.liveAt}
             </p>
           </CardContent>
         </Card>
@@ -381,14 +428,14 @@ export default function DashboardContent({
           <CardContent className="p-6">
             <div className="flex items-center justify-between mb-2">
               <span className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
-                Cancelled Events
+                {t.dashboard.cancelledEvents}
               </span>
               <XCircle className="h-4 w-4 text-muted-foreground" />
             </div>
             <div className="text-3xl font-bold">
               {stats?.cancelledEvents ?? "—"}
             </div>
-            <p className="text-xs text-red-500 mt-1">▼ 2% vs last month</p>
+            <p className="text-xs text-red-500 mt-1">{t.dashboard.cancelledDown}</p>
           </CardContent>
         </Card>
       </div>
@@ -398,9 +445,9 @@ export default function DashboardContent({
         {/* Registration Trend */}
         <Card className="lg:col-span-2">
           <CardHeader>
-            <CardTitle className="text-base">Registration trend</CardTitle>
+            <CardTitle className="text-base">{t.dashboard.regTrend}</CardTitle>
             <p className="text-sm text-muted-foreground">
-              Monthly registrations against target.
+              {t.dashboard.regTrendSub}
             </p>
           </CardHeader>
           <CardContent>
@@ -408,7 +455,7 @@ export default function DashboardContent({
               config={registrationChartConfig}
               className="h-[250px]"
             >
-              <LineChart data={registrationTrend}>
+              <LineChart data={localizedTrend}>
                 <CartesianGrid strokeDasharray="3 3" vertical={false} />
                 <XAxis dataKey="month" tickLine={false} axisLine={false} />
                 <YAxis tickLine={false} axisLine={false} />
@@ -428,8 +475,8 @@ export default function DashboardContent({
         {/* Registration Status Donut */}
         <Card>
           <CardHeader>
-            <CardTitle className="text-base">Registration status</CardTitle>
-            <p className="text-sm text-muted-foreground">Across all events</p>
+            <CardTitle className="text-base">{t.dashboard.regStatus}</CardTitle>
+            <p className="text-sm text-muted-foreground">{t.dashboard.regStatusSub}</p>
           </CardHeader>
           <CardContent>
             <div className="flex justify-center mb-4">
@@ -439,14 +486,14 @@ export default function DashboardContent({
               >
                 <PieChart>
                   <Pie
-                    data={registrationStatus}
+                    data={localizedStatus}
                     cx="50%"
                     cy="50%"
                     innerRadius={55}
                     outerRadius={80}
                     dataKey="value"
                   >
-                    {registrationStatus.map((entry, index) => (
+                    {localizedStatus.map((entry, index) => (
                       <Cell key={index} fill={entry.fill} />
                     ))}
                   </Pie>
@@ -455,12 +502,12 @@ export default function DashboardContent({
             </div>
             <div className="text-center mb-4">
               <span className="text-3xl font-bold">
-                {totalStatusRegistrations.toLocaleString()}
+                {totalStatusRegistrations.toLocaleString(dateLocale)}
               </span>
-              <p className="text-sm text-muted-foreground">Registrations</p>
+              <p className="text-sm text-muted-foreground">{t.dashboard.registrations}</p>
             </div>
             <div className="grid grid-cols-2 gap-2 text-sm">
-              {registrationStatus.map((item) => (
+              {localizedStatus.map((item) => (
                 <div key={item.name} className="flex items-center gap-2">
                   <span
                     className="h-2 w-2 rounded-full"
@@ -468,7 +515,7 @@ export default function DashboardContent({
                   />
                   <span className="text-muted-foreground">{item.name}</span>
                   <span className="ml-auto font-medium">
-                    {item.value.toLocaleString()}
+                    {item.value.toLocaleString(dateLocale)}
                   </span>
                 </div>
               ))}
@@ -482,9 +529,9 @@ export default function DashboardContent({
         {/* Attendance Trend */}
         <Card className="lg:col-span-2">
           <CardHeader>
-            <CardTitle className="text-base">Attendance trend</CardTitle>
+            <CardTitle className="text-base">{t.dashboard.attTrend}</CardTitle>
             <p className="text-sm text-muted-foreground">
-              Registered vs actually checked in
+              {t.dashboard.attTrendSub}
             </p>
           </CardHeader>
           <CardContent>
@@ -492,7 +539,7 @@ export default function DashboardContent({
               config={attendanceChartConfig}
               className="h-[250px]"
             >
-              <BarChart data={attendanceTrend}>
+              <BarChart data={localizedTrend}>
                 <CartesianGrid strokeDasharray="3 3" vertical={false} />
                 <XAxis dataKey="month" tickLine={false} axisLine={false} />
                 <YAxis tickLine={false} axisLine={false} />
@@ -515,15 +562,15 @@ export default function DashboardContent({
         {/* Top Event Categories */}
         <Card>
           <CardHeader>
-            <CardTitle className="text-base">Top event categories</CardTitle>
-            <p className="text-sm text-muted-foreground">By registrations</p>
+            <CardTitle className="text-base">{t.dashboard.topCategories}</CardTitle>
+            <p className="text-sm text-muted-foreground">{t.dashboard.topCategoriesSub}</p>
           </CardHeader>
           <CardContent>
             <ChartContainer
               config={categoryChartConfig}
               className="h-[250px]"
             >
-              <BarChart data={topCategories} layout="vertical">
+              <BarChart data={localizedCategories} layout="vertical">
                 <CartesianGrid strokeDasharray="3 3" horizontal={false} />
                 <XAxis type="number" tickLine={false} axisLine={false} />
                 <YAxis
@@ -549,7 +596,7 @@ export default function DashboardContent({
       <Card className="mb-8">
         <CardHeader>
           <CardTitle className="text-base">
-            Upcoming & Active Events Schedule
+            {t.dashboard.upcomingSchedule}
           </CardTitle>
         </CardHeader>
         <CardContent className="p-0">
@@ -560,7 +607,7 @@ export default function DashboardContent({
       {/* Recent Registrations Table (TanStack Table) */}
       <Card className="mb-8">
         <CardHeader>
-          <CardTitle className="text-base">Recent Registrations</CardTitle>
+          <CardTitle className="text-base">{t.dashboard.recentRegs}</CardTitle>
         </CardHeader>
         <CardContent className="p-0">
           <DataTable columns={recentColumns} data={recentRegistrations} enablePagination enableSorting pageSize={5} />
@@ -572,8 +619,8 @@ export default function DashboardContent({
         {/* Top Performing Events */}
         <Card>
           <CardHeader>
-            <CardTitle className="text-base">Top Performing Events</CardTitle>
-            <p className="text-sm text-muted-foreground">Fill rate and rating</p>
+            <CardTitle className="text-base">{t.dashboard.topEvents}</CardTitle>
+            <p className="text-sm text-muted-foreground">{t.dashboard.topEventsSub}</p>
           </CardHeader>
           <CardContent className="space-y-4">
             {topEvents.map((event, i) => (
@@ -605,8 +652,7 @@ export default function DashboardContent({
                   />
                 </div>
                 <p className="text-xs text-muted-foreground">
-                  {event.registrations} registrations · {event.fillRate}% fill
-                  rate
+                  {event.registrations} {t.dashboard.registrations} · {event.fillRate}% {t.dashboard.fillRateWord}
                 </p>
               </div>
             ))}
@@ -616,15 +662,15 @@ export default function DashboardContent({
         {/* Fast Actions */}
         <Card>
           <CardHeader>
-            <CardTitle className="text-base">Fast Actions</CardTitle>
+            <CardTitle className="text-base">{t.dashboard.fastActions}</CardTitle>
           </CardHeader>
           <CardContent className="space-y-1">
             {[
-              { label: "Create Event", href: "/admin/events/create" },
-              { label: "Manage Users", href: "/admin/users" },
-              { label: "Export Analytics", href: "/admin/analytics" },
-              { label: "View Today's Check-ins", href: "/admin/check-ins" },
-              { label: "Pending Reviews", href: "/admin/reviews" },
+              { label: t.dashboard.actionCreate, href: "/admin/events/create" },
+              { label: t.dashboard.actionUsers, href: "/admin/users" },
+              { label: t.dashboard.actionExport, href: "/admin/analytics" },
+              { label: t.dashboard.actionCheckins, href: "/admin/check-ins" },
+              { label: t.dashboard.actionReviews, href: "/admin/reviews" },
             ].map((action) => (
               <Link
                 key={action.label}

@@ -11,6 +11,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Field, FieldError, FieldGroup, FieldLabel } from "@/components/ui/field";
 import { Loader2, CheckCircle2 } from "lucide-react";
 import { toast } from "sonner";
+import { useLanguage } from "@/context/LanguageContext";
 
 const contactSchema = z.object({
   name: z.string().min(2, "Name must be at least 2 characters"),
@@ -21,6 +22,7 @@ const contactSchema = z.object({
 type ContactValues = z.infer<typeof contactSchema>;
 
 export default function ContactForm() {
+  const { t } = useLanguage();
   const [isLoading, setIsLoading] = useState(false);
   const [isSubmitted, setIsSubmitted] = useState(false);
 
@@ -35,7 +37,7 @@ export default function ContactForm() {
     try {
       await contactService.send(data);
       setIsSubmitted(true);
-      toast.success("Message sent successfully!");
+      toast.success(t.contact.messageSuccessToast);
     } catch (error: any) {
       if (error.errors) {
         error.errors.forEach((err: { path: string; message: string }) => {
@@ -45,7 +47,7 @@ export default function ContactForm() {
           }
         });
       } else {
-        toast.error(error.message || "Failed to send message");
+        toast.error(error.message || t.contact.messageFailedToast);
       }
     } finally {
       setIsLoading(false);
@@ -56,10 +58,10 @@ export default function ContactForm() {
     return (
       <div className="text-center space-y-4 py-8">
         <CheckCircle2 className="h-12 w-12 text-[#1a5c2a] mx-auto" />
-        <h3 className="text-lg font-semibold">Message Sent!</h3>
-        <p className="text-sm text-muted-foreground">Thank you for reaching out. We&apos;ll get back to you soon.</p>
+        <h3 className="text-lg font-semibold">{t.contact.messageSent}</h3>
+        <p className="text-sm text-muted-foreground">{t.contact.messageSentDesc}</p>
         <Button variant="outline" onClick={() => { setIsSubmitted(false); form.reset(); }}>
-          Send Another Message
+          {t.contact.sendAnother}
         </Button>
       </div>
     );
@@ -73,8 +75,8 @@ export default function ContactForm() {
           control={form.control}
           render={({ field, fieldState }) => (
             <Field data-invalid={fieldState.invalid}>
-              <FieldLabel htmlFor="contact-name">Name</FieldLabel>
-              <Input {...field} id="contact-name" placeholder="Your name" autoComplete="name" aria-invalid={fieldState.invalid} />
+              <FieldLabel htmlFor="contact-name">{t.contact.name}</FieldLabel>
+              <Input {...field} id="contact-name" placeholder={t.contact.namePlaceholder} autoComplete="name" aria-invalid={fieldState.invalid} />
               {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
             </Field>
           )}
@@ -84,8 +86,8 @@ export default function ContactForm() {
           control={form.control}
           render={({ field, fieldState }) => (
             <Field data-invalid={fieldState.invalid}>
-              <FieldLabel htmlFor="contact-email">Email</FieldLabel>
-              <Input {...field} id="contact-email" type="email" placeholder="Your email" autoComplete="email" aria-invalid={fieldState.invalid} />
+              <FieldLabel htmlFor="contact-email">{t.contact.email}</FieldLabel>
+              <Input {...field} id="contact-email" type="email" placeholder={t.contact.emailPlaceholder} autoComplete="email" aria-invalid={fieldState.invalid} />
               {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
             </Field>
           )}
@@ -95,15 +97,15 @@ export default function ContactForm() {
           control={form.control}
           render={({ field, fieldState }) => (
             <Field data-invalid={fieldState.invalid}>
-              <FieldLabel htmlFor="contact-message">Message</FieldLabel>
-              <Textarea {...field} id="contact-message" placeholder="Your message..." rows={5} aria-invalid={fieldState.invalid} />
+              <FieldLabel htmlFor="contact-message">{t.contact.message}</FieldLabel>
+              <Textarea {...field} id="contact-message" placeholder={t.contact.messagePlaceholder} rows={5} aria-invalid={fieldState.invalid} />
               {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
             </Field>
           )}
         />
       </FieldGroup>
       <Button type="submit" className="w-full bg-[#1a5c2a] hover:bg-[#144a22]" disabled={isLoading}>
-        {isLoading ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" />Sending...</> : "Send Message"}
+        {isLoading ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" />{t.contact.sending}</> : t.contact.sendMessage}
       </Button>
     </form>
   );

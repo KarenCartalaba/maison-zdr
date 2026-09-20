@@ -2,9 +2,11 @@
 
 import Link from "next/link";
 import { useAuth } from "@/context/AuthContext";
+import { useLanguage } from "@/context/LanguageContext";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Calendar, MapPin } from "lucide-react";
+import { formatDate } from "@/lib/format-date";
 import type { Event } from "@/types";
 
 interface EventCardProps {
@@ -13,12 +15,13 @@ interface EventCardProps {
 
 export default function EventCard({ event }: EventCardProps) {
   const { isAuthenticated, isVerified } = useAuth();
+  const { t, dateLocale } = useLanguage();
   const registrationCount = event._count?.registrations || 0;
   const capacityPercentage = (registrationCount / event.maxParticipants) * 100;
   const isDeadlinePassed = new Date(event.deadline) < new Date();
 
   const getStatusBadge = (): { label: string; className: string } => {
-    if (event.isCancelled) return { label: "Cancelled", className: "bg-red-600 hover:bg-red-700" };
+    if (event.isCancelled) return { label: t.events.cancelled, className: "bg-red-600 hover:bg-red-700" };
 
     const now = new Date();
     const eventDate = new Date(event.eventDate);
@@ -27,19 +30,19 @@ export default function EventCard({ event }: EventCardProps) {
     const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
     const eventDay = new Date(eventDate.getFullYear(), eventDate.getMonth(), eventDate.getDate());
 
-    if (eventDay < today) return { label: "Completed", className: "bg-gray-600 hover:bg-gray-700" };
-    if (eventDay.getTime() === today.getTime()) return { label: "Ongoing", className: "bg-[#1a5c2a] hover:bg-[#144a22]" };
-    return { label: "Upcoming", className: "bg-[#1a5c2a] hover:bg-[#144a22]" };
+    if (eventDay < today) return { label: t.events.completed, className: "bg-gray-600 hover:bg-gray-700" };
+    if (eventDay.getTime() === today.getTime()) return { label: t.events.ongoing, className: "bg-[#1a5c2a] hover:bg-[#144a22]" };
+    return { label: t.events.upcoming, className: "bg-[#1a5c2a] hover:bg-[#144a22]" };
   };
 
   const statusBadge = getStatusBadge();
 
   const getButtonState = () => {
-    if (event.isCancelled) return { text: "Event Cancelled", disabled: true };
-    if (isDeadlinePassed) return { text: "Registration Closed", disabled: true };
-    if (!isAuthenticated) return { text: "View Details", disabled: false };
-    if (!isVerified) return { text: "View Details", disabled: false };
-    return { text: "View Details", disabled: false };
+    if (event.isCancelled) return { text: t.events.eventCancelled, disabled: true };
+    if (isDeadlinePassed) return { text: t.events.registrationClosed, disabled: true };
+    if (!isAuthenticated) return { text: t.events.viewDetails, disabled: false };
+    if (!isVerified) return { text: t.events.viewDetails, disabled: false };
+    return { text: t.events.viewDetails, disabled: false };
   };
 
   const buttonState = getButtonState();
@@ -72,7 +75,7 @@ export default function EventCard({ event }: EventCardProps) {
         <div className="flex items-center gap-2 text-sm text-muted-foreground">
           <Calendar className="h-4 w-4" />
           <span>
-            {new Date(event.eventDate).toLocaleDateString("en-US", {
+            {formatDate(event.eventDate, dateLocale, {
               weekday: "long",
               hour: "2-digit",
               minute: "2-digit",
@@ -85,9 +88,9 @@ export default function EventCard({ event }: EventCardProps) {
         </div>
         <div className="space-y-1">
           <div className="flex items-center justify-between text-sm">
-            <span className="text-muted-foreground">Registration availability</span>
+            <span className="text-muted-foreground">{t.events.registrationAvailability}</span>
             <span className="text-muted-foreground">
-              {registrationCount}/{event.maxParticipants} slot left
+              {registrationCount}/{event.maxParticipants} {t.events.slotLeft}
             </span>
           </div>
           <div className="h-2 w-full rounded-full bg-muted">

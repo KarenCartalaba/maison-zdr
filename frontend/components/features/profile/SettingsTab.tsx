@@ -5,6 +5,7 @@ import { Controller, useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { useAuth } from "@/context/AuthContext";
+import { useLanguage } from "@/context/LanguageContext";
 import { authService } from "@/services/auth.service";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -37,6 +38,7 @@ type PasswordValues = z.infer<typeof passwordSchema>;
 
 export default function SettingsTab() {
   const { user, updateUser, isVerified } = useAuth();
+  const { t } = useLanguage();
   const [isUpdating, setIsUpdating] = useState(false);
   const [isChangingPassword, setIsChangingPassword] = useState(false);
   const [showPasswordForm, setShowPasswordForm] = useState(false);
@@ -71,7 +73,7 @@ export default function SettingsTab() {
       if (response.code === 200 && response.data?.user) {
         updateUser(response.data.user);
       }
-      toast.success("Profile updated successfully");
+      toast.success(t.profile.profileUpdatedSuccessfully);
     } catch (error: any) {
       if (error.errors) {
         error.errors.forEach((err: { path: string; message: string }) => {
@@ -91,7 +93,7 @@ export default function SettingsTab() {
   const handleSendVerification = async () => {
     try {
       await authService.forgotPassword(user?.email || "");
-      toast.success("Verification email sent!");
+      toast.success(t.profile.verificationEmailSent);
     } catch (error: any) {
       toast.error(error.message || "Failed to send verification email");
     }
@@ -101,7 +103,7 @@ export default function SettingsTab() {
     setIsChangingPassword(true);
     try {
       await authService.changePassword(data.currentPassword, data.newPassword);
-      toast.success("Password changed successfully");
+      toast.success(t.profile.passwordChangedSuccessfully);
       passwordForm.reset();
       setShowPasswordForm(false);
     } catch (error: any) {
@@ -123,9 +125,9 @@ export default function SettingsTab() {
   return (
     <div>
       <div className="mb-6">
-        <h2 className="text-2xl font-bold">Account Settings</h2>
+        <h2 className="text-2xl font-bold">{t.profile.accountSettings}</h2>
         <p className="text-sm text-muted-foreground mt-1">
-          Manage your personal account details securely.
+          {t.profile.manageAccountDetails}
         </p>
       </div>
 
@@ -139,7 +141,7 @@ export default function SettingsTab() {
                 control={profileForm.control}
                 render={({ field, fieldState }) => (
                   <Field data-invalid={fieldState.invalid}>
-                    <FieldLabel htmlFor="settings-firstName">First Name</FieldLabel>
+                    <FieldLabel htmlFor="settings-firstName">{t.profile.firstName}</FieldLabel>
                     <Input {...field} id="settings-firstName" aria-invalid={fieldState.invalid} />
                     {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
                   </Field>
@@ -150,7 +152,7 @@ export default function SettingsTab() {
                 control={profileForm.control}
                 render={({ field, fieldState }) => (
                   <Field data-invalid={fieldState.invalid}>
-                    <FieldLabel htmlFor="settings-lastName">Last Name</FieldLabel>
+                    <FieldLabel htmlFor="settings-lastName">{t.profile.lastName}</FieldLabel>
                     <Input {...field} id="settings-lastName" aria-invalid={fieldState.invalid} />
                     {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
                   </Field>
@@ -164,7 +166,7 @@ export default function SettingsTab() {
               control={profileForm.control}
               render={({ field, fieldState }) => (
                 <Field data-invalid={fieldState.invalid}>
-                  <FieldLabel htmlFor="settings-email">Email</FieldLabel>
+                  <FieldLabel htmlFor="settings-email">{t.profile.email}</FieldLabel>
                   <div className="relative">
                     <Mail className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                     <Input
@@ -188,9 +190,9 @@ export default function SettingsTab() {
               <div className="flex items-center gap-3">
                 <AlertTriangle className="h-5 w-5 text-amber-600" />
                 <div>
-                  <p className="text-sm font-medium text-amber-800">Email not verified</p>
+                  <p className="text-sm font-medium text-amber-800">{t.profile.emailNotVerified}</p>
                   <p className="text-xs text-amber-600">
-                    Verify to receive tickets and event reminders by email.
+                    {t.profile.verifyForTickets}
                   </p>
                 </div>
               </div>
@@ -200,14 +202,14 @@ export default function SettingsTab() {
                 className="bg-[#1a5c2a] hover:bg-[#144a22]"
                 onClick={handleSendVerification}
               >
-                Send Verification Email
+                {t.profile.sendVerificationEmail}
               </Button>
             </div>
           )}
 
           {/* Password section */}
           <div className="space-y-2">
-            <label className="text-sm font-semibold">Password</label>
+            <label className="text-sm font-semibold">{t.profile.password}</label>
             <button
               type="button"
               onClick={() => setShowPasswordForm(!showPasswordForm)}
@@ -215,7 +217,7 @@ export default function SettingsTab() {
             >
               <div className="flex items-center gap-3">
                 <Lock className="h-4 w-4 text-muted-foreground" />
-                <span className="text-sm">Change Password</span>
+                <span className="text-sm">{t.profile.changePassword}</span>
               </div>
               <ChevronRight className={`h-4 w-4 transition-transform ${showPasswordForm ? "rotate-90" : ""}`} />
             </button>
@@ -229,7 +231,7 @@ export default function SettingsTab() {
                       control={passwordForm.control}
                       render={({ field, fieldState }) => (
                         <Field data-invalid={fieldState.invalid}>
-                          <FieldLabel htmlFor="currentPassword">Current Password</FieldLabel>
+                          <FieldLabel htmlFor="currentPassword">{t.profile.currentPassword}</FieldLabel>
                           <Input
                             {...field}
                             id="currentPassword"
@@ -246,7 +248,7 @@ export default function SettingsTab() {
                       control={passwordForm.control}
                       render={({ field, fieldState }) => (
                         <Field data-invalid={fieldState.invalid}>
-                          <FieldLabel htmlFor="newPassword">New Password</FieldLabel>
+                          <FieldLabel htmlFor="newPassword">{t.profile.newPassword}</FieldLabel>
                           <Input
                             {...field}
                             id="newPassword"
@@ -263,7 +265,7 @@ export default function SettingsTab() {
                       control={passwordForm.control}
                       render={({ field, fieldState }) => (
                         <Field data-invalid={fieldState.invalid}>
-                          <FieldLabel htmlFor="confirmPassword">Confirm New Password</FieldLabel>
+                          <FieldLabel htmlFor="confirmPassword">{t.profile.confirmPassword}</FieldLabel>
                           <Input
                             {...field}
                             id="confirmPassword"
@@ -286,10 +288,10 @@ export default function SettingsTab() {
                       {isChangingPassword ? (
                         <>
                           <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                          Changing...
+                          {t.profile.changing}
                         </>
                       ) : (
-                        "Update Password"
+                        t.profile.updatePassword
                       )}
                     </Button>
                   </div>
@@ -308,14 +310,14 @@ export default function SettingsTab() {
               {isUpdating ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Saving...
+                  {t.profile.changing}
                 </>
               ) : (
-                "Save Changes"
+                t.profile.saveChanges
               )}
             </Button>
             <Button type="button" variant="outline" onClick={() => profileForm.reset()}>
-              Cancel
+              {t.profile.back}
             </Button>
           </div>
         </form>

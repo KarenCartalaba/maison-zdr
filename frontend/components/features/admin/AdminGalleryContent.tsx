@@ -17,6 +17,8 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { useConfirm } from "@/components/ui/confirm-dialog";
+import { useLanguage } from "@/context/LanguageContext";
+import { formatDate } from "@/lib/format-date";
 import type { Event } from "@/types";
 
 interface EventWithGallery extends Event {
@@ -31,6 +33,7 @@ export default function AdminGalleryContent() {
   const [deletingIndex, setDeletingIndex] = useState<number | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { confirm, dialog } = useConfirm();
+  const { t, dateLocale } = useLanguage();
 
   useEffect(() => {
     fetchEvents();
@@ -47,7 +50,7 @@ export default function AdminGalleryContent() {
       }
     } catch (err) {
       console.error("Failed to fetch events:", err);
-      toast.error("Failed to load events");
+      toast.error(t.adminGallery.loadError);
     } finally {
       setIsLoading(false);
     }
@@ -58,7 +61,7 @@ export default function AdminGalleryContent() {
     if (!file || !selectedEvent) return;
 
     if (file.size > 10 * 1024 * 1024) {
-      toast.error("Image must be under 10MB");
+      toast.error(t.adminGallery.errorSize);
       return;
     }
 
@@ -71,7 +74,6 @@ export default function AdminGalleryContent() {
           const response = await galleryService.upload({ imageBase64, folder: `events/${selectedEvent.id}` });
           if (response.code === 200 && response.data) {
             const uploadedUrl = response.data.url;
-            // Update the event's gallery array
             const updatedGallery = [...selectedEvent.gallery, uploadedUrl];
             await eventService.update({
               id: selectedEvent.id,
@@ -80,21 +82,20 @@ export default function AdminGalleryContent() {
             const updatedEvent = { ...selectedEvent, gallery: updatedGallery };
             setSelectedEvent(updatedEvent);
             setEvents(events.map((ev) => (ev.id === selectedEvent.id ? updatedEvent : ev)));
-            toast.success("Image uploaded successfully");
+            toast.success(t.adminGallery.uploadSuccess);
           }
         } catch (err: any) {
-          toast.error(err.response?.data?.message || "Failed to upload image");
+          toast.error(err.response?.data?.message || t.adminGallery.uploadError);
         } finally {
           setIsUploading(false);
         }
       };
       reader.readAsDataURL(file);
     } catch {
-      toast.error("Failed to read file");
+      toast.error(t.adminGallery.errorRead);
       setIsUploading(false);
     }
 
-    // Reset file input
     if (fileInputRef.current) {
       fileInputRef.current.value = "";
     }
@@ -108,10 +109,7 @@ export default function AdminGalleryContent() {
       const imageUrl = selectedEvent.gallery[index];
       const updatedGallery = selectedEvent.gallery.filter((_, i) => i !== index);
 
-      // Delete from gallery storage
       await galleryService.delete({ url: imageUrl });
-
-      // Update the event's gallery via the event service
       await eventService.update({
         id: selectedEvent.id,
         gallery: updatedGallery,
@@ -120,9 +118,9 @@ export default function AdminGalleryContent() {
       const updatedEvent = { ...selectedEvent, gallery: updatedGallery };
       setSelectedEvent(updatedEvent);
       setEvents(events.map((ev) => (ev.id === selectedEvent.id ? updatedEvent : ev)));
-      toast.success("Image deleted");
+      toast.success(t.adminGallery.deleteSuccess);
     } catch {
-      toast.error("Failed to delete image");
+      toast.error(t.adminGallery.deleteError);
     } finally {
       setDeletingIndex(null);
     }
@@ -138,6 +136,7 @@ export default function AdminGalleryContent() {
 
   // Selected event detail view
   if (selectedEvent) {
+    const photoCount = selectedEvent.gallery.length === 1 ? t.adminGallery.photoCount : t.adminGallery.photoCountPlural;
     return (
       <div>
         <div className="flex items-center gap-4 mb-6">
@@ -151,8 +150,8 @@ export default function AdminGalleryContent() {
           <div className="flex-1">
             <h1 className="text-2xl font-bold">{selectedEvent.title}</h1>
             <p className="text-sm text-muted-foreground mt-1">
-              {selectedEvent.gallery.length} photo{selectedEvent.gallery.length !== 1 ? "s" : ""} ·{" "}
-              {new Date(selectedEvent.eventDate).toLocaleDateString("en-US", {
+              {selectedEvent.gallery.length} {photoCount} ·{" "}
+              {formatDate(selectedEvent.eventDate, dateLocale, {
                 month: "long",
                 day: "numeric",
                 year: "numeric",
@@ -169,7 +168,7 @@ export default function AdminGalleryContent() {
             ) : (
               <Upload className="h-4 w-4 mr-2" />
             )}
-            Upload Photo
+            {t.adminGallery.uploadPhoto}
           </Button>
           <input
             ref={fileInputRef}
@@ -184,9 +183,9 @@ export default function AdminGalleryContent() {
           <Card>
             <CardContent className="flex flex-col items-center justify-center py-16">
               <ImageIcon className="h-12 w-12 text-muted-foreground mb-4" />
-              <p className="text-muted-foreground">No photos uploaded yet</p>
+              <p className="text-muted-foreground">{t.adminGallery.noPhotosTitle}</p>
               <p className="text-xs text-muted-foreground mt-1">
-                Click the Upload Photo button to add images
+                {t.adminGallery.noPhotosDesc}
               </p>
             </CardContent>
           </Card>
@@ -206,9 +205,9 @@ export default function AdminGalleryContent() {
                   <button
                     onClick={() =>
                       confirm({
-                        title: "Delete image",
-                        description: "Permanently delete this image from the event gallery?",
-                        confirmLabel: "Delete",
+                        title: t.adminGallery.deleteTitle,
+                        description: t.adminGallery.deleteDesc,
+                        confirmLabel: t.adminGallery.deleteConfirm,
                         onConfirm: () => handleDeleteImage(index),
                       })
                     }
@@ -234,9 +233,9 @@ export default function AdminGalleryContent() {
     <div>
       {dialog}
       <div className="mb-8">
-        <h1 className="text-3xl font-bold">Manage Gallery</h1>
+        <h1 className="text-3xl font-bold">{t.adminGallery.title}</h1>
         <p className="text-muted-foreground mt-2">
-          Select an event to manage its photos
+          {t.adminGallery.subtitle}
         </p>
       </div>
 
@@ -244,9 +243,9 @@ export default function AdminGalleryContent() {
         <Card>
           <CardContent className="flex flex-col items-center justify-center py-16">
             <ImageIcon className="h-12 w-12 text-muted-foreground mb-4" />
-            <p className="text-muted-foreground">No events with gallery photos yet</p>
+            <p className="text-muted-foreground">{t.adminGallery.noEventsTitle}</p>
             <p className="text-xs text-muted-foreground mt-1">
-              Upload photos from an event workspace to see them here
+              {t.adminGallery.noEventsDesc}
             </p>
           </CardContent>
         </Card>
@@ -282,7 +281,7 @@ export default function AdminGalleryContent() {
                   <h3 className="font-semibold truncate">{event.title}</h3>
                   <div className="flex items-center gap-1 text-sm text-muted-foreground mt-1">
                     <Calendar className="h-3.5 w-3.5" />
-                    {new Date(event.eventDate).toLocaleDateString("en-US", {
+                    {formatDate(event.eventDate, dateLocale, {
                       month: "short",
                       day: "numeric",
                       year: "numeric",

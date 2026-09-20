@@ -9,6 +9,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Input } from "@/components/ui/input";
 import { Pagination } from "@/components/ui/pagination";
 import { Search } from "lucide-react";
+import { useLanguage } from "@/context/LanguageContext";
 import type { Event } from "@/types";
 
 const ITEMS_PER_PAGE = 6;
@@ -18,7 +19,8 @@ interface EventsContentProps {
 }
 
 export default function EventsContent({ initialEvents = [] }: EventsContentProps) {
-  const [selectedCategory, setSelectedCategory] = useState("All Events");
+  const { t } = useLanguage();
+  const [selectedCategory, setSelectedCategory] = useState(t.events.allEvents);
   const [events, setEvents] = useState<Event[]>(initialEvents);
   const [loading, setLoading] = useState(initialEvents.length === 0);
   const [searchTerm, setSearchTerm] = useState("");
@@ -51,13 +53,13 @@ export default function EventsContent({ initialEvents = [] }: EventsContentProps
       );
     })
     .filter((e) => {
-      if (selectedCategory === "All Events") return true;
+      if (selectedCategory === t.events.allEvents) return true;
       const typeMap: Record<string, string[]> = {
-        "Food": ["FOOD_AND_DRINK"],
-        "Arts": ["WORKSHOP", "SOCIAL"],
-        "Games": ["TRIVIA"],
-        "Music": ["LIVE_MUSIC"],
-        "Performance": ["FORMAL", "CASUAL"],
+        [t.events.food]: ["FOOD_AND_DRINK"],
+        [t.events.arts]: ["WORKSHOP", "SOCIAL"],
+        [t.events.games]: ["TRIVIA"],
+        [t.events.music]: ["LIVE_MUSIC"],
+        [t.events.performance]: ["FORMAL", "CASUAL"],
       };
       const types = typeMap[selectedCategory] || [];
       return types.includes(e.eventType);
@@ -69,6 +71,12 @@ export default function EventsContent({ initialEvents = [] }: EventsContentProps
     currentPage * ITEMS_PER_PAGE
   );
 
+  // Reset page and selected category when locale changes
+  useEffect(() => {
+    setSelectedCategory(t.events.allEvents);
+    setCurrentPage(1);
+  }, [t.events.allEvents]);
+
   useEffect(() => {
     setCurrentPage(1);
   }, [searchTerm, selectedCategory]);
@@ -77,12 +85,12 @@ export default function EventsContent({ initialEvents = [] }: EventsContentProps
     <>
       <EventHeroBanner />
       <div className="container px-4 py-12">
-        <h1 className="text-3xl font-bold mb-6">Events</h1>
+        <h1 className="text-3xl font-bold mb-6">{t.events.title}</h1>
         <div className="relative mb-6">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <Input
             type="text"
-            placeholder="Search events by title, description, or location..."
+            placeholder={t.events.searchPlaceholder}
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             className="pl-10"
@@ -117,7 +125,7 @@ export default function EventsContent({ initialEvents = [] }: EventsContentProps
           </div>
         )}
         {!loading && filteredEvents.length === 0 && (
-          <p className="text-center text-muted-foreground py-12">No events found in this category.</p>
+          <p className="text-center text-muted-foreground py-12">{t.events.noEventsFound}</p>
         )}
       </div>
     </>

@@ -1,4 +1,7 @@
+"use client";
+
 import { Star } from "lucide-react";
+import { useLanguage } from "@/context/LanguageContext";
 
 interface ReviewCardProps {
   name: string;
@@ -10,6 +13,7 @@ interface ReviewCardProps {
 }
 
 export default function ReviewCard({ name, date, rating, title, comment, reply }: ReviewCardProps) {
+  const { t } = useLanguage();
   return (
     <div className="rounded-lg border p-5 space-y-3">
       <div className="flex items-center justify-between">
@@ -30,7 +34,7 @@ export default function ReviewCard({ name, date, rating, title, comment, reply }
       <p className="text-sm text-muted-foreground">{comment}</p>
       {reply && (
         <div className="mt-3 p-3 bg-muted rounded-lg">
-          <p className="text-xs font-medium text-muted-foreground mb-1">Reply:</p>
+          <p className="text-xs font-medium text-muted-foreground mb-1">{t.events.reply}</p>
           <p className="text-sm">{reply}</p>
         </div>
       )}

@@ -3,6 +3,7 @@
 import { useRef, useState } from "react";
 import { Camera, Calendar, User, BadgeCheck, Pencil, Loader2 } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
+import { useLanguage } from "@/context/LanguageContext";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { authService } from "@/services/auth.service";
@@ -14,11 +15,12 @@ interface ProfileHeaderProps {
 
 export default function ProfileHeader({ onEditProfile, eventsAttended = 0 }: ProfileHeaderProps) {
   const { user, isVerified, updateUser } = useAuth();
+  const { t, dateLocale } = useLanguage();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [uploading, setUploading] = useState(false);
 
   const memberSince = user?.createdAt
-    ? new Date(user.createdAt).toLocaleDateString("en-US", { month: "long", year: "numeric" })
+    ? new Date(user.createdAt).toLocaleDateString(dateLocale, { month: "long", year: "numeric" })
     : "";
 
   const handleProfilePicChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -26,7 +28,7 @@ export default function ProfileHeader({ onEditProfile, eventsAttended = 0 }: Pro
     if (!file) return;
 
     if (file.size > 5 * 1024 * 1024) {
-      toast.error("Image must be under 5MB");
+      toast.error(t.profile.imageTooLarge);
       return;
     }
 
@@ -39,16 +41,16 @@ export default function ProfileHeader({ onEditProfile, eventsAttended = 0 }: Pro
           if (response.code === 200 && response.data?.user) {
             updateUser(response.data.user);
           }
-          toast.success("Profile picture updated");
+          toast.success(t.profile.profilePictureUpdated);
         } catch {
-          toast.error("Failed to update profile picture");
+          toast.error(t.profile.failedUpdatePicture);
         } finally {
           setUploading(false);
         }
       };
       reader.readAsDataURL(file);
     } catch {
-      toast.error("Failed to read file");
+      toast.error(t.profile.failedReadFile);
       setUploading(false);
     }
   };
@@ -96,12 +98,12 @@ export default function ProfileHeader({ onEditProfile, eventsAttended = 0 }: Pro
           <div className="flex items-center gap-3 text-sm text-muted-foreground">
             <span className="flex items-center gap-1">
               <Calendar className="h-4 w-4" />
-              {eventsAttended} Events Attended
+              {eventsAttended} {t.profile.eventsAttended}
             </span>
             {memberSince && (
               <span className="flex items-center gap-1">
                 <User className="h-4 w-4" />
-                Member Since {memberSince}
+                {t.profile.memberSince} {memberSince}
               </span>
             )}
           </div>
@@ -110,7 +112,7 @@ export default function ProfileHeader({ onEditProfile, eventsAttended = 0 }: Pro
 
       <Button variant="outline" size="sm" onClick={onEditProfile} className="gap-2">
         <Pencil className="h-4 w-4" />
-        Edit Profile
+        {t.profile.editProfile}
       </Button>
     </div>
   );

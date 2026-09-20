@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef } from "react";
+import { useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -11,6 +11,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
 import { Loader2, ImagePlus } from "lucide-react";
+import { useLanguage } from "@/context/LanguageContext";
 import { toast } from "sonner";
 
 const createEventSchema = z.object({
@@ -32,6 +33,7 @@ export default function CreateEventContent() {
   const [coverPreview, setCoverPreview] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const router = useRouter();
+  const { t } = useLanguage();
 
   const {
     register,
@@ -50,7 +52,7 @@ export default function CreateEventContent() {
     const file = e.target.files?.[0];
     if (!file) return;
     if (file.size > 5 * 1024 * 1024) {
-      toast.error("Image must be less than 5MB");
+      toast.error(t.adminEventsForm.coverHint);
       return;
     }
     setCoverImage(file);
@@ -75,7 +77,7 @@ export default function CreateEventContent() {
             gallery = [uploadRes.data.url];
           }
         } catch (uploadErr: any) {
-          toast.error(uploadErr.response?.data?.message || "Failed to upload image");
+          toast.error(uploadErr.response?.data?.message || t.adminEventsForm.createError);
           return;
         }
       }
@@ -86,11 +88,11 @@ export default function CreateEventContent() {
         deadline: new Date(data.deadline).toISOString(),
       });
       if (response.code === 201) {
-        toast.success("Event created successfully");
+        toast.success(t.adminEventsForm.createSuccess);
         router.push("/admin/events");
       }
     } catch (err: any) {
-      toast.error(err.response?.data?.message || "Failed to create event");
+      toast.error(err.response?.data?.message || t.adminEventsForm.createError);
     } finally {
       setIsLoading(false);
     }
@@ -99,16 +101,16 @@ export default function CreateEventContent() {
   return (
     <div className="max-w-2xl">
       <div className="mb-8">
-        <h1 className="text-3xl font-bold">Create Event</h1>
-        <p className="text-muted-foreground mt-2">Add a new event</p>
+        <h1 className="text-3xl font-bold">{t.adminEventsForm.createTitle}</h1>
+        <p className="text-muted-foreground mt-2">{t.adminEventsForm.createSubtitle}</p>
       </div>
 
       <Card>
         <CardContent className="p-6">
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
             <div className="space-y-2">
-              <label className="text-sm font-medium">Cover Image</label>
-              <div 
+              <label className="text-sm font-medium">{t.adminEventsForm.coverImage}</label>
+              <div
                 className="border-2 border-dashed rounded-lg p-8 text-center cursor-pointer hover:border-[#1a5c2a] transition-colors"
                 onClick={() => fileInputRef.current?.click()}
               >
@@ -117,15 +119,15 @@ export default function CreateEventContent() {
                 ) : (
                   <>
                     <ImagePlus className="h-10 w-10 mx-auto text-muted-foreground mb-2" />
-                    <p className="text-sm text-muted-foreground">Click to upload cover image</p>
-                    <p className="text-xs text-muted-foreground mt-1">JPG, PNG up to 5MB</p>
+                    <p className="text-sm text-muted-foreground">{t.adminEventsForm.coverClick}</p>
+                    <p className="text-xs text-muted-foreground mt-1">{t.adminEventsForm.coverHint}</p>
                   </>
                 )}
               </div>
-              <input 
+              <input
                 ref={fileInputRef}
-                type="file" 
-                accept="image/*" 
+                type="file"
+                accept="image/*"
                 className="hidden"
                 onChange={handleImageSelect}
               />
@@ -133,7 +135,7 @@ export default function CreateEventContent() {
 
             <div className="space-y-2">
               <label htmlFor="title" className="text-sm font-medium">
-                Title
+                {t.adminEventsForm.labelTitle}
               </label>
               <Input id="title" {...register("title")} />
               {errors.title && (
@@ -143,7 +145,7 @@ export default function CreateEventContent() {
 
             <div className="space-y-2">
               <label htmlFor="description" className="text-sm font-medium">
-                Description
+                {t.adminEventsForm.labelDescription}
               </label>
               <textarea
                 id="description"
@@ -157,21 +159,21 @@ export default function CreateEventContent() {
 
             <div className="space-y-2">
               <label htmlFor="eventType" className="text-sm font-medium">
-                Event Type
+                {t.adminEventsForm.labelEventType}
               </label>
               <select
                 id="eventType"
                 className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
                 {...register("eventType")}
               >
-                <option value="FORMAL">Formal</option>
-                <option value="CASUAL">Casual</option>
-                <option value="SOCIAL">Social</option>
-                <option value="WORKSHOP">Workshop</option>
-                <option value="LIVE_MUSIC">Live Music</option>
-                <option value="FOOD_AND_DRINK">Food & Drink</option>
-                <option value="TRIVIA">Trivia</option>
-                <option value="PRIVATE">Private</option>
+                <option value="FORMAL">{t.adminEventsForm.typeFormal}</option>
+                <option value="CASUAL">{t.adminEventsForm.typeCasual}</option>
+                <option value="SOCIAL">{t.adminEventsForm.typeSocial}</option>
+                <option value="WORKSHOP">{t.adminEventsForm.typeWorkshop}</option>
+                <option value="LIVE_MUSIC">{t.adminEventsForm.typeLiveMusic}</option>
+                <option value="FOOD_AND_DRINK">{t.adminEventsForm.typeFoodDrink}</option>
+                <option value="TRIVIA">{t.adminEventsForm.typeTrivia}</option>
+                <option value="PRIVATE">{t.adminEventsForm.typePrivate}</option>
               </select>
               {errors.eventType && (
                 <p className="text-sm text-red-500">{errors.eventType.message}</p>
@@ -180,7 +182,7 @@ export default function CreateEventContent() {
 
             <div className="space-y-2">
               <label htmlFor="location" className="text-sm font-medium">
-                Location
+                {t.adminEventsForm.labelLocation}
               </label>
               <Input id="location" {...register("location")} />
               {errors.location && (
@@ -191,7 +193,7 @@ export default function CreateEventContent() {
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
                 <label htmlFor="eventDate" className="text-sm font-medium">
-                  Event Date
+                  {t.adminEventsForm.labelEventDate}
                 </label>
                 <Input id="eventDate" type="datetime-local" {...register("eventDate")} />
                 {errors.eventDate && (
@@ -201,7 +203,7 @@ export default function CreateEventContent() {
 
               <div className="space-y-2">
                 <label htmlFor="deadline" className="text-sm font-medium">
-                  Registration Deadline
+                  {t.adminEventsForm.labelDeadline}
                 </label>
                 <Input id="deadline" type="datetime-local" {...register("deadline")} />
                 {errors.deadline && (
@@ -213,7 +215,7 @@ export default function CreateEventContent() {
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
                 <label htmlFor="minParticipants" className="text-sm font-medium">
-                  Min Participants
+                  {t.adminEventsForm.labelMinParticipants}
                 </label>
                 <Input
                   id="minParticipants"
@@ -227,7 +229,7 @@ export default function CreateEventContent() {
 
               <div className="space-y-2">
                 <label htmlFor="maxParticipants" className="text-sm font-medium">
-                  Max Participants
+                  {t.adminEventsForm.labelMaxParticipants}
                 </label>
                 <Input
                   id="maxParticipants"
@@ -245,14 +247,14 @@ export default function CreateEventContent() {
                 {isLoading ? (
                   <>
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Creating...
+                    {t.adminEventsForm.creating}
                   </>
                 ) : (
-                  "Create Event"
+                  t.adminEventsForm.btnCreate
                 )}
               </Button>
               <Button type="button" variant="outline" onClick={() => router.back()}>
-                Cancel
+                {t.adminEventsForm.btnCancel}
               </Button>
             </div>
           </form>

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 import { getErrorMessage } from "@/lib/server-error";
 import { Card, CardContent } from "@/components/ui/card";
@@ -9,17 +9,11 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Star, Search, MessageSquare, Inbox, Loader2 } from "lucide-react";
 import { adminService } from "@/services/admin.service";
+import { useLanguage } from "@/context/LanguageContext";
+import { formatDate } from "@/lib/format-date";
 import type { AdminReview, ReviewStats } from "@/types";
 
 const STATUS_FILTERS = ["ALL", "PENDING", "APPROVED", "REJECTED"];
-
-function formatDate(date: string) {
-  return new Date(date).toLocaleDateString("en-US", {
-    month: "short",
-    day: "numeric",
-    year: "numeric",
-  });
-}
 
 function StarRating({ rating }: { rating: number }) {
   return (
@@ -68,13 +62,13 @@ function LoadingSkeleton() {
   );
 }
 
-function EmptyState() {
+function EmptyState({ t }: { t: any }) {
   return (
     <div className="flex flex-col items-center justify-center py-16">
       <Inbox className="h-12 w-12 text-muted-foreground mb-4" />
-      <h3 className="text-lg font-medium mb-1">No reviews found</h3>
+      <h3 className="text-lg font-medium mb-1">{t.adminReviews.emptyTitle}</h3>
       <p className="text-sm text-muted-foreground">
-        There are no reviews matching your criteria.
+        {t.adminReviews.emptyDesc}
       </p>
     </div>
   );
@@ -91,6 +85,7 @@ export default function ReviewsContent() {
   const [replyText, setReplyText] = useState("");
   const [actionLoading, setActionLoading] = useState<string | null>(null);
   const searchTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const { t, dateLocale } = useLanguage();
 
   const fetchData = async (status?: string, searchTerm?: string, isInitial = false) => {
     try {
@@ -175,9 +170,9 @@ export default function ReviewsContent() {
     <div>
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h1 className="text-2xl font-bold">Reviews</h1>
+          <h1 className="text-2xl font-bold">{t.adminReviews.title}</h1>
           <p className="text-sm text-muted-foreground">
-            Manage guest reviews and feedback
+            {t.adminReviews.subtitle}
           </p>
         </div>
       </div>
@@ -203,29 +198,29 @@ export default function ReviewsContent() {
                 ))}
               </div>
               <p className="text-xs text-muted-foreground mt-1">
-                Average Rating
+                {t.adminReviews.statsAvgRating}
               </p>
             </CardContent>
           </Card>
           <Card>
             <CardContent className="p-4 text-center">
-              <p className="text-2xl font-bold">{stats.total}</p>
-              <p className="text-xs text-muted-foreground">Total Reviews</p>
+              <p className="text-2xl font-bold">{stats.total.toLocaleString(dateLocale)}</p>
+              <p className="text-xs text-muted-foreground">{t.adminReviews.statsTotal}</p>
             </CardContent>
           </Card>
           <Card>
             <CardContent className="p-4 text-center">
               <p className="text-2xl font-bold text-[#1a5c2a]">
-                {stats.pending}
+                {stats.pending.toLocaleString(dateLocale)}
               </p>
-              <p className="text-xs text-muted-foreground">Pending Approval</p>
+              <p className="text-xs text-muted-foreground">{t.adminReviews.statsPending}</p>
             </CardContent>
           </Card>
           <Card>
             <CardContent className="p-4 text-center">
               <p className="text-2xl font-bold">{positivePercentage}%</p>
               <p className="text-xs text-muted-foreground">
-                Positive Reviews
+                {t.adminReviews.statsPositive}
               </p>
             </CardContent>
           </Card>
@@ -237,7 +232,7 @@ export default function ReviewsContent() {
         <div className="flex items-center gap-2 border rounded-lg px-3 py-2 flex-1 max-w-sm">
           <Search className="h-4 w-4 text-muted-foreground" />
           <Input
-            placeholder="Search reviews..."
+            placeholder={t.adminReviews.searchPlaceholder}
             value={search}
             onChange={(e) => handleSearch(e.target.value)}
             className="border-0 bg-transparent outline-none w-full"
@@ -265,7 +260,7 @@ export default function ReviewsContent() {
       {reviews.length === 0 ? (
         <Card>
           <CardContent className="p-0">
-            <EmptyState />
+            <EmptyState t={t} />
           </CardContent>
         </Card>
       ) : (
@@ -295,7 +290,7 @@ export default function ReviewsContent() {
                       </Badge>
                     </div>
                     <p className="text-xs text-muted-foreground">
-                      {review.event.title} · {formatDate(review.createdAt)}
+                      {review.event.title} · {formatDate(review.createdAt, dateLocale)}
                     </p>
                   </div>
                   <StarRating rating={review.rating} />
@@ -309,7 +304,7 @@ export default function ReviewsContent() {
                 {review.reply && (
                   <div className="mt-3 p-3 bg-muted rounded-lg">
                     <p className="text-xs font-medium text-muted-foreground mb-1">
-                      Reply:
+                      {t.adminReviews.replyLabel}
                     </p>
                     <p className="text-sm">{review.reply}</p>
                   </div>
@@ -326,7 +321,7 @@ export default function ReviewsContent() {
                         }
                         disabled={actionLoading === review.id}
                       >
-                        Approve
+                        {t.adminReviews.approve}
                       </Button>
                       <Button
                         variant="outline"
@@ -337,7 +332,7 @@ export default function ReviewsContent() {
                         }
                         disabled={actionLoading === review.id}
                       >
-                        Reject
+                        {t.adminReviews.reject}
                       </Button>
                     </>
                   )}
@@ -352,13 +347,13 @@ export default function ReviewsContent() {
                     }}
                   >
                     <MessageSquare className="h-4 w-4 mr-1" />
-                    {review.reply ? "Edit Reply" : "Reply"}
+                    {review.reply ? t.adminReviews.editReply : t.adminReviews.reply}
                   </Button>
                 </div>
                 {replyingId === review.id && (
                   <div className="mt-4 flex gap-2">
                     <Input
-                      placeholder="Write your reply..."
+                      placeholder={t.adminReviews.writeReply}
                       value={replyText}
                       onChange={(e) => setReplyText(e.target.value)}
                       className="flex-1"
@@ -371,7 +366,7 @@ export default function ReviewsContent() {
                         actionLoading === review.id || !replyText.trim()
                       }
                     >
-                      {actionLoading === review.id ? "Sending..." : "Send"}
+                      {actionLoading === review.id ? t.adminReviews.sending : t.adminReviews.send}
                     </Button>
                     <Button
                       variant="outline"
@@ -381,7 +376,7 @@ export default function ReviewsContent() {
                         setReplyText("");
                       }}
                     >
-                      Cancel
+                      {t.adminReviews.cancel}
                     </Button>
                   </div>
                 )}

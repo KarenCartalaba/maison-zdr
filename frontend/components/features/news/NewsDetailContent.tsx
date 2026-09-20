@@ -7,6 +7,8 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ArrowLeft, Calendar, User, Newspaper } from "lucide-react";
+import { useLanguage } from "@/context/LanguageContext";
+import { formatDate } from "@/lib/format-date";
 import type { News } from "@/types";
 
 interface NewsDetailContentProps {
@@ -14,6 +16,7 @@ interface NewsDetailContentProps {
 }
 
 export default function NewsDetailContent({ initialNews }: NewsDetailContentProps) {
+  const { t, dateLocale } = useLanguage();
   const [news, setNews] = useState<News | null>(initialNews);
   const [loading, setLoading] = useState(!initialNews);
 
@@ -40,14 +43,14 @@ export default function NewsDetailContent({ initialNews }: NewsDetailContentProp
     return (
       <div className="container px-4 py-12 max-w-4xl mx-auto text-center">
         <Newspaper className="h-16 w-16 mx-auto mb-4 text-muted-foreground" />
-        <h1 className="text-3xl font-bold mb-4">News Not Found</h1>
+        <h1 className="text-3xl font-bold mb-4">{t.news.newsNotFound}</h1>
         <p className="text-muted-foreground mb-6">
-          The news article you&apos;re looking for doesn&apos;t exist or has been removed.
+          {t.news.newsNotFoundDesc}
         </p>
         <Link href="/news">
           <Button className="bg-[#1a5c2a] hover:bg-[#144a22]">
             <ArrowLeft className="h-4 w-4 mr-2" />
-            Back to News
+            {t.news.backToNews}
           </Button>
         </Link>
       </div>
@@ -62,18 +65,18 @@ export default function NewsDetailContent({ initialNews }: NewsDetailContentProp
         className="inline-flex items-center text-sm text-muted-foreground hover:text-foreground mb-6"
       >
         <ArrowLeft className="h-4 w-4 mr-2" />
-        Back to News
+        {t.news.backToNews}
       </Link>
 
       {/* Header */}
       <div className="mb-8">
-        <Badge className="mb-4 bg-[#1a5c2a] hover:bg-[#144a22]">News</Badge>
+        <Badge className="mb-4 bg-[#1a5c2a] hover:bg-[#144a22]">{t.news.badge}</Badge>
         <h1 className="text-4xl font-bold mb-4">{news.title}</h1>
         <div className="flex items-center gap-6 text-sm text-muted-foreground">
           <div className="flex items-center gap-2">
             <Calendar className="h-4 w-4" />
             <span>
-              {new Date(news.createdAt).toLocaleDateString("en-US", {
+              {formatDate(news.createdAt, dateLocale, {
                 year: "numeric",
                 month: "long",
                 day: "numeric",

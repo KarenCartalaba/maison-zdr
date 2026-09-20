@@ -6,10 +6,12 @@ import Link from "next/link";
 import { authService } from "@/services/auth.service";
 import { Button } from "@/components/ui/button";
 import { CheckCircle, XCircle, Loader2 } from "lucide-react";
+import { useLanguage } from "@/context/LanguageContext";
 
 export default function VerifyEmailContent() {
   const searchParams = useSearchParams();
   const token = searchParams.get("token");
+  const { t } = useLanguage();
   const [status, setStatus] = useState<"loading" | "success" | "error">("loading");
   const [message, setMessage] = useState("");
 
@@ -17,7 +19,7 @@ export default function VerifyEmailContent() {
     const verifyEmail = async () => {
       if (!token) {
         setStatus("error");
-        setMessage("No verification token provided");
+        setMessage(t.auth.noVerificationToken);
         return;
       }
 
@@ -45,25 +47,25 @@ export default function VerifyEmailContent() {
         {status === "loading" && (
           <>
             <Loader2 className="mx-auto h-12 w-12 animate-spin text-muted-foreground" />
-            <h2 className="text-xl font-bold">Verifying Email...</h2>
+            <h2 className="text-xl font-bold">{t.auth.verifyingEmail}</h2>
             <p className="text-sm text-muted-foreground">
-              Please wait while we verify your email
+              {t.auth.pleaseWaitVerify}
             </p>
           </>
         )}
         {status === "success" && (
           <>
             <CheckCircle className="mx-auto h-12 w-12 text-green-500" />
-            <h2 className="text-xl font-bold">Email Verified!</h2>
+            <h2 className="text-xl font-bold">{t.auth.emailVerified}</h2>
             <p className="text-sm text-muted-foreground">
-              Your email has been successfully verified
+              {t.auth.emailVerifiedDesc}
             </p>
           </>
         )}
         {status === "error" && (
           <>
             <XCircle className="mx-auto h-12 w-12 text-red-500" />
-            <h2 className="text-xl font-bold">Verification Failed</h2>
+            <h2 className="text-xl font-bold">{t.auth.verificationFailed}</h2>
             <p className="text-sm text-muted-foreground">{message}</p>
           </>
         )}
@@ -71,7 +73,7 @@ export default function VerifyEmailContent() {
 
       <div className="mt-6 text-center">
         <Link href="/login">
-          <Button className="w-full bg-[#1a5c2a] hover:bg-[#144a22]">Go to Login</Button>
+          <Button className="w-full bg-[#1a5c2a] hover:bg-[#144a22]">{t.auth.goToLogin}</Button>
         </Link>
       </div>
     </>

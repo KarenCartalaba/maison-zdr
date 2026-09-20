@@ -8,6 +8,8 @@ import GalleryGrid from "@/components/features/events/GalleryGrid";
 import ReviewSection from "@/components/features/events/ReviewSection";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
+import { useLanguage } from "@/context/LanguageContext";
+import { formatDate } from "@/lib/format-date";
 
 interface EventDetailContentProps {
   eventId: string;
@@ -18,6 +20,7 @@ export default function EventDetailContent({ eventId, initialEvent }: EventDetai
   const [event, setEvent] = useState<any>(initialEvent || null);
   const [loading, setLoading] = useState(!initialEvent);
   const [error, setError] = useState(false);
+  const { t, dateLocale } = useLanguage();
 
   // Always reflect the latest server data (e.g. null after a delete → "Event not found")
   useEffect(() => {
@@ -63,8 +66,8 @@ export default function EventDetailContent({ eventId, initialEvent }: EventDetai
   if (error || !event) {
     return (
       <div className="container px-4 py-24 text-center">
-        <h1 className="text-2xl font-bold mb-2">Event not found</h1>
-        <p className="text-muted-foreground">The event you&apos;re looking for doesn&apos;t exist or has been removed.</p>
+        <h1 className="text-2xl font-bold mb-2">{t.events.eventNotFound}</h1>
+        <p className="text-muted-foreground">{t.events.eventNotFoundDesc}</p>
       </div>
     );
   }
@@ -89,9 +92,9 @@ export default function EventDetailContent({ eventId, initialEvent }: EventDetai
                 {event.eventType?.replace(/_/g, " ").toLowerCase().replace(/\b\w/g, (c: string) => c.toUpperCase())}
               </Badge>
               <div className="flex items-center gap-2 rounded-full border px-4 py-2 text-sm">
-                <span className="text-muted-foreground">Date</span>
+                <span className="text-muted-foreground">{t.events.date}</span>
                 <span className="font-medium">
-                  {new Date(event.eventDate).toLocaleDateString("en-US", {
+                  {formatDate(event.eventDate, dateLocale, {
                     month: "long",
                     day: "numeric",
                     year: "numeric",
@@ -99,29 +102,29 @@ export default function EventDetailContent({ eventId, initialEvent }: EventDetai
                 </span>
               </div>
               <div className="flex items-center gap-2 rounded-full border px-4 py-2 text-sm">
-                <span className="text-muted-foreground">Time</span>
+                <span className="text-muted-foreground">{t.events.time}</span>
                 <span className="font-medium">
-                  {new Date(event.eventDate).toLocaleTimeString("en-US", {
+                  {new Date(event.eventDate).toLocaleTimeString(dateLocale, {
                     hour: "numeric",
                     minute: "2-digit",
-                    hour12: true,
+                    hour12: dateLocale === "en-US",
                   })}{" "}–{" "}
-                  {new Date(new Date(event.eventDate).getTime() + 3 * 60 * 60 * 1000).toLocaleTimeString("en-US", {
+                  {new Date(new Date(event.eventDate).getTime() + 3 * 60 * 60 * 1000).toLocaleTimeString(dateLocale, {
                     hour: "numeric",
                     minute: "2-digit",
-                    hour12: true,
+                    hour12: dateLocale === "en-US",
                   })}
                 </span>
               </div>
               <div className="flex items-center gap-2 rounded-full border px-4 py-2 text-sm">
-                <span className="text-muted-foreground">Venue</span>
+                <span className="text-muted-foreground">{t.events.venue}</span>
                 <span className="font-medium">{event.location}</span>
               </div>
             </div>
 
             {/* About */}
             <div>
-              <h2 className="text-2xl font-bold mb-4">About this Event</h2>
+              <h2 className="text-2xl font-bold mb-4">{t.events.aboutThisEvent}</h2>
               <p className="text-muted-foreground leading-relaxed">
                 {event.description}
               </p>
@@ -136,11 +139,11 @@ export default function EventDetailContent({ eventId, initialEvent }: EventDetai
                   </span>
                 </div>
                 <div>
-                  <p className="text-xs text-muted-foreground">Organizer</p>
+                  <p className="text-xs text-muted-foreground">{t.events.organizer}</p>
                   <p className="font-medium">{event.author?.name || "Maison ZDR"}</p>
                 </div>
               </div>
-              <span className="text-sm text-muted-foreground">Official Event Organizer</span>
+              <span className="text-sm text-muted-foreground">{t.events.officialOrganizer}</span>
             </div>
 
             {/* Gallery — pass event gallery images */}

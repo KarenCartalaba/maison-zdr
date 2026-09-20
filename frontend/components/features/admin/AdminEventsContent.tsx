@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 import { getErrorMessage } from "@/lib/server-error";
 import { useConfirm } from "@/components/ui/confirm-dialog";
@@ -13,6 +13,8 @@ import { Plus, Pencil, Trash2, Loader2, LayoutGrid, List } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { DataTable, type DataTableColumn } from "@/components/ui/data-table";
 import { DataTableColumnHeader } from "@/components/ui/data-table-column-header";
+import { useLanguage } from "@/context/LanguageContext";
+import { formatDate } from "@/lib/format-date";
 import type { Event } from "@/types";
 
 interface AdminEventsContentProps {
@@ -25,6 +27,7 @@ export default function AdminEventsContent({ initialEvents = [] }: AdminEventsCo
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
   const { confirm, dialog } = useConfirm();
   const [activeTab, setActiveTab] = useState<"all" | "ongoing" | "upcoming" | "past" | "cancelled">("all");
+  const { t, dateLocale } = useLanguage();
 
   const now = new Date();
 
@@ -46,16 +49,16 @@ export default function AdminEventsContent({ initialEvents = [] }: AdminEventsCo
     }
   });
 
-  const eventTypeLabels: Record<string, string> = {
-    FORMAL: "Formal",
-    CASUAL: "Casual",
-    SOCIAL: "Social",
-    WORKSHOP: "Workshop",
-    LIVE_MUSIC: "Live Music",
-    FOOD_AND_DRINK: "Food & Drink",
-    TRIVIA: "Trivia",
-    PRIVATE: "Private",
-  };
+  const eventTypeLabels: Record<string, string> = useMemo(() => ({
+    FORMAL: t.adminEvents.typeFormal,
+    CASUAL: t.adminEvents.typeCasual,
+    SOCIAL: t.adminEvents.typeSocial,
+    WORKSHOP: t.adminEvents.typeWorkshop,
+    LIVE_MUSIC: t.adminEvents.typeLiveMusic,
+    FOOD_AND_DRINK: t.adminEvents.typeFoodDrink,
+    TRIVIA: t.adminEvents.typeTrivia,
+    PRIVATE: t.adminEvents.typePrivate,
+  }), [t]);
 
   useEffect(() => {
     const fetchEvents = async () => {
@@ -80,18 +83,18 @@ export default function AdminEventsContent({ initialEvents = [] }: AdminEventsCo
       if (response.code === 200) {
         const newEvents = events.filter((e) => e.id !== id);
         setEvents(newEvents);
-        toast.success("Event deleted");
+        toast.success(t.adminEvents.deleteSuccess);
       }
     } catch (err) {
-      toast.error(getErrorMessage(err, "Failed to delete event"));
+      toast.error(getErrorMessage(err, t.adminEvents.deleteError));
     }
   };
 
   // TanStack Table columns for list view
-  const eventColumns: DataTableColumn[] = [
+  const eventColumns: DataTableColumn[] = useMemo(() => [
     {
       id: "cover",
-      header: "Cover",
+      header: t.adminEvents.colCover,
       cell: ({ row }) => (
         <div className="h-10 w-14 rounded overflow-hidden bg-muted">
           {row.original.gallery?.[0] ? (
@@ -106,55 +109,55 @@ export default function AdminEventsContent({ initialEvents = [] }: AdminEventsCo
     },
     {
       accessorKey: "title",
-      header: ({ column }) => <DataTableColumnHeader column={column} title="TITLE" />,
+      header: ({ column }) => <DataTableColumnHeader column={column} title={t.adminEvents.colTitle} />,
       cell: ({ row }) => (
         <span className="font-medium">{row.original.title}</span>
       ),
     },
     {
       id: "date",
-      header: "DATE",
+      header: t.adminEvents.colDate,
       cell: ({ row }) => (
         <span className="text-muted-foreground">
-          {new Date(row.original.eventDate).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}
+          {formatDate(row.original.eventDate, dateLocale, { month: "short", day: "numeric", year: "numeric" })}
         </span>
       ),
     },
     {
       id: "time",
-      header: "TIME",
+      header: t.adminEvents.colTime,
       cell: ({ row }) => (
         <span className="text-muted-foreground">
-          {new Date(row.original.eventDate).toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit" })}
+          {new Date(row.original.eventDate).toLocaleTimeString(dateLocale, { hour: "2-digit", minute: "2-digit" })}
         </span>
       ),
     },
     {
       id: "venue",
-      header: "VENUE",
+      header: t.adminEvents.colVenue,
       cell: ({ row }) => (
         <span className="text-muted-foreground">{row.original.location}</span>
       ),
     },
     {
       id: "type",
-      header: "TYPE",
+      header: t.adminEvents.colType,
       cell: ({ row }) => (
-        <Badge variant="secondary" className="bg-[#e8f5e9] text-[#1a5c2a]">Public · {eventTypeLabels[row.original.eventType] || "Social"}</Badge>
+        <Badge variant="secondary" className="bg-[#e8f5e9] text-[#1a5c2a]">{t.adminEvents.publicBadge} · {eventTypeLabels[row.original.eventType] || t.adminEvents.typeSocial}</Badge>
       ),
     },
     {
       id: "status",
-      header: "STATUS",
+      header: t.adminEvents.colStatus,
       cell: ({ row }) => (
         <Badge variant={row.original.isCancelled ? "destructive" : "outline"} className={!row.original.isCancelled ? "text-[#1a5c2a] border-[#1a5c2a]" : ""}>
-          {row.original.isCancelled ? "Cancelled" : "Active"}
+          {row.original.isCancelled ? t.adminEvents.cancelled : t.adminEvents.active}
         </Badge>
       ),
     },
     {
       id: "actions",
-      header: "ACTIONS",
+      header: t.adminEvents.colActions,
       cell: ({ row }) => (
         <div className="flex items-center justify-end gap-1">
           <Link href={`/admin/events/${row.original.id}`}>
@@ -171,9 +174,9 @@ export default function AdminEventsContent({ initialEvents = [] }: AdminEventsCo
             className="h-8 w-8"
             onClick={() =>
               confirm({
-                title: "Delete event",
-                description: `Permanently delete "${row.original.title}"? This also removes all its registrations.`,
-                confirmLabel: "Delete",
+                title: t.adminEvents.deleteTitle,
+                description: t.adminEvents.deleteDesc.replace("{title}", row.original.title),
+                confirmLabel: t.adminEvents.deleteConfirm,
                 onConfirm: () => handleDelete(row.original.id),
               })
             }
@@ -183,15 +186,15 @@ export default function AdminEventsContent({ initialEvents = [] }: AdminEventsCo
         </div>
       ),
     },
-  ];
+  ], [t, dateLocale, eventTypeLabels, confirm]);
 
-  const tabs = [
-    { id: "all" as const, label: "ALL EVENTS" },
-    { id: "ongoing" as const, label: "ONGOING" },
-    { id: "upcoming" as const, label: "UPCOMING" },
-    { id: "past" as const, label: "PAST" },
-    { id: "cancelled" as const, label: "CANCELLED" },
-  ];
+  const tabs = useMemo(() => [
+    { id: "all" as const, label: t.adminEvents.tabAll },
+    { id: "ongoing" as const, label: t.adminEvents.tabOngoing },
+    { id: "upcoming" as const, label: t.adminEvents.tabUpcoming },
+    { id: "past" as const, label: t.adminEvents.tabPast },
+    { id: "cancelled" as const, label: t.adminEvents.tabCancelled },
+  ], [t]);
 
   if (isLoading) {
     return (
@@ -207,8 +210,8 @@ export default function AdminEventsContent({ initialEvents = [] }: AdminEventsCo
       {/* Header */}
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h1 className="text-2xl font-bold">Events Overview</h1>
-          <p className="text-sm text-muted-foreground">Full event calendar and attendance</p>
+          <h1 className="text-2xl font-bold">{t.adminEvents.title}</h1>
+          <p className="text-sm text-muted-foreground">{t.adminEvents.subtitle}</p>
         </div>
         <div className="flex items-center gap-3">
           {/* View Toggle */}
@@ -235,7 +238,7 @@ export default function AdminEventsContent({ initialEvents = [] }: AdminEventsCo
           <Link href="/admin/events/create">
             <Button className="bg-[#1a5c2a] hover:bg-[#144a22]">
               <Plus className="h-4 w-4 mr-2" />
-              CREATE NEW EVENT
+              {t.adminEvents.createNew}
             </Button>
           </Link>
         </div>
@@ -264,7 +267,7 @@ export default function AdminEventsContent({ initialEvents = [] }: AdminEventsCo
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {filteredEvents.length === 0 ? (
             <div className="col-span-full text-center py-12 text-muted-foreground">
-              No events found. Create your first event!
+              {t.adminEvents.noEvents}
             </div>
           ) : (
             filteredEvents.map((event) => (
@@ -285,22 +288,22 @@ export default function AdminEventsContent({ initialEvents = [] }: AdminEventsCo
                 <CardContent className="p-4">
                   <div className="flex items-center justify-between mb-2">
                     <Badge variant="secondary" className="bg-[#e8f5e9] text-[#1a5c2a]">
-                      Public · {eventTypeLabels[event.eventType] || "Social"}
+                      {t.adminEvents.publicBadge} · {eventTypeLabels[event.eventType] || t.adminEvents.typeSocial}
                     </Badge>
                   </div>
                   <h3 className="font-semibold text-lg mb-1">{event.title}</h3>
                   <p className="text-sm text-muted-foreground mb-3">
-                    {new Date(event.eventDate).toLocaleDateString("en-US", { month: "short", day: "numeric" })} · {event.location || "Bar & Lounge"}
+                    {formatDate(event.eventDate, dateLocale, { month: "short", day: "numeric" })} · {event.location || "Bar & Lounge"}
                   </p>
                   <div className="flex items-center justify-between text-sm text-muted-foreground mb-4">
-                    <span>{event._count?.registrations || 0} / {event.maxParticipants} registrations</span>
+                    <span>{event._count?.registrations || 0} / {event.maxParticipants} {t.adminEvents.registrations}</span>
                     <span className={event.isCancelled ? "text-red-500" : "text-[#1a5c2a]"}>
-                      {event.isCancelled ? "Cancelled" : "Active"}
+                      {event.isCancelled ? t.adminEvents.cancelled : t.adminEvents.active}
                     </span>
                   </div>
                   <div className="flex items-center gap-2">
                     <Link href={`/admin/events/${event.id}`} className="flex-1">
-                      <Button variant="outline" className="w-full">Details</Button>
+                      <Button variant="outline" className="w-full">{t.adminEvents.details}</Button>
                     </Link>
                     <Link href={`/admin/events/${event.id}/edit`}>
                       <Button variant="outline" size="icon">
@@ -312,9 +315,9 @@ export default function AdminEventsContent({ initialEvents = [] }: AdminEventsCo
                       size="icon"
                       onClick={() =>
                         confirm({
-                          title: "Delete event",
-                          description: `Permanently delete "${event.title}"? This also removes all its registrations.`,
-                          confirmLabel: "Delete",
+                          title: t.adminEvents.deleteTitle,
+                          description: t.adminEvents.deleteDesc.replace("{title}", event.title),
+                          confirmLabel: t.adminEvents.deleteConfirm,
                           onConfirm: () => handleDelete(event.id),
                         })
                       }
@@ -333,7 +336,7 @@ export default function AdminEventsContent({ initialEvents = [] }: AdminEventsCo
           <CardContent className="p-0">
             {filteredEvents.length === 0 ? (
               <div className="px-6 py-12 text-center text-muted-foreground">
-                No events found. Create your first event!
+                {t.adminEvents.noEvents}
               </div>
             ) : (
             <DataTable

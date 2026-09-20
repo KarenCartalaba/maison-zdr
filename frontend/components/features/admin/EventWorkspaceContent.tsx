@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState, useCallback } from "react";
+import { useEffect, useMemo, useRef, useState, useCallback } from "react";
 import { useConfirm } from "@/components/ui/confirm-dialog";
 import { useParams, useRouter } from "next/navigation";
 import { Controller, useForm } from "react-hook-form";
@@ -23,6 +23,8 @@ import { cn } from "@/lib/utils";
 import { eventService } from "@/services/event.service";
 import { adminService } from "@/services/admin.service";
 import { galleryService } from "@/services/gallery.service";
+import { useLanguage } from "@/context/LanguageContext";
+import { formatDate } from "@/lib/format-date";
 import type { Event, AdminRegistration, AdminReview } from "@/types";
 import { toast } from "sonner";
 import { getErrorMessage } from "@/lib/server-error";
@@ -33,6 +35,7 @@ export default function EventWorkspaceContent() {
   const params = useParams();
   const router = useRouter();
   const eventId = params.id as string;
+  const { t, dateLocale } = useLanguage();
 
   const [event, setEvent] = useState<Event | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -66,20 +69,20 @@ export default function EventWorkspaceContent() {
   if (!event) {
     return (
       <div className="text-center py-12">
-        <p className="text-muted-foreground">Event not found</p>
+        <p className="text-muted-foreground">{t.adminWorkspace.notFound}</p>
         <Link href="/admin/events">
-          <Button variant="link" className="mt-4">Back to Events</Button>
+          <Button variant="link" className="mt-4">{t.adminWorkspace.backToEvents}</Button>
         </Link>
       </div>
     );
   }
 
   const tabs: { id: Tab; label: string }[] = [
-    { id: "overview", label: "Overview" },
-    { id: "participants", label: "Participants" },
-    { id: "reviews", label: "Reviews" },
-    { id: "highlights", label: "Highlights" },
-    { id: "settings", label: "Settings" },
+    { id: "overview", label: t.adminWorkspace.tabOverview },
+    { id: "participants", label: t.adminWorkspace.tabParticipants },
+    { id: "reviews", label: t.adminWorkspace.tabReviews },
+    { id: "highlights", label: t.adminWorkspace.tabHighlights },
+    { id: "settings", label: t.adminWorkspace.tabSettings },
   ];
 
   return (
@@ -93,18 +96,18 @@ export default function EventWorkspaceContent() {
           <div className="flex items-center gap-3">
             <h1 className="text-2xl font-bold">{event.title}</h1>
             {event.isCancelled && (
-              <Badge variant="destructive">Cancelled</Badge>
+              <Badge variant="destructive">{t.adminWorkspace.overviewCancelled}</Badge>
             )}
           </div>
           <p className="text-sm text-muted-foreground mt-1">
-            Event workspace · Created {new Date(event.createdAt).toLocaleDateString()}
+            {t.adminWorkspace.overviewCreated} {formatDate(event.createdAt, dateLocale)}
           </p>
         </div>
         <div className="flex items-center gap-2">
           <Link href={`/admin/events/${eventId}/edit`}>
             <Button variant="outline" size="sm">
               <Pencil className="h-4 w-4 mr-2" />
-              Edit
+              {t.adminWorkspace.edit}
             </Button>
           </Link>
         </div>
@@ -130,11 +133,11 @@ export default function EventWorkspaceContent() {
 
       {/* Tab Content */}
       <div>
-        {activeTab === "overview" && <OverviewTab event={event} />}
-        {activeTab === "participants" && <ParticipantsTab eventId={eventId} />}
-        {activeTab === "reviews" && <ReviewsTab eventId={eventId} />}
-        {activeTab === "highlights" && <HighlightsTab event={event} />}
-        {activeTab === "settings" && <SettingsTab event={event} onUpdated={(updated) => { setEvent(updated); setActiveTab("overview"); }} />}
+        {activeTab === "overview" && <OverviewTab event={event} t={t} dateLocale={dateLocale} />}
+        {activeTab === "participants" && <ParticipantsTab eventId={eventId} t={t} dateLocale={dateLocale} />}
+        {activeTab === "reviews" && <ReviewsTab eventId={eventId} t={t} dateLocale={dateLocale} />}
+        {activeTab === "highlights" && <HighlightsTab event={event} t={t} dateLocale={dateLocale} />}
+        {activeTab === "settings" && <SettingsTab event={event} t={t} dateLocale={dateLocale} onUpdated={(updated) => { setEvent(updated); setActiveTab("overview"); }} />}
       </div>
     </div>
   );
@@ -142,50 +145,48 @@ export default function EventWorkspaceContent() {
 
 // ==================== Overview Tab ====================
 
-function OverviewTab({ event }: { event: Event }) {
+function OverviewTab({ event, t, dateLocale }: { event: Event; t: any; dateLocale: string }) {
   const confirmedCount = event._count?.registrations || 0;
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-      {/* Event Details */}
       <Card className="lg:col-span-2">
         <CardHeader>
-          <CardTitle className="text-base">Event Details</CardTitle>
+          <CardTitle className="text-base">{t.adminWorkspace.overviewTitle}</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
           <div>
-            <p className="text-sm text-muted-foreground mb-1">Description</p>
-            <p className="text-sm">{event.description || "No description provided"}</p>
+            <p className="text-sm text-muted-foreground mb-1">{t.adminWorkspace.overviewDescription}</p>
+            <p className="text-sm">{event.description || t.adminWorkspace.overviewNoDesc}</p>
           </div>
           <div className="grid grid-cols-2 gap-4">
             <div className="flex items-center gap-2">
               <Calendar className="h-4 w-4 text-muted-foreground" />
               <div>
-                <p className="text-sm font-medium">{new Date(event.eventDate).toLocaleDateString("en-US", { weekday: "long", year: "numeric", month: "long", day: "numeric" })}</p>
-                <p className="text-xs text-muted-foreground">{new Date(event.eventDate).toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit" })}</p>
+                <p className="text-sm font-medium">{new Date(event.eventDate).toLocaleDateString(dateLocale, { weekday: "long", year: "numeric", month: "long", day: "numeric" })}</p>
+                <p className="text-xs text-muted-foreground">{new Date(event.eventDate).toLocaleTimeString(dateLocale, { hour: "2-digit", minute: "2-digit" })}</p>
               </div>
             </div>
             <div className="flex items-center gap-2">
               <MapPin className="h-4 w-4 text-muted-foreground" />
               <div>
                 <p className="text-sm font-medium">{event.location}</p>
-                <p className="text-xs text-muted-foreground">Venue</p>
+                <p className="text-xs text-muted-foreground">{t.adminWorkspace.overviewVenue}</p>
               </div>
             </div>
           </div>
         </CardContent>
       </Card>
 
-      {/* Quick Stats */}
       <div className="space-y-4">
         <Card>
           <CardContent className="p-4">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <Users className="h-4 w-4 text-muted-foreground" />
-                <span className="text-sm">Registrations</span>
+                <span className="text-sm">{t.adminWorkspace.overviewRegistrations}</span>
               </div>
-              <span className="text-lg font-bold">{confirmedCount} / {event.maxParticipants}</span>
+              <span className="text-lg font-bold">{confirmedCount.toLocaleString(dateLocale)} / {event.maxParticipants.toLocaleString(dateLocale)}</span>
             </div>
             <div className="h-2 w-full rounded-full bg-muted mt-2">
               <div
@@ -200,10 +201,10 @@ function OverviewTab({ event }: { event: Event }) {
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <Clock className="h-4 w-4 text-muted-foreground" />
-                <span className="text-sm">Status</span>
+                <span className="text-sm">{t.adminWorkspace.overviewStatus}</span>
               </div>
               <Badge variant={event.isCancelled ? "destructive" : "outline"} className={!event.isCancelled ? "text-[#1a5c2a] border-[#1a5c2a]" : ""}>
-                {event.isCancelled ? "Cancelled" : "Active"}
+                {event.isCancelled ? t.adminWorkspace.overviewCancelled : "Active"}
               </Badge>
             </div>
           </CardContent>
@@ -213,9 +214,9 @@ function OverviewTab({ event }: { event: Event }) {
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <Calendar className="h-4 w-4 text-muted-foreground" />
-                <span className="text-sm">Deadline</span>
+                <span className="text-sm">{t.adminWorkspace.overviewDeadline}</span>
               </div>
-              <span className="text-sm font-medium">{new Date(event.deadline).toLocaleDateString()}</span>
+              <span className="text-sm font-medium">{formatDate(event.deadline, dateLocale)}</span>
             </div>
           </CardContent>
         </Card>
@@ -226,7 +227,7 @@ function OverviewTab({ event }: { event: Event }) {
 
 // ==================== Participants Tab ====================
 
-function ParticipantsTab({ eventId }: { eventId: string }) {
+function ParticipantsTab({ eventId, t, dateLocale }: { eventId: string; t: any; dateLocale: string }) {
   const [participants, setParticipants] = useState<AdminRegistration[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [search, setSearch] = useState("");
@@ -255,10 +256,10 @@ function ParticipantsTab({ eventId }: { eventId: string }) {
     try {
       setActionLoading(registrationId);
       await adminService.updateRegistrationStatus(registrationId, "CANCELLED");
-      toast.success("Registration cancelled");
+      toast.success(t.adminWorkspace.regCancelled);
       fetchParticipants();
     } catch (err) {
-      toast.error("Failed to cancel registration");
+      toast.error(t.adminWorkspace.regCancelError);
     } finally {
       setActionLoading(null);
     }
@@ -268,15 +269,14 @@ function ParticipantsTab({ eventId }: { eventId: string }) {
     try {
       setActionLoading(registrationId);
       await adminService.updateRegistrationStatus(registrationId, "CONFIRMED");
-      toast.success("Registration restored");
+      toast.success(t.adminWorkspace.regRestored);
       fetchParticipants();
     } catch (err) {
-      toast.error(getErrorMessage(err, "Failed to restore registration"));
+      toast.error(getErrorMessage(err, t.adminWorkspace.regRestoreError));
     } finally {
       setActionLoading(null);
     }
   };
-
 
   const filtered = participants.filter((p) => {
     if (!search) return true;
@@ -291,12 +291,11 @@ function ParticipantsTab({ eventId }: { eventId: string }) {
   const pending = participants.filter((p) => p.status === "PENDING").length;
   const cancelled = participants.filter((p) => p.status === "CANCELLED").length;
 
-  // TanStack Table columns for Participants
-  const participantColumns: DataTableColumn[] = [
+  const participantColumns: DataTableColumn[] = useMemo(() => [
     {
       id: "guest",
       accessorFn: (row) => row.user?.name || "",
-      header: ({ column }) => <DataTableColumnHeader column={column} title="GUEST" />,
+      header: ({ column }) => <DataTableColumnHeader column={column} title={t.adminWorkspace.participantsGuest} />,
       cell: ({ row }) => (
         <div>
           <p className="font-medium">{row.original.user?.name || "Unknown"}</p>
@@ -307,7 +306,7 @@ function ParticipantsTab({ eventId }: { eventId: string }) {
     {
       id: "status",
       accessorFn: (row) => row.status,
-      header: ({ column }) => <DataTableColumnHeader column={column} title="STATUS" />,
+      header: ({ column }) => <DataTableColumnHeader column={column} title={t.adminWorkspace.participantsStatus} />,
       cell: ({ row }) => (
         <Badge
           variant={
@@ -329,26 +328,26 @@ function ParticipantsTab({ eventId }: { eventId: string }) {
     },
     {
       id: "reference",
-      header: "REFERENCE",
+      header: t.adminWorkspace.participantsReference,
       cell: ({ row }) => (
         <span className="text-muted-foreground text-xs">
-          {row.original.referenceNumber || "—"}
+          {row.original.referenceNumber || "\u2014"}
         </span>
       ),
     },
     {
       id: "checkin",
-      header: "CHECK-IN",
+      header: t.adminWorkspace.participantsCheckin,
       cell: ({ row }) =>
         row.original.checkedIn ? (
           <CheckCircle2 className="h-4 w-4 text-[#1a5c2a]" />
         ) : (
-          <span className="text-xs text-muted-foreground">Not checked in</span>
+          <span className="text-xs text-muted-foreground">{t.adminWorkspace.participantsNotCheckedIn}</span>
         ),
     },
     {
       id: "actions",
-      header: "ACTIONS",
+      header: t.adminWorkspace.participantsActions,
       cell: ({ row }) => {
         const p = row.original;
         return (
@@ -364,7 +363,7 @@ function ParticipantsTab({ eventId }: { eventId: string }) {
                 {actionLoading === p.id ? (
                   <Loader2 className="h-4 w-4 animate-spin" />
                 ) : (
-                  "Restore"
+                  t.adminWorkspace.participantsRestore
                 )}
               </Button>
             )}
@@ -375,9 +374,9 @@ function ParticipantsTab({ eventId }: { eventId: string }) {
                 className="text-red-500 hover:text-red-700"
                 onClick={() =>
                   confirm({
-                    title: "Cancel registration",
-                    description: `Cancel ${p.user?.name || "this participant"}'s registration? They can re-register before the deadline.`,
-                    confirmLabel: "Yes, cancel",
+                    title: t.adminWorkspace.cancelRegTitle,
+                    description: t.adminWorkspace.cancelRegDesc.replace("{name}", p.user?.name || "this participant"),
+                    confirmLabel: t.adminWorkspace.cancelRegConfirm,
                     onConfirm: () => handleCancel(p.id),
                   })
                 }
@@ -386,7 +385,7 @@ function ParticipantsTab({ eventId }: { eventId: string }) {
                 {actionLoading === p.id ? (
                   <Loader2 className="h-4 w-4 animate-spin" />
                 ) : (
-                  "Cancel"
+                  t.adminWorkspace.participantsCancel
                 )}
               </Button>
             )}
@@ -394,7 +393,7 @@ function ParticipantsTab({ eventId }: { eventId: string }) {
         );
       },
     },
-  ];
+  ], [t, actionLoading, confirm]);
 
   if (isLoading) {
     return (
@@ -407,49 +406,46 @@ function ParticipantsTab({ eventId }: { eventId: string }) {
   return (
     <div className="space-y-6">
       {dialog}
-      {/* Stats */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         <Card>
           <CardContent className="p-4 text-center">
-            <p className="text-2xl font-bold">{totalRegistered}</p>
-            <p className="text-xs text-muted-foreground">Total Registered</p>
+            <p className="text-2xl font-bold">{totalRegistered.toLocaleString(dateLocale)}</p>
+            <p className="text-xs text-muted-foreground">{t.adminWorkspace.participantsStatsTotal}</p>
           </CardContent>
         </Card>
         <Card>
           <CardContent className="p-4 text-center">
-            <p className="text-2xl font-bold text-[#1a5c2a]">{confirmed}</p>
-            <p className="text-xs text-muted-foreground">Confirmed</p>
+            <p className="text-2xl font-bold text-[#1a5c2a]">{confirmed.toLocaleString(dateLocale)}</p>
+            <p className="text-xs text-muted-foreground">{t.adminWorkspace.participantsStatsConfirmed}</p>
           </CardContent>
         </Card>
         <Card>
           <CardContent className="p-4 text-center">
-            <p className="text-2xl font-bold text-yellow-600">{pending}</p>
-            <p className="text-xs text-muted-foreground">Pending</p>
+            <p className="text-2xl font-bold text-yellow-600">{pending.toLocaleString(dateLocale)}</p>
+            <p className="text-xs text-muted-foreground">{t.adminWorkspace.participantsStatsPending}</p>
           </CardContent>
         </Card>
         <Card>
           <CardContent className="p-4 text-center">
-            <p className="text-2xl font-bold text-red-500">{cancelled}</p>
-            <p className="text-xs text-muted-foreground">Cancelled</p>
+            <p className="text-2xl font-bold text-red-500">{cancelled.toLocaleString(dateLocale)}</p>
+            <p className="text-xs text-muted-foreground">{t.adminWorkspace.participantsStatsCancelled}</p>
           </CardContent>
         </Card>
       </div>
 
-      {/* Search */}
       <div className="flex items-center gap-2 border rounded-lg px-3 py-2 max-w-sm">
         <Search className="h-4 w-4 text-muted-foreground" />
         <Input
-          placeholder="Search by name or email..."
+          placeholder={t.adminWorkspace.participantsSearch}
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           className="border-0 bg-transparent outline-none w-full"
         />
       </div>
 
-      {/* Table */}
       <Card>
         <CardHeader>
-          <CardTitle className="text-base">Registered Participants</CardTitle>
+          <CardTitle className="text-base">{t.adminWorkspace.participantsTableTitle}</CardTitle>
         </CardHeader>
         <CardContent className="p-0">
           <div className="overflow-x-auto">
@@ -463,7 +459,7 @@ function ParticipantsTab({ eventId }: { eventId: string }) {
               emptyContent={
                 <div className="px-6 py-12 text-center text-muted-foreground">
                   <Inbox className="h-8 w-8 mx-auto mb-2 text-muted-foreground" />
-                  {search ? "No participants match your search" : "No participants yet"}
+                  {search ? t.adminWorkspace.participantsEmptySearch : t.adminWorkspace.participantsEmpty}
                 </div>
               }
             />
@@ -476,7 +472,7 @@ function ParticipantsTab({ eventId }: { eventId: string }) {
 
 // ==================== Reviews Tab ====================
 
-function ReviewsTab({ eventId }: { eventId: string }) {
+function ReviewsTab({ eventId, t, dateLocale }: { eventId: string; t: any; dateLocale: string }) {
   const [reviews, setReviews] = useState<AdminReview[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [replyingId, setReplyingId] = useState<string | null>(null);
@@ -562,9 +558,9 @@ function ReviewsTab({ eventId }: { eventId: string }) {
           <CardContent className="p-0">
             <div className="flex flex-col items-center justify-center py-16">
               <Inbox className="h-12 w-12 text-muted-foreground mb-4" />
-              <h3 className="text-lg font-medium mb-1">No reviews yet</h3>
+              <h3 className="text-lg font-medium mb-1">{t.adminWorkspace.reviewsEmptyTitle}</h3>
               <p className="text-sm text-muted-foreground">
-                Reviews for this event will appear here.
+                {t.adminWorkspace.reviewsEmptyDesc}
               </p>
             </div>
           </CardContent>
@@ -595,7 +591,7 @@ function ReviewsTab({ eventId }: { eventId: string }) {
                     </Badge>
                   </div>
                   <p className="text-xs text-muted-foreground">
-                    {new Date(review.createdAt).toLocaleDateString("en-US", {
+                    {formatDate(review.createdAt, dateLocale, {
                       month: "short",
                       day: "numeric",
                       year: "numeric",
@@ -611,7 +607,7 @@ function ReviewsTab({ eventId }: { eventId: string }) {
 
               {review.reply && (
                 <div className="mt-3 p-3 bg-muted rounded-lg">
-                  <p className="text-xs font-medium text-muted-foreground mb-1">Reply:</p>
+                  <p className="text-xs font-medium text-muted-foreground mb-1">{t.adminWorkspace.reviewsReplyLabel}</p>
                   <p className="text-sm">{review.reply}</p>
                 </div>
               )}
@@ -626,7 +622,7 @@ function ReviewsTab({ eventId }: { eventId: string }) {
                       onClick={() => handleStatusChange(review.id, "APPROVED")}
                       disabled={actionLoading === review.id}
                     >
-                      Approve
+                      {t.adminWorkspace.reviewsApprove}
                     </Button>
                     <Button
                       variant="outline"
@@ -635,7 +631,7 @@ function ReviewsTab({ eventId }: { eventId: string }) {
                       onClick={() => handleStatusChange(review.id, "REJECTED")}
                       disabled={actionLoading === review.id}
                     >
-                      Reject
+                      {t.adminWorkspace.reviewsReject}
                     </Button>
                   </>
                 )}
@@ -648,14 +644,14 @@ function ReviewsTab({ eventId }: { eventId: string }) {
                   }}
                 >
                   <MessageSquare className="h-4 w-4 mr-1" />
-                  {review.reply ? "Edit Reply" : "Reply"}
+                  {review.reply ? t.adminWorkspace.reviewsEditReply : t.adminWorkspace.reviewsReply}
                 </Button>
               </div>
 
               {replyingId === review.id && (
                 <div className="mt-4 flex gap-2">
                   <Input
-                    placeholder="Write your reply..."
+                    placeholder={t.adminWorkspace.reviewsWriteReply}
                     value={replyText}
                     onChange={(e) => setReplyText(e.target.value)}
                     className="flex-1"
@@ -666,7 +662,7 @@ function ReviewsTab({ eventId }: { eventId: string }) {
                     onClick={() => handleReply(review.id)}
                     disabled={actionLoading === review.id || !replyText.trim()}
                   >
-                    {actionLoading === review.id ? "Sending..." : "Send"}
+                    {actionLoading === review.id ? t.adminWorkspace.reviewsSending : t.adminWorkspace.reviewsSend}
                   </Button>
                   <Button
                     variant="outline"
@@ -676,7 +672,7 @@ function ReviewsTab({ eventId }: { eventId: string }) {
                       setReplyText("");
                     }}
                   >
-                    Cancel
+                    {t.adminWorkspace.reviewsCancel}
                   </Button>
                 </div>
               )}
@@ -690,7 +686,7 @@ function ReviewsTab({ eventId }: { eventId: string }) {
 
 // ==================== Highlights Tab ====================
 
-function HighlightsTab({ event }: { event: Event }) {
+function HighlightsTab({ event, t, dateLocale }: { event: Event; t: any; dateLocale: string }) {
   const [gallery, setGallery] = useState<string[]>(event.gallery || []);
   const [isUploading, setIsUploading] = useState(false);
   const [deletingUrl, setDeletingUrl] = useState<string | null>(null);
@@ -701,22 +697,18 @@ function HighlightsTab({ event }: { event: Event }) {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    // Validate file type
     if (!file.type.startsWith("image/")) {
-      toast.error("Please select an image file");
+      toast.error(t.adminWorkspace.highlightsErrorFile);
       return;
     }
 
-    // Validate file size (max 5MB)
     if (file.size > 5 * 1024 * 1024) {
-      toast.error("Image must be less than 5MB");
+      toast.error(t.adminWorkspace.highlightsErrorSize);
       return;
     }
 
     try {
       setIsUploading(true);
-
-      // Read file as base64
       const base64 = await new Promise<string>((resolve, reject) => {
         const reader = new FileReader();
         reader.onload = () => resolve(reader.result as string);
@@ -724,7 +716,6 @@ function HighlightsTab({ event }: { event: Event }) {
         reader.readAsDataURL(file);
       });
 
-      // Upload to gallery
       const response = await galleryService.upload({
         imageBase64: base64,
         folder: "event-highlights",
@@ -733,22 +724,18 @@ function HighlightsTab({ event }: { event: Event }) {
       if (response.code === 201 && response.data) {
         const newUrl = response.data.url;
         const updatedGallery = [...gallery, newUrl];
-
-        // Update event with new gallery
         await eventService.update({
           id: event.id,
           gallery: updatedGallery,
         });
-
         setGallery(updatedGallery);
-        toast.success("Image uploaded successfully");
+        toast.success(t.adminWorkspace.highlightsUploadSuccess);
       }
     } catch (err: any) {
       console.error("Failed to upload image:", err);
-      toast.error(err.response?.data?.message || "Failed to upload image");
+      toast.error(err.response?.data?.message || t.adminWorkspace.highlightsDeleteError);
     } finally {
       setIsUploading(false);
-      // Reset file input
       if (fileInputRef.current) {
         fileInputRef.current.value = "";
       }
@@ -758,26 +745,23 @@ function HighlightsTab({ event }: { event: Event }) {
   const handleDelete = async (imageUrl: string) => {
     try {
       setDeletingUrl(imageUrl);
-
-      // Delete from gallery storage
       await galleryService.delete({ url: imageUrl });
-
-      // Remove from event gallery
       const updatedGallery = gallery.filter((url) => url !== imageUrl);
       await eventService.update({
         id: event.id,
         gallery: updatedGallery,
       });
-
       setGallery(updatedGallery);
-      toast.success("Image deleted");
+      toast.success(t.adminWorkspace.highlightsDeleteSuccess);
     } catch (err) {
       console.error("Failed to delete image:", err);
-      toast.error("Failed to delete image");
+      toast.error(t.adminWorkspace.highlightsDeleteError);
     } finally {
       setDeletingUrl(null);
     }
   };
+
+  const imageLabel = gallery.length === 1 ? t.adminWorkspace.highlightsImage : t.adminWorkspace.highlightsImages;
 
   return (
     <Card>
@@ -785,9 +769,9 @@ function HighlightsTab({ event }: { event: Event }) {
       <CardHeader>
         <div className="flex items-center justify-between">
           <CardTitle className="text-base">
-            Event Highlights
+            {t.adminWorkspace.highlightsTitle}
             <span className="text-muted-foreground font-normal ml-2">
-              ({gallery.length} {gallery.length === 1 ? "image" : "images"})
+              ({gallery.length} {imageLabel})
             </span>
           </CardTitle>
           <Button
@@ -801,7 +785,7 @@ function HighlightsTab({ event }: { event: Event }) {
             ) : (
               <Upload className="h-4 w-4 mr-2" />
             )}
-            Upload
+            {t.adminWorkspace.highlightsUpload}
           </Button>
           <input
             ref={fileInputRef}
@@ -816,8 +800,8 @@ function HighlightsTab({ event }: { event: Event }) {
         {gallery.length === 0 ? (
           <div className="text-center py-12 text-muted-foreground">
             <ImagePlus className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
-            <p className="font-medium">No highlights uploaded yet</p>
-            <p className="text-xs mt-1">Upload images to showcase this event</p>
+            <p className="font-medium">{t.adminWorkspace.highlightsEmptyTitle}</p>
+            <p className="text-xs mt-1">{t.adminWorkspace.highlightsEmptyDesc}</p>
             <Button
               variant="outline"
               size="sm"
@@ -826,7 +810,7 @@ function HighlightsTab({ event }: { event: Event }) {
               disabled={isUploading}
             >
               <Upload className="h-4 w-4 mr-2" />
-              Upload Image
+              {t.adminWorkspace.highlightsUploadImage}
             </Button>
           </div>
         ) : (
@@ -844,9 +828,9 @@ function HighlightsTab({ event }: { event: Event }) {
                     size="sm"
                     onClick={() =>
                       confirm({
-                        title: "Delete image",
-                        description: "Permanently delete this image from the event gallery?",
-                        confirmLabel: "Delete",
+                        title: t.adminWorkspace.highlightsDeleteImage,
+                        description: t.adminWorkspace.highlightsDeleteDesc,
+                        confirmLabel: t.adminWorkspace.highlightsDeleteConfirm,
                         onConfirm: () => handleDelete(url),
                       })
                     }
@@ -881,7 +865,7 @@ const eventSettingsSchema = z.object({
 
 type EventSettingsValues = z.infer<typeof eventSettingsSchema>;
 
-function SettingsTab({ event, onUpdated }: { event: Event; onUpdated: (event: Event) => void }) {
+function SettingsTab({ event, t, dateLocale, onUpdated }: { event: Event; t: any; dateLocale: string; onUpdated: (event: Event) => void }) {
   const [isUpdating, setIsUpdating] = useState(false);
 
   const form = useForm<EventSettingsValues>({
@@ -911,9 +895,9 @@ function SettingsTab({ event, onUpdated }: { event: Event; onUpdated: (event: Ev
       });
       if (response.code === 200 && response.data) {
         onUpdated(response.data.event);
-        toast.success("Event updated successfully");
+        toast.success(t.adminWorkspace.settingsUpdateSuccess);
       } else {
-        toast.error(response.message || "Failed to update event");
+        toast.error(response.message || t.adminWorkspace.settingsUpdateError);
       }
     } catch (error: any) {
       if (error.errors) {
@@ -924,7 +908,7 @@ function SettingsTab({ event, onUpdated }: { event: Event; onUpdated: (event: Ev
           }
         });
       } else {
-        toast.error(error.message || "Failed to update event");
+        toast.error(error.message || t.adminWorkspace.settingsUpdateError);
       }
     } finally {
       setIsUpdating(false);
@@ -934,7 +918,7 @@ function SettingsTab({ event, onUpdated }: { event: Event; onUpdated: (event: Ev
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="text-base">Event Settings</CardTitle>
+        <CardTitle className="text-base">{t.adminWorkspace.settingsTitle}</CardTitle>
       </CardHeader>
       <CardContent>
         <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4 max-w-xl" noValidate>
@@ -944,7 +928,7 @@ function SettingsTab({ event, onUpdated }: { event: Event; onUpdated: (event: Ev
               control={form.control}
               render={({ field, fieldState }) => (
                 <Field data-invalid={fieldState.invalid}>
-                  <FieldLabel htmlFor="event-title">Title</FieldLabel>
+                  <FieldLabel htmlFor="event-title">{t.adminWorkspace.settingsLabelTitle}</FieldLabel>
                   <Input {...field} id="event-title" aria-invalid={fieldState.invalid} />
                   {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
                 </Field>
@@ -955,7 +939,7 @@ function SettingsTab({ event, onUpdated }: { event: Event; onUpdated: (event: Ev
               control={form.control}
               render={({ field, fieldState }) => (
                 <Field data-invalid={fieldState.invalid}>
-                  <FieldLabel htmlFor="event-description">Description</FieldLabel>
+                  <FieldLabel htmlFor="event-description">{t.adminWorkspace.settingsLabelDescription}</FieldLabel>
                   <Textarea {...field} id="event-description" rows={4} aria-invalid={fieldState.invalid} />
                   {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
                 </Field>
@@ -966,7 +950,7 @@ function SettingsTab({ event, onUpdated }: { event: Event; onUpdated: (event: Ev
               control={form.control}
               render={({ field, fieldState }) => (
                 <Field data-invalid={fieldState.invalid}>
-                  <FieldLabel htmlFor="event-location">Location</FieldLabel>
+                  <FieldLabel htmlFor="event-location">{t.adminWorkspace.settingsLabelLocation}</FieldLabel>
                   <Input {...field} id="event-location" aria-invalid={fieldState.invalid} />
                   {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
                 </Field>
@@ -977,7 +961,7 @@ function SettingsTab({ event, onUpdated }: { event: Event; onUpdated: (event: Ev
               control={form.control}
               render={({ field, fieldState }) => (
                 <Field data-invalid={fieldState.invalid}>
-                  <FieldLabel htmlFor="event-maxParticipants">Max Participants</FieldLabel>
+                  <FieldLabel htmlFor="event-maxParticipants">{t.adminWorkspace.settingsLabelMaxParticipants}</FieldLabel>
                   <Input
                     {...field}
                     id="event-maxParticipants"
@@ -1002,7 +986,7 @@ function SettingsTab({ event, onUpdated }: { event: Event; onUpdated: (event: Ev
                       className="rounded"
                       aria-invalid={fieldState.invalid}
                     />
-                    <span className="text-sm">Mark as cancelled</span>
+                    <span className="text-sm">{t.adminWorkspace.settingsMarkCancelled}</span>
                   </label>
                   {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
                 </Field>
@@ -1021,9 +1005,9 @@ function SettingsTab({ event, onUpdated }: { event: Event; onUpdated: (event: Ev
                       className="rounded"
                       aria-invalid={fieldState.invalid}
                     />
-                    <span className="text-sm">Allow reviews now</span>
+                    <span className="text-sm">{t.adminWorkspace.settingsAllowReviews}</span>
                   </label>
-                  <p className="text-xs text-muted-foreground">Lets customers submit reviews before the event date has passed.</p>
+                  <p className="text-xs text-muted-foreground">{t.adminWorkspace.settingsAllowReviewsDesc}</p>
                   {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
                 </Field>
               )}
@@ -1032,11 +1016,11 @@ function SettingsTab({ event, onUpdated }: { event: Event; onUpdated: (event: Ev
           <div className="flex gap-2">
             <Button type="submit" disabled={isUpdating} className="bg-[#1a5c2a] hover:bg-[#144a22]">
               {isUpdating ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : null}
-              Save Changes
+              {t.adminWorkspace.settingsSave}
             </Button>
             <Button type="button" variant="destructive">
               <Trash2 className="h-4 w-4 mr-2" />
-              Delete Event
+              {t.adminWorkspace.settingsDelete}
             </Button>
           </div>
         </form>

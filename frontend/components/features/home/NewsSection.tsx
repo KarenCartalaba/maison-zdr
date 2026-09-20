@@ -1,7 +1,11 @@
+"use client";
+
 import Link from "next/link";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Newspaper, Calendar } from "lucide-react";
+import { useLanguage } from "@/context/LanguageContext";
+import { formatDate } from "@/lib/format-date";
 import type { News } from "@/types";
 
 interface NewsSectionProps {
@@ -9,19 +13,20 @@ interface NewsSectionProps {
 }
 
 export default function NewsSection({ news = [] }: NewsSectionProps) {
+  const { t, dateLocale } = useLanguage();
   if (news.length === 0) return null;
 
   return (
     <section className="container px-4 py-12">
       <div className="flex items-center justify-between mb-8">
         <div>
-          <h2 className="text-3xl font-bold">News & Updates</h2>
+          <h2 className="text-3xl font-bold">{t.home.newsSection.title}</h2>
           <p className="text-muted-foreground mt-1">
-            Stay informed with the latest announcements
+            {t.home.newsSection.subtitle}
           </p>
         </div>
         <Link href="/news" className="text-sm font-medium text-[#1a5c2a] hover:underline">
-          View All &rarr;
+          {t.home.newsSection.viewAll} &rarr;
         </Link>
       </div>
 
@@ -42,7 +47,7 @@ export default function NewsSection({ news = [] }: NewsSectionProps) {
                   </div>
                 )}
                 <Badge className="absolute top-3 right-3 bg-[#1a5c2a] hover:bg-[#144a22]">
-                  News
+                  {t.home.newsSection.badge}
                 </Badge>
               </div>
               <CardContent className="p-5 space-y-3">
@@ -53,7 +58,7 @@ export default function NewsSection({ news = [] }: NewsSectionProps) {
                 <div className="flex items-center gap-2 text-sm text-muted-foreground">
                   <Calendar className="h-4 w-4" />
                   <span>
-                    {new Date(item.createdAt).toLocaleDateString("en-US", {
+                    {formatDate(item.createdAt, dateLocale, {
                       month: "long",
                       day: "numeric",
                       year: "numeric",

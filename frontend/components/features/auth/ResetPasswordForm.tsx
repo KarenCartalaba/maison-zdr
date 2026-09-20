@@ -12,6 +12,7 @@ import { Input } from "@/components/ui/input";
 import { Field, FieldError, FieldGroup, FieldLabel } from "@/components/ui/field";
 import { Loader2, CheckCircle2, XCircle, ArrowLeft } from "lucide-react";
 import { toast } from "sonner";
+import { useLanguage } from "@/context/LanguageContext";
 
 const resetPasswordSchema = z
   .object({
@@ -32,12 +33,13 @@ type ResetPasswordValues = z.infer<typeof resetPasswordSchema>;
 export default function ResetPasswordForm() {
   const searchParams = useSearchParams();
   const token = searchParams.get("token");
+  const { t } = useLanguage();
   const [isLoading, setIsLoading] = useState(false);
   const [status, setStatus] = useState<"validating" | "form" | "success" | "error">(
     token ? "validating" : "error"
   );
   const [message, setMessage] = useState(
-    token ? "" : "No reset token provided. Please request a new password reset link."
+    token ? "" : t.auth.noResetToken
   );
 
   const form = useForm<ResetPasswordValues>({
@@ -99,9 +101,9 @@ export default function ResetPasswordForm() {
     return (
       <div className="text-center space-y-4">
         <Loader2 className="mx-auto h-12 w-12 animate-spin text-muted-foreground" />
-        <h2 className="text-xl font-bold">Validating reset link...</h2>
+        <h2 className="text-xl font-bold">{t.auth.validatingResetLink}</h2>
         <p className="text-sm text-muted-foreground">
-          Please wait while we verify your reset token
+          {t.auth.pleaseWaitReset}
         </p>
       </div>
     );
@@ -111,11 +113,11 @@ export default function ResetPasswordForm() {
     return (
       <div className="text-center space-y-4">
         <CheckCircle2 className="h-12 w-12 text-[#1a5c2a] mx-auto" />
-        <h1 className="text-2xl font-bold">Password Reset!</h1>
+        <h1 className="text-2xl font-bold">{t.auth.passwordResetSuccess}</h1>
         <p className="text-sm text-muted-foreground">{message}</p>
         <Link href="/login" className="inline-flex items-center text-sm text-muted-foreground hover:text-foreground">
           <ArrowLeft className="mr-1 h-4 w-4" />
-          Back to login
+          {t.auth.backToLogin}
         </Link>
       </div>
     );
@@ -125,11 +127,11 @@ export default function ResetPasswordForm() {
     return (
       <div className="text-center space-y-4">
         <XCircle className="h-12 w-12 text-red-500 mx-auto" />
-        <h1 className="text-2xl font-bold">Reset Failed</h1>
+        <h1 className="text-2xl font-bold">{t.auth.resetFailed}</h1>
         <p className="text-sm text-muted-foreground">{message}</p>
         <Link href="/forgot-password" className="inline-flex items-center text-sm text-muted-foreground hover:text-foreground">
           <ArrowLeft className="mr-1 h-4 w-4" />
-          Request a new link
+          {t.auth.requestNewLink}
         </Link>
       </div>
     );
@@ -138,8 +140,8 @@ export default function ResetPasswordForm() {
   return (
     <>
       <div className="text-center mb-8">
-        <h1 className="text-2xl font-bold">Set new password</h1>
-        <p className="text-sm text-muted-foreground mt-1">Enter your new password below.</p>
+        <h1 className="text-2xl font-bold">{t.auth.setNewPassword}</h1>
+        <p className="text-sm text-muted-foreground mt-1">{t.auth.newPasswordDesc}</p>
       </div>
 
       <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4" noValidate>
@@ -149,12 +151,12 @@ export default function ResetPasswordForm() {
             control={form.control}
             render={({ field, fieldState }) => (
               <Field data-invalid={fieldState.invalid}>
-                <FieldLabel htmlFor="reset-password">New Password</FieldLabel>
+                <FieldLabel htmlFor="reset-password">{t.auth.newPasswordLabel}</FieldLabel>
                 <Input
                   {...field}
                   id="reset-password"
                   type="password"
-                  placeholder="••••••••"
+                  placeholder="\u2022\u2022\u2022\u2022\u2022\u2022\u2022\u2022"
                   autoComplete="new-password"
                   aria-invalid={fieldState.invalid}
                 />
@@ -167,12 +169,12 @@ export default function ResetPasswordForm() {
             control={form.control}
             render={({ field, fieldState }) => (
               <Field data-invalid={fieldState.invalid}>
-                <FieldLabel htmlFor="reset-confirmPassword">Confirm Password</FieldLabel>
+                <FieldLabel htmlFor="reset-confirmPassword">{t.auth.confirmPasswordLabel}</FieldLabel>
                 <Input
                   {...field}
                   id="reset-confirmPassword"
                   type="password"
-                  placeholder="••••••••"
+                  placeholder="\u2022\u2022\u2022\u2022\u2022\u2022\u2022\u2022"
                   autoComplete="new-password"
                   aria-invalid={fieldState.invalid}
                 />
@@ -184,15 +186,15 @@ export default function ResetPasswordForm() {
 
         <Button type="submit" className="w-full bg-[#1a5c2a] hover:bg-[#144a22]" disabled={isLoading}>
           {isLoading ? (
-            <><Loader2 className="mr-2 h-4 w-4 animate-spin" />Resetting...</>
+            <><Loader2 className="mr-2 h-4 w-4 animate-spin" />{t.auth.resetting}</>
           ) : (
-            "Reset Password"
+            t.auth.resetPasswordButton
           )}
         </Button>
 
         <p className="text-center text-sm text-muted-foreground">
           <Link href="/login" className="font-semibold text-foreground hover:underline">
-            Back to login
+            {t.auth.backToLogin}
           </Link>
         </p>
       </form>

@@ -1,9 +1,13 @@
+"use client";
+
 import Link from "next/link";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Calendar, MapPin } from "lucide-react";
 import EventImage from "@/components/ui/event-image";
+import { useLanguage } from "@/context/LanguageContext";
+import { formatDate } from "@/lib/format-date";
 import type { Event } from "@/types";
 
 interface UpcomingEventsSectionProps {
@@ -11,19 +15,20 @@ interface UpcomingEventsSectionProps {
 }
 
 export default function UpcomingEventsSection({ events = [] }: UpcomingEventsSectionProps) {
+  const { t, dateLocale } = useLanguage();
   if (events.length === 0) return null;
 
   return (
     <section className="container px-4 py-12">
       <div className="flex items-center justify-between mb-8">
         <div>
-          <h2 className="text-3xl font-bold">Upcoming Events</h2>
+          <h2 className="text-3xl font-bold">{t.home.upcoming.title}</h2>
           <p className="text-muted-foreground mt-1">
-            Plan ahead and reserve your spot early.
+            {t.home.upcoming.subtitle}
           </p>
         </div>
         <Link href="/events" className="text-sm font-medium text-[#1a5c2a] hover:underline">
-          View Page &rarr;
+          {t.home.upcoming.viewPage} &rarr;
         </Link>
       </div>
 
@@ -35,7 +40,7 @@ export default function UpcomingEventsSection({ events = [] }: UpcomingEventsSec
               <div className="relative h-48">
                 <EventImage src={event.gallery?.[0]} title={event.title} className="h-48" />
                 <Badge className="absolute top-3 right-3 bg-[#1a5c2a] hover:bg-[#144a22]">
-                  Upcoming
+                  {t.home.upcoming.badge}
                 </Badge>
               </div>
               <CardContent className="p-5 space-y-3">
@@ -43,7 +48,7 @@ export default function UpcomingEventsSection({ events = [] }: UpcomingEventsSec
                 <div className="flex items-center gap-2 text-sm text-muted-foreground">
                   <Calendar className="h-4 w-4" />
                   <span>
-                    {new Date(event.eventDate).toLocaleDateString("en-US", {
+                    {formatDate(event.eventDate, dateLocale, {
                       weekday: "long",
                       hour: "2-digit",
                       minute: "2-digit",
@@ -56,8 +61,8 @@ export default function UpcomingEventsSection({ events = [] }: UpcomingEventsSec
                 </div>
                 <div className="space-y-1">
                   <div className="flex items-center justify-between text-sm">
-                    <span className="text-muted-foreground">Registration availability</span>
-                    <span className="text-muted-foreground">{regCount}/{event.maxParticipants} slot left</span>
+                    <span className="text-muted-foreground">{t.home.upcoming.registrationAvailability}</span>
+                    <span className="text-muted-foreground">{regCount}/{event.maxParticipants} {t.home.upcoming.slotLeft}</span>
                   </div>
                   <div className="h-2 w-full rounded-full bg-muted">
                     <div
@@ -68,7 +73,7 @@ export default function UpcomingEventsSection({ events = [] }: UpcomingEventsSec
                 </div>
                 <Link href={`/events/${event.id}`}>
                   <Button className="w-full bg-[#1a5c2a] hover:bg-[#144a22]">
-                    View Details
+                    {t.home.upcoming.viewDetails}
                   </Button>
                 </Link>
               </CardContent>

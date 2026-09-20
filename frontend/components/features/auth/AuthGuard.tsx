@@ -1,6 +1,7 @@
 "use client";
 
 import { useAuth } from "@/context/AuthContext";
+import { useLanguage } from "@/context/LanguageContext";
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
 
@@ -11,6 +12,7 @@ interface AuthGuardProps {
 
 export function AuthGuard({ children, mode = "PRIVATE" }: AuthGuardProps) {
   const { isLoading, isAuthenticated, isAdmin, isModerator, isVerified } = useAuth();
+  const { t } = useLanguage();
   const router = useRouter();
 
   const hasAdminAccess = isAdmin || isModerator;
@@ -51,7 +53,7 @@ export function AuthGuard({ children, mode = "PRIVATE" }: AuthGuardProps) {
       <div className="flex min-h-screen items-center justify-center bg-background">
         <div className="flex flex-col items-center gap-4">
           <div className="h-8 w-8 animate-spin rounded-full border-4 border-[#1a5c2a] border-t-transparent" />
-          <p className="text-sm text-muted-foreground animate-pulse">Verifying session...</p>
+          <p className="text-sm text-muted-foreground animate-pulse">{t.auth.verifyingSession}</p>
         </div>
       </div>
     );

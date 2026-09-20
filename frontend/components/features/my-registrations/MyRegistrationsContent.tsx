@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useAuth } from "@/context/AuthContext";
+import { useLanguage } from "@/context/LanguageContext";
 import { toast } from "sonner";
 import { getErrorMessage } from "@/lib/server-error";
 import { useConfirm } from "@/components/ui/confirm-dialog";
@@ -19,6 +20,7 @@ interface MyRegistrationsContentProps {
 
 export default function MyRegistrationsContent({ initialRegistrations = [] }: MyRegistrationsContentProps) {
   const { user } = useAuth();
+  const { t, dateLocale } = useLanguage();
   const [registrations, setRegistrations] = useState<Registration[]>(initialRegistrations);
   const [isLoading, setIsLoading] = useState(initialRegistrations.length === 0);
   const [cancellingId, setCancellingId] = useState<string | null>(null);
@@ -39,12 +41,12 @@ export default function MyRegistrationsContent({ initialRegistrations = [] }: My
         setRegistrations((prev) =>
           prev.map((r) => (r.id === registration.id ? { ...r, status: "CANCELLED" } : r))
         );
-        toast.success("Registration cancelled");
+        toast.success(t.myRegs.registrationCancelled);
       } else {
-        toast.error(res.message || "Failed to cancel registration");
+        toast.error(res.message || t.myRegs.failedCancelRegistration);
       }
     } catch (err) {
-      toast.error(getErrorMessage(err, "Failed to cancel registration"));
+      toast.error(getErrorMessage(err, t.myRegs.failedCancelRegistration));
     } finally {
       setCancellingId(null);
     }
@@ -82,15 +84,15 @@ export default function MyRegistrationsContent({ initialRegistrations = [] }: My
     <div className="container mx-auto px-4 py-8">
       {dialog}
       <div className="mb-8">
-        <h1 className="text-3xl font-bold">My Registrations</h1>
-        <p className="text-muted-foreground mt-2">View your event registrations</p>
+        <h1 className="text-3xl font-bold">{t.myRegs.heading}</h1>
+        <p className="text-muted-foreground mt-2">{t.myRegs.subtitle}</p>
       </div>
 
       {registrations.length === 0 ? (
         <Card>
           <CardContent className="flex flex-col items-center justify-center py-16">
-            <p className="text-muted-foreground mb-4">You haven&apos;t registered for any events yet.</p>
-            <Link href="/events" className="text-primary hover:underline">Browse Events</Link>
+            <p className="text-muted-foreground mb-4">{t.myRegs.emptyState}</p>
+            <Link href="/events" className="text-primary hover:underline">{t.myRegs.browseEvents}</Link>
           </CardContent>
         </Card>
       ) : (
@@ -104,7 +106,7 @@ export default function MyRegistrationsContent({ initialRegistrations = [] }: My
                     {registration.event?.eventDate && (
                       <span className="flex items-center gap-1">
                         <Calendar className="h-4 w-4" />
-                        {new Date(registration.event.eventDate).toLocaleDateString()}
+                        {new Date(registration.event.eventDate).toLocaleDateString(dateLocale)}
                       </span>
                     )}
                     {registration.event?.location && (
@@ -115,7 +117,7 @@ export default function MyRegistrationsContent({ initialRegistrations = [] }: My
                     )}
                   </div>
                   {registration.hasPlusOne && registration.guestName && (
-                    <p className="text-sm text-muted-foreground mt-1">Plus-one: {registration.guestName}</p>
+                    <p className="text-sm text-muted-foreground mt-1">{t.myRegs.plusOne} {registration.guestName}</p>
                   )}
                 </div>
                 <div className="flex flex-col items-end gap-2 shrink-0">
@@ -130,14 +132,14 @@ export default function MyRegistrationsContent({ initialRegistrations = [] }: My
                       disabled={cancellingId === registration.id}
                       onClick={() =>
                         confirm({
-                          title: "Cancel registration",
-                          description: `Cancel your registration for "${registration.event?.title || "this event"}"? You can re-register any time before the deadline.`,
-                          confirmLabel: "Yes, cancel",
+                          title: t.myRegs.confirmCancelTitle,
+                          description: t.myRegs.confirmCancelDescription.replace("{title}", registration.event?.title || "this event"),
+                          confirmLabel: t.myRegs.confirmYesCancel,
                           onConfirm: () => handleCancel(registration),
                         })
                       }
                     >
-                      {cancellingId === registration.id ? "Cancelling…" : "Cancel registration"}
+                      {cancellingId === registration.id ? t.myRegs.cancelling : t.myRegs.cancelRegistration}
                     </Button>
                   )}
                 </div>

@@ -1,6 +1,10 @@
+"use client";
+
 import { Button } from "@/components/ui/button";
+import { useLanguage } from "@/context/LanguageContext";
 
 export default function EventHeroBanner() {
+  const { t } = useLanguage();
   return (
     <section className="relative h-[300px] md:h-[400px]">
       {/* TODO: Replace with actual venue exterior image */}
@@ -13,13 +17,13 @@ export default function EventHeroBanner() {
       <div className="absolute inset-0 flex items-center">
         <div className="container px-4 text-white space-y-4">
           <h1 className="text-4xl md:text-5xl font-bold max-w-lg">
-            Join Events That Match Your Interests
+            {t.events.heroTitle}
           </h1>
           <p className="text-lg text-white/90 max-w-md">
-            Never miss a beat — see what&apos;s happening at Zone de Rassemblement.
+            {t.events.heroSubtitle}
           </p>
           <Button className="bg-white text-foreground hover:bg-white/90 rounded-full px-8">
-            View Events
+            {t.events.viewEvents}
           </Button>
         </div>
       </div>

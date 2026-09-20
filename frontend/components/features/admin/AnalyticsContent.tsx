@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Download, TrendingUp, Users, Calendar, Star, Inbox } from "lucide-react";
@@ -22,71 +22,8 @@ import {
 import { DataTable, type DataTableColumn } from "@/components/ui/data-table";
 import { DataTableColumnHeader } from "@/components/ui/data-table-column-header";
 import { adminService } from "@/services/admin.service";
+import { useLanguage } from "@/context/LanguageContext";
 import type { AnalyticsOverview } from "@/types";
-
-const performanceColumns: DataTableColumn[] = [
-  {
-    accessorKey: "title",
-    header: ({ column }) => <DataTableColumnHeader column={column} title="EVENT" />,
-    cell: ({ row }) => (
-      <span className="font-medium">{row.original.title}</span>
-    ),
-  },
-  {
-    id: "registrations",
-    header: "REGISTRATIONS",
-    cell: ({ row }) => (
-      <span>
-        {row.original.registrations} / {row.original.maxParticipants}
-      </span>
-    ),
-  },
-  {
-    id: "fillRate",
-    header: "FILL RATE",
-    cell: ({ row }) => (
-      <div className="flex items-center gap-2">
-        <div className="h-2 w-24 rounded-full bg-muted">
-          <div
-            className="h-full rounded-full bg-[#1a5c2a]"
-            style={{
-              width: `${Math.min(row.original.fillRate, 100)}%`,
-            }}
-          />
-        </div>
-        <span className="text-xs text-muted-foreground">
-          {Math.round(row.original.fillRate)}%
-        </span>
-      </div>
-    ),
-  },
-  {
-    id: "avgRating",
-    header: "AVG. RATING",
-    cell: ({ row }) => (
-      <div className="flex items-center gap-1">
-        <span className="text-yellow-400">★</span>
-        <span>{row.original.avgRating.toFixed(1)}</span>
-      </div>
-    ),
-  },
-  {
-    accessorKey: "reviewCount",
-    header: "REVIEWS",
-    cell: ({ row }) => (
-      <span className="text-muted-foreground">{row.original.reviewCount}</span>
-    ),
-  },
-];
-
-const registrationTrendConfig = {
-  registered: { label: "Registered", color: "#1a5c2a" },
-  attended: { label: "Attended", color: "#4ade80" },
-} satisfies ChartConfig;
-
-const performanceChartConfig = {
-  registrations: { label: "Registrations", color: "#1a5c2a" },
-} satisfies ChartConfig;
 
 function LoadingSkeleton() {
   return (
@@ -132,13 +69,13 @@ function LoadingSkeleton() {
   );
 }
 
-function EmptyState() {
+function EmptyState({ t }: { t: any }) {
   return (
     <div className="flex flex-col items-center justify-center py-16">
       <Inbox className="h-12 w-12 text-muted-foreground mb-4" />
-      <h3 className="text-lg font-medium mb-1">No analytics data available yet</h3>
+      <h3 className="text-lg font-medium mb-1">{t.adminAnalytics.emptyTitle}</h3>
       <p className="text-sm text-muted-foreground">
-        Analytics will appear once you have events and registrations.
+        {t.adminAnalytics.emptyDesc}
       </p>
     </div>
   );
@@ -151,6 +88,71 @@ interface AnalyticsContentProps {
 export default function AnalyticsContent({ initialData = null }: AnalyticsContentProps) {
   const [data, setData] = useState<AnalyticsOverview | null>(initialData);
   const [loading, setLoading] = useState(!initialData);
+  const { t, dateLocale } = useLanguage();
+
+  const performanceColumns: DataTableColumn[] = useMemo(() => [
+    {
+      accessorKey: "title",
+      header: ({ column }) => <DataTableColumnHeader column={column} title={t.adminAnalytics.colEvent} />,
+      cell: ({ row }) => (
+        <span className="font-medium">{row.original.title}</span>
+      ),
+    },
+    {
+      id: "registrations",
+      header: t.adminAnalytics.colRegistrations,
+      cell: ({ row }) => (
+        <span>
+          {row.original.registrations.toLocaleString(dateLocale)} / {row.original.maxParticipants.toLocaleString(dateLocale)}
+        </span>
+      ),
+    },
+    {
+      id: "fillRate",
+      header: t.adminAnalytics.colFillRate,
+      cell: ({ row }) => (
+        <div className="flex items-center gap-2">
+          <div className="h-2 w-24 rounded-full bg-muted">
+            <div
+              className="h-full rounded-full bg-[#1a5c2a]"
+              style={{
+                width: `${Math.min(row.original.fillRate, 100)}%`,
+              }}
+            />
+          </div>
+          <span className="text-xs text-muted-foreground">
+            {Math.round(row.original.fillRate)}%
+          </span>
+        </div>
+      ),
+    },
+    {
+      id: "avgRating",
+      header: t.adminAnalytics.colAvgRating,
+      cell: ({ row }) => (
+        <div className="flex items-center gap-1">
+          <span className="text-yellow-400">★</span>
+          <span>{row.original.avgRating.toFixed(1)}</span>
+        </div>
+      ),
+    },
+    {
+      accessorKey: "reviewCount",
+      header: t.adminAnalytics.colReviews,
+      cell: ({ row }) => (
+        <span className="text-muted-foreground">{row.original.reviewCount.toLocaleString(dateLocale)}</span>
+      ),
+    },
+  ], [t, dateLocale]);
+
+  const registrationTrendConfig = useMemo(() => ({
+    registered: { label: t.adminAnalytics.chartRegistered, color: "#1a5c2a" },
+    attended: { label: t.adminAnalytics.chartAttended, color: "#4ade80" },
+  } satisfies ChartConfig), [t]);
+
+  const performanceChartConfig = useMemo(() => ({
+    registrations: { label: t.adminAnalytics.chartRegistrations, color: "#1a5c2a" },
+  } satisfies ChartConfig), [t]);
 
   // Always reflect the latest server data
   useEffect(() => {
@@ -161,20 +163,20 @@ export default function AnalyticsContent({ initialData = null }: AnalyticsConten
   const handleExportReport = () => {
     if (!data) return;
     const lines: string[] = [];
-    lines.push("Analytics Report");
-    lines.push(`Generated,${new Date().toISOString().split("T")[0]}`);
+    lines.push(t.adminAnalytics.csvReportTitle);
+    lines.push(`${t.adminAnalytics.csvGenerated},${new Date().toISOString().split("T")[0]}`);
     lines.push("");
-    lines.push("Overview");
-    lines.push("Metric,Value");
-    lines.push(`Total Events,${data.totalEvents}`);
-    lines.push(`Total Registrations,${data.totalRegistrations}`);
-    lines.push(`Total Users,${data.totalUsers}`);
-    lines.push(`Total Reviews,${data.totalReviews}`);
-    lines.push(`Average Rating,${data.avgRating.toFixed(1)}`);
+    lines.push(t.adminAnalytics.csvOverview);
+    lines.push(`${t.adminAnalytics.csvMetric},${t.adminAnalytics.csvValue}`);
+    lines.push(`${t.adminAnalytics.csvTotalEvents},${data.totalEvents}`);
+    lines.push(`${t.adminAnalytics.csvTotalRegistrations},${data.totalRegistrations}`);
+    lines.push(`${t.adminAnalytics.csvTotalUsers},${data.totalUsers}`);
+    lines.push(`${t.adminAnalytics.csvTotalReviews},${data.totalReviews}`);
+    lines.push(`${t.adminAnalytics.csvAvgRating},${data.avgRating.toFixed(1)}`);
     lines.push("");
     if (data.eventPerformance && data.eventPerformance.length > 0) {
-      lines.push("Event Performance");
-      lines.push("Event,Registrations,Max Participants,Fill Rate,Avg Rating,Reviews");
+      lines.push(t.adminAnalytics.csvEventPerf);
+      lines.push(`${t.adminAnalytics.csvEvent},${t.adminAnalytics.csvEventRegistrations},${t.adminAnalytics.csvMaxParticipants},${t.adminAnalytics.csvFillRate},${t.adminAnalytics.csvAvgRatingLabel},${t.adminAnalytics.csvReviews}`);
       data.eventPerformance.forEach((e) => {
         lines.push(
           `"${e.title.replace(/"/g, '""')}",${e.registrations},${e.maxParticipants},${Math.round(e.fillRate)}%,${e.avgRating.toFixed(1)},${e.reviewCount}`
@@ -214,27 +216,27 @@ export default function AnalyticsContent({ initialData = null }: AnalyticsConten
   }, [initialData]);
 
   if (loading) return <LoadingSkeleton />;
-  if (!data) return <EmptyState />;
+  if (!data) return <EmptyState t={t} />;
 
   const hasData =
     data.totalEvents > 0 ||
     data.totalRegistrations > 0 ||
     data.totalUsers > 0;
 
-  if (!hasData) return <EmptyState />;
+  if (!hasData) return <EmptyState t={t} />;
 
   return (
     <div>
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h1 className="text-2xl font-bold">Analytics</h1>
+          <h1 className="text-2xl font-bold">{t.adminAnalytics.title}</h1>
           <p className="text-sm text-muted-foreground">
-            Event performance and insights
+            {t.adminAnalytics.subtitle}
           </p>
         </div>
         <Button variant="outline" onClick={handleExportReport}>
           <Download className="h-4 w-4 mr-2" />
-          Export Report
+          {t.adminAnalytics.exportReport}
         </Button>
       </div>
 
@@ -244,30 +246,30 @@ export default function AnalyticsContent({ initialData = null }: AnalyticsConten
           <CardContent className="p-4">
             <div className="flex items-center justify-between mb-2">
               <span className="text-xs text-muted-foreground">
-                Total Registrations
+                {t.adminAnalytics.statRegistrations}
               </span>
               <TrendingUp className="h-4 w-4 text-muted-foreground" />
             </div>
             <p className="text-2xl font-bold">
-              {data.totalRegistrations.toLocaleString()}
+              {data.totalRegistrations.toLocaleString(dateLocale)}
             </p>
           </CardContent>
         </Card>
         <Card>
           <CardContent className="p-4">
             <div className="flex items-center justify-between mb-2">
-              <span className="text-xs text-muted-foreground">Total Users</span>
+              <span className="text-xs text-muted-foreground">{t.adminAnalytics.statUsers}</span>
               <Users className="h-4 w-4 text-muted-foreground" />
             </div>
             <p className="text-2xl font-bold">
-              {data.totalUsers.toLocaleString()}
+              {data.totalUsers.toLocaleString(dateLocale)}
             </p>
           </CardContent>
         </Card>
         <Card>
           <CardContent className="p-4">
             <div className="flex items-center justify-between mb-2">
-              <span className="text-xs text-muted-foreground">Avg. Rating</span>
+              <span className="text-xs text-muted-foreground">{t.adminAnalytics.statAvgRating}</span>
               <Star className="h-4 w-4 text-muted-foreground" />
             </div>
             <p className="text-2xl font-bold">{data.avgRating.toFixed(1)}</p>
@@ -277,11 +279,11 @@ export default function AnalyticsContent({ initialData = null }: AnalyticsConten
           <CardContent className="p-4">
             <div className="flex items-center justify-between mb-2">
               <span className="text-xs text-muted-foreground">
-                Events Hosted
+                {t.adminAnalytics.statEventsHosted}
               </span>
               <Calendar className="h-4 w-4 text-muted-foreground" />
             </div>
-            <p className="text-2xl font-bold">{data.totalEvents}</p>
+            <p className="text-2xl font-bold">{data.totalEvents.toLocaleString(dateLocale)}</p>
           </CardContent>
         </Card>
       </div>
@@ -290,7 +292,7 @@ export default function AnalyticsContent({ initialData = null }: AnalyticsConten
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
         <Card>
           <CardHeader>
-            <CardTitle className="text-base">Registration Trend</CardTitle>
+            <CardTitle className="text-base">{t.adminAnalytics.chartRegTrend}</CardTitle>
           </CardHeader>
           <CardContent>
             {data.registrationTrend && data.registrationTrend.length > 0 ? (
@@ -323,7 +325,7 @@ export default function AnalyticsContent({ initialData = null }: AnalyticsConten
               </ChartContainer>
             ) : (
               <div className="flex items-center justify-center h-[250px] text-muted-foreground text-sm">
-                No trend data available
+                {t.adminAnalytics.noTrendData}
               </div>
             )}
           </CardContent>
@@ -331,7 +333,7 @@ export default function AnalyticsContent({ initialData = null }: AnalyticsConten
 
         <Card>
           <CardHeader>
-            <CardTitle className="text-base">Event Performance</CardTitle>
+            <CardTitle className="text-base">{t.adminAnalytics.chartEventPerf}</CardTitle>
           </CardHeader>
           <CardContent>
             {data.eventPerformance && data.eventPerformance.length > 0 ? (
@@ -358,7 +360,7 @@ export default function AnalyticsContent({ initialData = null }: AnalyticsConten
               </ChartContainer>
             ) : (
               <div className="flex items-center justify-center h-[250px] text-muted-foreground text-sm">
-                No performance data available
+                {t.adminAnalytics.noPerfData}
               </div>
             )}
           </CardContent>
@@ -369,7 +371,7 @@ export default function AnalyticsContent({ initialData = null }: AnalyticsConten
       {data.eventPerformance && data.eventPerformance.length > 0 && (
         <Card>
           <CardHeader>
-            <CardTitle className="text-base">Event Performance</CardTitle>
+            <CardTitle className="text-base">{t.adminAnalytics.chartEventPerf}</CardTitle>
           </CardHeader>
           <CardContent className="p-0">
             <DataTable columns={performanceColumns} data={data.eventPerformance ?? []} enablePagination enableSorting pageSize={10} />

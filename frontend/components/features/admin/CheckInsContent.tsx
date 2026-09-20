@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 import { getErrorMessage } from "@/lib/server-error";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -11,6 +11,7 @@ import { DataTable, type DataTableColumn } from "@/components/ui/data-table";
 import { DataTableColumnHeader } from "@/components/ui/data-table-column-header";
 import { QrCode, Search, CheckCircle2, User, CalendarDays } from "lucide-react";
 import { adminService } from "@/services/admin.service";
+import { useLanguage } from "@/context/LanguageContext";
 import type { AdminRegistration, CheckInEvent } from "@/types";
 
 function LoadingSkeleton() {
@@ -45,13 +46,13 @@ function LoadingSkeleton() {
   );
 }
 
-function EmptyState({ message }: { message: string }) {
+function EmptyState({ message, hint }: { message: string; hint: string }) {
   return (
     <div className="flex flex-col items-center justify-center py-16">
       <CalendarDays className="h-12 w-12 text-muted-foreground mb-4" />
       <h3 className="text-lg font-medium mb-1">{message}</h3>
       <p className="text-sm text-muted-foreground">
-        Select an event above to view check-in details.
+        {hint}
       </p>
     </div>
   );
@@ -67,6 +68,7 @@ export default function CheckInsContent() {
   const [loadingCheckIn, setLoadingCheckIn] = useState(false);
   const [checkInLoadingId, setCheckInLoadingId] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
+  const { t, dateLocale } = useLanguage();
 
   useEffect(() => {
     const fetchEvents = async () => {
@@ -112,18 +114,17 @@ export default function CheckInsContent() {
     try {
       setCheckInLoadingId(registrationId);
       await adminService.checkIn(registrationId);
-      // Refresh check-in data
       const response = await adminService.getEventCheckIn(selectedEventId);
       if (response.data) {
         setRegistrations(response.data.registrations);
         setCheckedInCount(response.data.checkedInCount);
         setTotalCount(response.data.totalCount);
-        toast.success("Check-in successful");
+        toast.success(t.adminCheckins.checkInSuccess);
       } else {
-        toast.error(response.message || "Check-in may not have completed");
+        toast.error(response.message || t.adminCheckins.checkInError);
       }
     } catch (error) {
-      toast.error(getErrorMessage(error, "Failed to check in"));
+      toast.error(getErrorMessage(error, t.adminCheckins.checkInError));
     } finally {
       setCheckInLoadingId(null);
     }
@@ -139,11 +140,11 @@ export default function CheckInsContent() {
       reg.user.email.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  const checkInColumns: DataTableColumn[] = [
+  const checkInColumns: DataTableColumn[] = useMemo(() => [
     {
       id: "guest",
       accessorFn: (row) => row.user.name,
-      header: ({ column }) => <DataTableColumnHeader column={column} title="GUEST" />,
+      header: ({ column }) => <DataTableColumnHeader column={column} title={t.adminCheckins.colGuest} />,
       cell: ({ row }) => (
         <div className="flex items-center gap-3">
           <div className="h-8 w-8 rounded-full bg-muted flex items-center justify-center">
@@ -160,7 +161,7 @@ export default function CheckInsContent() {
     },
     {
       accessorKey: "checkedIn",
-      header: ({ column }) => <DataTableColumnHeader column={column} title="STATUS" />,
+      header: ({ column }) => <DataTableColumnHeader column={column} title={t.adminCheckins.colStatus} />,
       cell: ({ row }) => (
         <Badge
           variant={row.original.checkedIn ? "outline" : "secondary"}
@@ -170,16 +171,16 @@ export default function CheckInsContent() {
               : ""
           }
         >
-          {row.original.checkedIn ? "Checked In" : "Pending"}
+          {row.original.checkedIn ? t.adminCheckins.checkedIn : t.adminCheckins.pending}
         </Badge>
       ),
     },
     {
       id: "checkInTime",
-      header: "CHECK-IN TIME",
+      header: t.adminCheckins.colCheckinTime,
       cell: ({ row }) =>
         row.original.checkedIn && row.original.checkedInAt
-          ? new Date(row.original.checkedInAt).toLocaleTimeString("en-US", {
+          ? new Date(row.original.checkedInAt).toLocaleTimeString(dateLocale, {
               hour: "2-digit",
               minute: "2-digit",
             })
@@ -187,12 +188,12 @@ export default function CheckInsContent() {
     },
     {
       id: "table",
-      header: "TABLE",
+      header: t.adminCheckins.colTable,
       cell: () => "\u2014",
     },
     {
       id: "actions",
-      header: "ACTIONS",
+      header: t.adminCheckins.colActions,
       cell: ({ row }) =>
         !row.original.checkedIn ? (
           <Button
@@ -204,25 +205,25 @@ export default function CheckInsContent() {
           >
             <CheckCircle2 className="h-4 w-4 mr-1" />
             {checkInLoadingId === row.original.id
-              ? "Checking in..."
-              : "Check In"}
+              ? t.adminCheckins.checkingIn
+              : t.adminCheckins.checkIn}
           </Button>
         ) : null,
     },
-  ];
+  ], [t, dateLocale, checkInLoadingId]);
 
   return (
     <div>
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h1 className="text-2xl font-bold">Check-in Desk</h1>
+          <h1 className="text-2xl font-bold">{t.adminCheckins.title}</h1>
           <p className="text-sm text-muted-foreground">
-            Scan QR code or manually check in participants
+            {t.adminCheckins.subtitle}
           </p>
         </div>
         <Button className="bg-[#1a5c2a] hover:bg-[#144a22]">
           <QrCode className="h-4 w-4 mr-2" />
-          Scan QR Code
+          {t.adminCheckins.scanQr}
         </Button>
       </div>
 
@@ -255,24 +256,24 @@ export default function CheckInsContent() {
         <div className="grid grid-cols-3 gap-4 mb-6">
           <Card>
             <CardContent className="p-4 text-center">
-              <p className="text-2xl font-bold">{totalCount}</p>
-              <p className="text-xs text-muted-foreground">Expected Guests</p>
+              <p className="text-2xl font-bold">{totalCount.toLocaleString(dateLocale)}</p>
+              <p className="text-xs text-muted-foreground">{t.adminCheckins.expectedGuests}</p>
             </CardContent>
           </Card>
           <Card>
             <CardContent className="p-4 text-center">
               <p className="text-2xl font-bold text-[#1a5c2a]">
-                {checkedInCount}
+                {checkedInCount.toLocaleString(dateLocale)}
               </p>
-              <p className="text-xs text-muted-foreground">Checked In</p>
+              <p className="text-xs text-muted-foreground">{t.adminCheckins.checkedInLabel}</p>
             </CardContent>
           </Card>
           <Card>
             <CardContent className="p-4 text-center">
               <p className="text-2xl font-bold text-muted-foreground">
-                {totalCount - checkedInCount}
+                {(totalCount - checkedInCount).toLocaleString(dateLocale)}
               </p>
-              <p className="text-xs text-muted-foreground">Pending</p>
+              <p className="text-xs text-muted-foreground">{t.adminCheckins.pendingLabel}</p>
             </CardContent>
           </Card>
         </div>
@@ -282,7 +283,7 @@ export default function CheckInsContent() {
       <div className="flex items-center gap-2 border rounded-lg px-3 py-2 mb-4 max-w-sm">
         <Search className="h-4 w-4 text-muted-foreground" />
         <Input
-          placeholder="Search by name or email..."
+          placeholder={t.adminCheckins.searchPlaceholder}
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
           className="border-0 bg-transparent outline-none w-full shadow-none focus-visible:ring-0"
@@ -294,8 +295,8 @@ export default function CheckInsContent() {
         <CardHeader>
           <CardTitle className="text-base">
             {selectedEvent
-              ? `${selectedEvent.title} — Check-in List`
-              : "Check-in List"}
+              ? `${selectedEvent.title} — ${t.adminCheckins.checkInList}`
+              : t.adminCheckins.checkInList}
           </CardTitle>
         </CardHeader>
         <CardContent className="p-0">
@@ -309,10 +310,10 @@ export default function CheckInsContent() {
             <div className="flex flex-col items-center justify-center py-16">
               <User className="h-12 w-12 text-muted-foreground mb-4" />
               <h3 className="text-lg font-medium mb-1">
-                No registrations for this event
+                {t.adminCheckins.emptyTitle}
               </h3>
               <p className="text-sm text-muted-foreground">
-                There are no registrations to check in.
+                {t.adminCheckins.emptyDesc}
               </p>
             </div>
           ) : (

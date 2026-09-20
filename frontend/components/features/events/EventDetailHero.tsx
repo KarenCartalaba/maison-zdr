@@ -1,6 +1,9 @@
+"use client";
+
 import { ArrowLeft } from "lucide-react";
 import Link from "next/link";
 import EventImage from "@/components/ui/event-image";
+import { useLanguage } from "@/context/LanguageContext";
 
 interface EventDetailHeroProps {
   title: string;
@@ -8,6 +11,7 @@ interface EventDetailHeroProps {
 }
 
 export default function EventDetailHero({ title, imageUrl }: EventDetailHeroProps) {
+  const { t } = useLanguage();
   return (
     <section className="relative h-[300px] md:h-[400px]">
       <EventImage src={imageUrl} title={title} className="h-full" />
@@ -18,7 +22,7 @@ export default function EventDetailHero({ title, imageUrl }: EventDetailHeroProp
           className="inline-flex items-center text-white/80 hover:text-white mb-4"
         >
           <ArrowLeft className="h-4 w-4 mr-2" />
-          Back
+          {t.events.back}
         </Link>
         <h1 className="text-3xl md:text-4xl font-bold text-white">{title}</h1>
       </div>

@@ -1,30 +1,34 @@
+"use client";
+
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
+import { useLanguage } from "@/context/LanguageContext";
 
 export default function HeroSection() {
+  const { t } = useLanguage();
   return (
     <section className="container px-4 py-12 md:py-20">
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
         {/* Text Content */}
         <div className="space-y-6">
           <p className="text-sm font-medium text-[#1a5c2a] uppercase tracking-wide">
-            Zone de Rassemblement
+            {t.home.hero.badge}
           </p>
           <h1 className="text-4xl md:text-5xl font-bold leading-tight">
-            Register Now and Experience the Ultimate Bar Vibe
+            {t.home.hero.title}
           </h1>
           <p className="text-muted-foreground text-lg">
-            Relax, unwind, and soak in the atmosphere. Every table brings laughter, music, and good times.
+            {t.home.hero.subtitle}
           </p>
           <div className="flex gap-4">
             <Link href="/events">
               <Button className="bg-[#1a5c2a] hover:bg-[#144a22] rounded-full px-8">
-                Browse Events
+                {t.home.hero.browseEvents}
               </Button>
             </Link>
             <Link href="/about">
               <Button variant="outline" className="rounded-full px-8">
-                Learn More
+                {t.home.hero.learnMore}
               </Button>
             </Link>
           </div>

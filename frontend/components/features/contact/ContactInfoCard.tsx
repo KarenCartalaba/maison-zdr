@@ -1,12 +1,16 @@
+"use client";
+
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { MapPin, Phone, Mail, Clock } from "lucide-react";
+import { useLanguage } from "@/context/LanguageContext";
 
 export default function ContactInfoCard() {
+  const { t } = useLanguage();
   return (
     <Card className="border shadow-md">
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
-          <span className="text-lg">Contact Information</span>
+          <span className="text-lg">{t.contact.infoTitle}</span>
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-6">
@@ -15,7 +19,7 @@ export default function ContactInfoCard() {
             <MapPin className="h-5 w-5 text-[#1a5c2a]" />
           </div>
           <div>
-            <h4 className="font-medium text-sm">Location</h4>
+            <h4 className="font-medium text-sm">{t.contact.location}</h4>
             <p className="text-sm text-muted-foreground">
               9 Rue du Commerce, 35140 Saint-Hilaire-des-Landes, France
             </p>
@@ -27,7 +31,7 @@ export default function ContactInfoCard() {
             <Phone className="h-5 w-5 text-[#1a5c2a]" />
           </div>
           <div>
-            <h4 className="font-medium text-sm">Phone</h4>
+            <h4 className="font-medium text-sm">{t.contact.phone}</h4>
             <p className="text-sm text-muted-foreground">09123456789</p>
           </div>
         </div>
@@ -37,7 +41,7 @@ export default function ContactInfoCard() {
             <Mail className="h-5 w-5 text-[#1a5c2a]" />
           </div>
           <div>
-            <h4 className="font-medium text-sm">Email</h4>
+            <h4 className="font-medium text-sm">{t.contact.emailLabel}</h4>
             <p className="text-sm text-muted-foreground">maisonzdr@gmail.com</p>
           </div>
         </div>
@@ -47,8 +51,8 @@ export default function ContactInfoCard() {
             <Clock className="h-5 w-5 text-[#1a5c2a]" />
           </div>
           <div>
-            <h4 className="font-medium text-sm">Operation Time</h4>
-            <p className="text-sm text-muted-foreground">Mon-Sun: 10:00 - 23:00</p>
+            <h4 className="font-medium text-sm">{t.contact.operationTime}</h4>
+            <p className="text-sm text-muted-foreground">{t.contact.hours}</p>
           </div>
         </div>
       </CardContent>

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 import { getErrorMessage } from "@/lib/server-error";
 import { Card, CardContent } from "@/components/ui/card";
@@ -20,16 +20,11 @@ import { DataTable, type DataTableColumn } from "@/components/ui/data-table";
 import { DataTableColumnHeader } from "@/components/ui/data-table-column-header";
 import { ClipboardList, Download, Search, MoreHorizontal, Loader2 } from "lucide-react";
 import { adminService } from "@/services/admin.service";
+import { useLanguage } from "@/context/LanguageContext";
+import { formatDate } from "@/lib/format-date";
 import type { AdminRegistration, RegistrationStats } from "@/types";
-const STATUS_FILTERS = ["ALL", "CONFIRMED", "PENDING", "WAITLISTED", "CANCELLED"];
 
-function formatDate(date: string) {
-  return new Date(date).toLocaleDateString("en-US", {
-    month: "short",
-    day: "numeric",
-    year: "numeric",
-  });
-}
+const STATUS_FILTERS = ["ALL", "CONFIRMED", "PENDING", "WAITLISTED", "CANCELLED"];
 
 function statusBadgeColor(status: string) {
   switch (status) {
@@ -78,13 +73,13 @@ function LoadingSkeleton() {
   );
 }
 
-function EmptyState() {
+function EmptyState({ t }: { t: any }) {
   return (
     <div className="flex flex-col items-center justify-center py-16">
       <ClipboardList className="h-12 w-12 text-muted-foreground mb-4" />
-      <h3 className="text-lg font-medium mb-1">No registrations found</h3>
+      <h3 className="text-lg font-medium mb-1">{t.adminRegs.emptyTitle}</h3>
       <p className="text-sm text-muted-foreground">
-        There are no registrations matching your criteria.
+        {t.adminRegs.emptyDesc}
       </p>
     </div>
   );
@@ -100,15 +95,16 @@ export default function RegistrationsContent() {
   const [updatingId, setUpdatingId] = useState<string | null>(null);
   const [eventFilter, setEventFilter] = useState("ALL");
   const searchTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const { t, dateLocale } = useLanguage();
 
   const handleExportCsv = () => {
-    const headers = ["Reference", "Guest", "Email", "Event", "Date", "Status"];
+    const headers = [t.adminRegs.csvHeaders.reference, t.adminRegs.csvHeaders.guest, t.adminRegs.csvHeaders.email, t.adminRegs.csvHeaders.event, t.adminRegs.csvHeaders.date, t.adminRegs.csvHeaders.status];
     const rows = registrations.map((reg) => [
       reg.id,
       reg.user.name,
       reg.user.email,
       reg.event.title,
-      formatDate(reg.event.eventDate),
+      formatDate(reg.event.eventDate, dateLocale),
       reg.status,
     ]);
     const csvContent = [headers, ...rows]
@@ -172,18 +168,18 @@ export default function RegistrationsContent() {
       setUpdatingId(id);
       await adminService.updateRegistrationStatus(id, status);
       fetchData(activeFilter, search);
-      toast.success("Registration status updated");
+      toast.success(t.adminRegs.updateSuccess);
     } catch (error) {
-      toast.error(getErrorMessage(error, "Failed to update status"));
+      toast.error(getErrorMessage(error, t.adminRegs.updateError));
     } finally {
       setUpdatingId(null);
     }
   };
 
-  const registrationColumns: DataTableColumn[] = [
+  const registrationColumns: DataTableColumn[] = useMemo(() => [
     {
       accessorKey: "referenceNumber",
-      header: "REFERENCE",
+      header: t.adminRegs.colReference,
       cell: ({ row }) => (
         <span className="font-mono font-medium">
           {row.original.referenceNumber || row.original.id.substring(0, 8)}
@@ -192,7 +188,7 @@ export default function RegistrationsContent() {
     },
     {
       id: "participant",
-      header: "PARTICIPANT",
+      header: t.adminRegs.colParticipant,
       cell: ({ row }) => (
         <div>
           <p className="font-medium">{row.original.user.name}</p>
@@ -204,23 +200,23 @@ export default function RegistrationsContent() {
     },
     {
       id: "event",
-      header: "EVENT",
+      header: t.adminRegs.colEvent,
       cell: ({ row }) => row.original.event.title,
     },
     {
       id: "date",
       accessorFn: (row) => row.event.eventDate,
-      header: ({ column }) => <DataTableColumnHeader column={column} title="DATE" />,
-      cell: ({ row }) => formatDate(row.original.event.eventDate),
+      header: ({ column }) => <DataTableColumnHeader column={column} title={t.adminRegs.colDate} />,
+      cell: ({ row }) => formatDate(row.original.event.eventDate, dateLocale),
     },
     {
       id: "plusOne",
-      header: "PLUS ONE",
-      cell: ({ row }) => (row.original.hasPlusOne ? "Yes" : "No"),
+      header: t.adminRegs.colPlusOne,
+      cell: ({ row }) => (row.original.hasPlusOne ? t.adminRegs.yes : t.adminRegs.no),
     },
     {
       accessorKey: "status",
-      header: ({ column }) => <DataTableColumnHeader column={column} title="STATUS" />,
+      header: ({ column }) => <DataTableColumnHeader column={column} title={t.adminRegs.colStatus} />,
       cell: ({ row }) => (
         <Badge
           variant="outline"
@@ -232,7 +228,7 @@ export default function RegistrationsContent() {
     },
     {
       id: "actions",
-      header: "ACTIONS",
+      header: t.adminRegs.colActions,
       cell: ({ row }) => (
         <DropdownMenu>
           <DropdownMenuTrigger className="inline-flex items-center justify-center h-7 w-7 rounded-md hover:bg-muted text-muted-foreground">
@@ -240,14 +236,14 @@ export default function RegistrationsContent() {
           </DropdownMenuTrigger>
           <DropdownMenuContent>
             <DropdownMenuGroup>
-              <DropdownMenuLabel>Change Status</DropdownMenuLabel>
+              <DropdownMenuLabel>{t.adminRegs.changeStatus}</DropdownMenuLabel>
               <DropdownMenuItem
                 onClick={() =>
                   handleStatusChange(row.original.id, "CONFIRMED")
                 }
                 disabled={updatingId === row.original.id}
               >
-                Confirm
+                {t.adminRegs.confirm}
               </DropdownMenuItem>
               <DropdownMenuItem
                 onClick={() =>
@@ -255,7 +251,7 @@ export default function RegistrationsContent() {
                 }
                 disabled={updatingId === row.original.id}
               >
-                Set Pending
+                {t.adminRegs.setPending}
               </DropdownMenuItem>
               <DropdownMenuItem
                 onClick={() =>
@@ -263,7 +259,7 @@ export default function RegistrationsContent() {
                 }
                 disabled={updatingId === row.original.id}
               >
-                Waitlist
+                {t.adminRegs.waitlist}
               </DropdownMenuItem>
             </DropdownMenuGroup>
             <DropdownMenuSeparator />
@@ -274,13 +270,13 @@ export default function RegistrationsContent() {
               }
               disabled={updatingId === row.original.id}
             >
-              Cancel
+              {t.adminRegs.cancel}
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
       ),
     },
-  ];
+  ], [t, dateLocale, updatingId]);
 
   const filteredRegistrations = eventFilter === "ALL"
     ? registrations
@@ -296,14 +292,14 @@ export default function RegistrationsContent() {
     <div>
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h1 className="text-2xl font-bold">Registrations</h1>
+          <h1 className="text-2xl font-bold">{t.adminRegs.title}</h1>
           <p className="text-sm text-muted-foreground">
-            Manage all event registrations
+            {t.adminRegs.subtitle}
           </p>
         </div>
         <Button variant="outline" onClick={handleExportCsv}>
           <Download className="h-4 w-4 mr-2" />
-          Export CSV
+          {t.adminRegs.exportCsv}
         </Button>
       </div>
 
@@ -312,7 +308,7 @@ export default function RegistrationsContent() {
         <div className="flex items-center gap-2 border rounded-lg px-3 py-2 flex-1 max-w-sm">
           <Search className="h-4 w-4 text-muted-foreground" />
           <Input
-            placeholder="Search registrations..."
+            placeholder={t.adminRegs.searchPlaceholder}
             value={search}
             onChange={(e) => handleSearch(e.target.value)}
             className="border-0 bg-transparent outline-none w-full"
@@ -325,7 +321,7 @@ export default function RegistrationsContent() {
             onChange={(e) => setEventFilter(e.target.value)}
             className="h-9 rounded-md border border-input bg-transparent px-3 text-sm"
           >
-            <option value="ALL">All Events</option>
+            <option value="ALL">{t.adminRegs.allEvents}</option>
             {uniqueEvents.map((event) => (
               <option key={event.id} value={event.id}>
                 {event.title}
@@ -353,32 +349,32 @@ export default function RegistrationsContent() {
         <div className="grid grid-cols-4 gap-4 mb-6">
           <Card>
             <CardContent className="p-4 text-center">
-              <p className="text-2xl font-bold">{stats.total.toLocaleString()}</p>
-              <p className="text-xs text-muted-foreground">Total Registrations</p>
+              <p className="text-2xl font-bold">{stats.total.toLocaleString(dateLocale)}</p>
+              <p className="text-xs text-muted-foreground">{t.adminRegs.statsTotal}</p>
             </CardContent>
           </Card>
           <Card>
             <CardContent className="p-4 text-center">
               <p className="text-2xl font-bold text-[#1a5c2a]">
-                {stats.confirmed.toLocaleString()}
+                {stats.confirmed.toLocaleString(dateLocale)}
               </p>
-              <p className="text-xs text-muted-foreground">Confirmed</p>
+              <p className="text-xs text-muted-foreground">{t.adminRegs.statsConfirmed}</p>
             </CardContent>
           </Card>
           <Card>
             <CardContent className="p-4 text-center">
               <p className="text-2xl font-bold text-yellow-600">
-                {stats.pending.toLocaleString()}
+                {stats.pending.toLocaleString(dateLocale)}
               </p>
-              <p className="text-xs text-muted-foreground">Pending</p>
+              <p className="text-xs text-muted-foreground">{t.adminRegs.statsPending}</p>
             </CardContent>
           </Card>
           <Card>
             <CardContent className="p-4 text-center">
               <p className="text-2xl font-bold text-red-500">
-                {stats.cancelled.toLocaleString()}
+                {stats.cancelled.toLocaleString(dateLocale)}
               </p>
-              <p className="text-xs text-muted-foreground">Cancelled</p>
+              <p className="text-xs text-muted-foreground">{t.adminRegs.statsCancelled}</p>
             </CardContent>
           </Card>
         </div>
@@ -388,7 +384,7 @@ export default function RegistrationsContent() {
       {filteredRegistrations.length === 0 ? (
         <Card>
           <CardContent className="p-0">
-            <EmptyState />
+            <EmptyState t={t} />
           </CardContent>
         </Card>
       ) : (

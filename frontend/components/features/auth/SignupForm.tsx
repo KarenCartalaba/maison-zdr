@@ -6,6 +6,7 @@ import { Controller, useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { useAuth } from "@/context/AuthContext";
+import { useLanguage } from "@/context/LanguageContext";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Field, FieldError, FieldGroup, FieldLabel } from "@/components/ui/field";
@@ -32,6 +33,7 @@ type SignupFormValues = z.infer<typeof signupFormSchema>;
 
 export default function SignupForm() {
   const { signup } = useAuth();
+  const { t } = useLanguage();
   const [isLoading, setIsLoading] = useState(false);
 
   const form = useForm<SignupFormValues>({
@@ -63,14 +65,14 @@ export default function SignupForm() {
   return (
     <>
       <div className="text-center mb-8">
-        <h1 className="text-2xl font-bold">Create an account</h1>
-        <p className="text-sm text-muted-foreground mt-1">Sign up to join events.</p>
+        <h1 className="text-2xl font-bold">{t.auth.signupTitle}</h1>
+        <p className="text-sm text-muted-foreground mt-1">{t.auth.signupSubtitle}</p>
       </div>
 
       <div className="space-y-6">
         <div>
-          <h2 className="text-lg font-semibold">Register</h2>
-          <p className="text-sm text-muted-foreground">Please fill in your details</p>
+          <h2 className="text-lg font-semibold">{t.auth.signupHeading}</h2>
+          <p className="text-sm text-muted-foreground">{t.auth.pleaseFillDetails}</p>
         </div>
 
         <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4" noValidate>
@@ -80,12 +82,12 @@ export default function SignupForm() {
               control={form.control}
               render={({ field, fieldState }) => (
                 <Field data-invalid={fieldState.invalid}>
-                  <FieldLabel htmlFor="signup-name">Full Name</FieldLabel>
+                  <FieldLabel htmlFor="signup-name">{t.auth.fullNameLabel}</FieldLabel>
                   <Input
                     {...field}
                     id="signup-name"
                     type="text"
-                    placeholder="Full Name"
+                    placeholder={t.auth.fullNamePlaceholder}
                     autoComplete="name"
                     aria-invalid={fieldState.invalid}
                   />
@@ -99,12 +101,12 @@ export default function SignupForm() {
               control={form.control}
               render={({ field, fieldState }) => (
                 <Field data-invalid={fieldState.invalid}>
-                  <FieldLabel htmlFor="signup-email">Email</FieldLabel>
+                  <FieldLabel htmlFor="signup-email">{t.auth.emailLabel}</FieldLabel>
                   <Input
                     {...field}
                     id="signup-email"
                     type="email"
-                    placeholder="Email"
+                    placeholder={t.auth.emailPlaceholder}
                     autoComplete="email"
                     aria-invalid={fieldState.invalid}
                   />
@@ -118,12 +120,12 @@ export default function SignupForm() {
               control={form.control}
               render={({ field, fieldState }) => (
                 <Field data-invalid={fieldState.invalid}>
-                  <FieldLabel htmlFor="signup-password">Password</FieldLabel>
+                  <FieldLabel htmlFor="signup-password">{t.auth.passwordLabel}</FieldLabel>
                   <Input
                     {...field}
                     id="signup-password"
                     type="password"
-                    placeholder="Password"
+                    placeholder={t.auth.passwordPlaceholder}
                     autoComplete="new-password"
                     aria-invalid={fieldState.invalid}
                   />
@@ -137,12 +139,12 @@ export default function SignupForm() {
               control={form.control}
               render={({ field, fieldState }) => (
                 <Field data-invalid={fieldState.invalid}>
-                  <FieldLabel htmlFor="signup-confirm">Confirm Password</FieldLabel>
+                  <FieldLabel htmlFor="signup-confirm">{t.auth.confirmPasswordLabel}</FieldLabel>
                   <Input
                     {...field}
                     id="signup-confirm"
                     type="password"
-                    placeholder="Confirm Password"
+                    placeholder={t.auth.confirmPasswordPlaceholder}
                     autoComplete="new-password"
                     aria-invalid={fieldState.invalid}
                   />
@@ -160,18 +162,18 @@ export default function SignupForm() {
             {isLoading ? (
               <>
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                Creating account...
+                {t.auth.creatingAccount}
               </>
             ) : (
-              "Sign Up"
+              t.auth.signUpButton
             )}
           </Button>
         </form>
 
         <p className="text-center text-sm text-muted-foreground">
-          Already have an account?{" "}
+          {t.auth.hasAccount}{" "}
           <Link href="/login" className="font-semibold text-foreground hover:underline">
-            Sign in
+            {t.auth.signInLink}
           </Link>
         </p>
       </div>

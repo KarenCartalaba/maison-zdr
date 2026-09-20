@@ -6,6 +6,8 @@ import { Star } from "lucide-react";
 import { eventService } from "@/services/event.service";
 import ReviewCard from "./ReviewCard";
 import { Skeleton } from "@/components/ui/skeleton";
+import { useLanguage } from "@/context/LanguageContext";
+import { formatDate } from "@/lib/format-date";
 
 interface ReviewSectionProps {
   eventId?: string;
@@ -22,6 +24,7 @@ export default function ReviewSection({
   averageRating: propAvgRating = 0,
   totalReviews: propTotalReviews = 0,
 }: ReviewSectionProps) {
+  const { t, dateLocale } = useLanguage();
   const [reviews, setReviews] = useState<any[]>([]);
   const [avgRating, setAvgRating] = useState(propAvgRating);
   const [totalReviews, setTotalReviews] = useState(propTotalReviews);
@@ -51,17 +54,17 @@ export default function ReviewSection({
       href={eventId ? `/profile?tab=reviews&event=${eventId}` : "/profile"}
       className="inline-flex items-center justify-center rounded-md bg-[#1a5c2a] px-4 py-2 text-sm font-medium text-white hover:bg-[#144a22]"
     >
-      Write a Review
+      {t.events.writeReview}
     </Link>
   ) : (
-    <p className="text-sm text-muted-foreground">Reviews open after the event.</p>
+    <p className="text-sm text-muted-foreground">{t.events.reviewsOpenAfter}</p>
   );
 
   if (loading) {
     return (
       <div>
         <div className="flex items-center gap-4 mb-6">
-          <h2 className="text-2xl font-bold">Reviews</h2>
+          <h2 className="text-2xl font-bold">{t.events.reviews}</h2>
         </div>
         <div className="space-y-4">
           {Array.from({ length: 3 }).map((_, i) => (
@@ -84,9 +87,9 @@ export default function ReviewSection({
     return (
       <div>
         <div className="flex items-center gap-4 mb-6">
-          <h2 className="text-2xl font-bold">Reviews</h2>
+          <h2 className="text-2xl font-bold">{t.events.reviews}</h2>
         </div>
-        <p className="text-muted-foreground">No reviews yet. Be the first to share your experience!</p>
+        <p className="text-muted-foreground">{t.events.noReviewsYet}</p>
         <div className="mt-4">{reviewCta}</div>
       </div>
     );
@@ -95,7 +98,7 @@ export default function ReviewSection({
   return (
     <div>
       <div className="flex items-center gap-4 mb-6">
-        <h2 className="text-2xl font-bold">Reviews</h2>
+        <h2 className="text-2xl font-bold">{t.events.reviews}</h2>
         <div className="flex items-center gap-2">
           <div className="flex gap-0.5">
             {Array.from({ length: 5 }).map((_, i) => (
@@ -110,7 +113,7 @@ export default function ReviewSection({
             ))}
           </div>
           <span className="font-semibold">{avgRating}</span>
-          <span className="text-sm text-muted-foreground">({totalReviews} reviews)</span>
+          <span className="text-sm text-muted-foreground">({totalReviews} {t.events.reviewCount})</span>
         </div>
       </div>
 
@@ -121,7 +124,7 @@ export default function ReviewSection({
           <ReviewCard
             key={review.id}
             name={review.user?.name || "Anonymous"}
-            date={new Date(review.createdAt).toLocaleDateString("en-US", {
+            date={formatDate(review.createdAt, dateLocale, {
               month: "long",
               day: "numeric",
               year: "numeric",

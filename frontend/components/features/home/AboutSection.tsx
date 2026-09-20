@@ -1,25 +1,12 @@
-import { CheckCircle } from "lucide-react";
+"use client";
 
-const features = [
-  {
-    title: "Verified Community",
-    description: "Email verification ensures trusted event environment.",
-  },
-  {
-    title: "Guest-Friendly",
-    description: "Email verification ensures trusted event environment.",
-  },
-  {
-    title: "Real-Time Tracking",
-    description: "Email verification ensures trusted event environment.",
-  },
-  {
-    title: "Post-Event Reviews",
-    description: "Email verification ensures trusted event environment.",
-  },
-];
+import { CheckCircle } from "lucide-react";
+import { useLanguage } from "@/context/LanguageContext";
 
 export default function AboutSection() {
+  const { t } = useLanguage();
+  const features = t.home.about.features;
+
   return (
     <section className="bg-[#1a5c2a] text-white py-16">
       <div className="container px-4">
@@ -27,13 +14,10 @@ export default function AboutSection() {
           {/* Text Content */}
           <div className="space-y-6">
             <h2 className="text-3xl md:text-4xl font-bold">
-              Bringing Communities Together Through Events
+              {t.home.about.title}
             </h2>
             <p className="text-white/80">
-              Maison ZDR is a dedicated event registration platform built to simplify how
-              organizations manage and how people experience events. From intimate forums
-              to large-scale galas, we ensure seamless, organized, and meaningful
-              participation.
+              {t.home.about.description}
             </p>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">

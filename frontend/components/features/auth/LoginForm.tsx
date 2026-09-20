@@ -6,6 +6,7 @@ import { Controller, useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { useAuth } from "@/context/AuthContext";
+import { useLanguage } from "@/context/LanguageContext";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Field, FieldError, FieldGroup, FieldLabel } from "@/components/ui/field";
@@ -27,6 +28,7 @@ declare global {
 
 export default function LoginForm() {
   const { login, loginWithGoogle } = useAuth();
+  const { t } = useLanguage();
   const [isLoading, setIsLoading] = useState(false);
   const [isGoogleLoading, setIsGoogleLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
@@ -108,14 +110,14 @@ export default function LoginForm() {
   return (
     <>
       <div className="text-center mb-8">
-        <h1 className="text-2xl font-bold">Sign in to your account</h1>
-        <p className="text-sm text-muted-foreground mt-1">Sign in to join events.</p>
+        <h1 className="text-2xl font-bold">{t.auth.loginTitle}</h1>
+        <p className="text-sm text-muted-foreground mt-1">{t.auth.loginSubtitle}</p>
       </div>
 
       <div className="space-y-6">
         <div>
-          <h2 className="text-lg font-semibold">Login</h2>
-          <p className="text-sm text-muted-foreground">Please fill in your details</p>
+          <h2 className="text-lg font-semibold">{t.auth.loginHeading}</h2>
+          <p className="text-sm text-muted-foreground">{t.auth.pleaseFillDetails}</p>
         </div>
 
         <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4" noValidate>
@@ -125,12 +127,12 @@ export default function LoginForm() {
               control={form.control}
               render={({ field, fieldState }) => (
                 <Field data-invalid={fieldState.invalid}>
-                  <FieldLabel htmlFor="login-email">Email</FieldLabel>
+                  <FieldLabel htmlFor="login-email">{t.auth.emailLabel}</FieldLabel>
                   <Input
                     {...field}
                     id="login-email"
                     type="email"
-                    placeholder="Email"
+                    placeholder={t.auth.emailPlaceholder}
                     autoComplete="email"
                     aria-invalid={fieldState.invalid}
                   />
@@ -144,13 +146,13 @@ export default function LoginForm() {
               control={form.control}
               render={({ field, fieldState }) => (
                 <Field data-invalid={fieldState.invalid}>
-                  <FieldLabel htmlFor="login-password">Password</FieldLabel>
+                  <FieldLabel htmlFor="login-password">{t.auth.passwordLabel}</FieldLabel>
                   <div className="relative">
                     <Input
                       {...field}
                       id="login-password"
                       type={showPassword ? "text" : "password"}
-                      placeholder="Password"
+                      placeholder={t.auth.passwordPlaceholder}
                       autoComplete="current-password"
                       aria-invalid={fieldState.invalid}
                       className="pr-10"
@@ -173,7 +175,7 @@ export default function LoginForm() {
 
           <div className="text-center">
             <Link href="/forgot-password" className="text-sm text-muted-foreground hover:text-foreground">
-              Forgot Password?
+              {t.auth.forgotPassword}
             </Link>
           </div>
 
@@ -185,10 +187,10 @@ export default function LoginForm() {
             {isLoading ? (
               <>
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                Signing in...
+                {t.auth.signingIn}
               </>
             ) : (
-              "Login"
+              t.auth.loginButton
             )}
           </Button>
         </form>
@@ -198,7 +200,7 @@ export default function LoginForm() {
             <span className="w-full border-t" />
           </div>
           <div className="relative flex justify-center text-xs uppercase">
-            <span className="bg-background px-2 text-muted-foreground">or</span>
+            <span className="bg-background px-2 text-muted-foreground">{t.auth.or}</span>
           </div>
         </div>
 
@@ -206,7 +208,7 @@ export default function LoginForm() {
           <div className="w-full flex justify-center min-h-[44px]">
             <Button variant="outline" className="w-full border" disabled>
               <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-              Signing in with Google...
+              {t.auth.signingInWithGoogle}
             </Button>
           </div>
         ) : (
@@ -214,9 +216,9 @@ export default function LoginForm() {
         )}
 
         <p className="text-center text-sm text-muted-foreground">
-          Don&apos;t have an account?{" "}
+          {t.auth.noAccount}{" "}
           <Link href="/signup" className="font-semibold text-foreground hover:underline">
-            Sign up
+            {t.auth.signUpLink}
           </Link>
         </p>
       </div>

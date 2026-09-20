@@ -5,6 +5,8 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ImageIcon, X, ChevronLeft, ChevronRight } from "lucide-react";
 import { eventService } from "@/services/event.service";
+import { useLanguage } from "@/context/LanguageContext";
+import { formatDate } from "@/lib/format-date";
 import type { Event } from "@/types";
 
 interface EventWithGallery extends Event {
@@ -12,6 +14,7 @@ interface EventWithGallery extends Event {
 }
 
 export default function GalleryContent() {
+  const { t, dateLocale } = useLanguage();
   const [events, setEvents] = useState<EventWithGallery[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [lightboxEvent, setLightboxEvent] = useState<EventWithGallery | null>(null);
@@ -105,17 +108,17 @@ export default function GalleryContent() {
   return (
     <div className="container mx-auto px-4 py-8">
       <div className="mb-8">
-        <h1 className="text-3xl font-bold">Gallery</h1>
-        <p className="text-muted-foreground mt-2">Photos from our events</p>
+        <h1 className="text-3xl font-bold">{t.gallery.title}</h1>
+        <p className="text-muted-foreground mt-2">{t.gallery.subtitle}</p>
       </div>
 
       {events.length === 0 ? (
         <Card>
           <CardContent className="flex flex-col items-center justify-center py-16">
             <ImageIcon className="h-12 w-12 text-muted-foreground mb-4" />
-            <p className="text-muted-foreground">No photos available yet</p>
+            <p className="text-muted-foreground">{t.gallery.noPhotosAvailable}</p>
             <p className="text-xs text-muted-foreground mt-1">
-              Check back after our next event
+              {t.gallery.checkBackLater}
             </p>
           </CardContent>
         </Card>
@@ -126,7 +129,7 @@ export default function GalleryContent() {
               <div className="mb-4">
                 <h2 className="text-xl font-bold">{event.title}</h2>
                 <p className="text-sm text-muted-foreground">
-                  {new Date(event.eventDate).toLocaleDateString("en-US", {
+                  {formatDate(event.eventDate, dateLocale, {
                     month: "long",
                     day: "numeric",
                     year: "numeric",

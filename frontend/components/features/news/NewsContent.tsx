@@ -7,6 +7,8 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Newspaper, Calendar } from "lucide-react";
+import { useLanguage } from "@/context/LanguageContext";
+import { formatDate } from "@/lib/format-date";
 import type { News } from "@/types";
 
 interface NewsContentProps {
@@ -14,6 +16,7 @@ interface NewsContentProps {
 }
 
 export default function NewsContent({ initialNews = [] }: NewsContentProps) {
+  const { t, dateLocale } = useLanguage();
   const [news, setNews] = useState<News[]>(initialNews);
   const [loading, setLoading] = useState(initialNews.length === 0);
 
@@ -40,16 +43,16 @@ export default function NewsContent({ initialNews = [] }: NewsContentProps) {
       <section className="bg-gradient-to-r from-[#1a5c2a] to-[#2d8a42] text-white py-16">
         <div className="container px-4 text-center">
           <Newspaper className="h-12 w-12 mx-auto mb-4 opacity-80" />
-          <h1 className="text-4xl font-bold mb-4">News & Updates</h1>
+          <h1 className="text-4xl font-bold mb-4">{t.news.heroTitle}</h1>
           <p className="text-lg text-white/80 max-w-2xl mx-auto">
-            Stay informed with the latest announcements, events, and updates from Maison ZDR.
+            {t.news.heroSubtitle}
           </p>
         </div>
       </section>
 
       {/* News Grid */}
       <div className="container px-4 py-12">
-        <h2 className="text-3xl font-bold mb-6">Latest News</h2>
+        <h2 className="text-3xl font-bold mb-6">{t.news.latestNews}</h2>
         {loading ? (
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             {Array.from({ length: 3 }).map((_, i) => (
@@ -82,7 +85,7 @@ export default function NewsContent({ initialNews = [] }: NewsContentProps) {
                       </div>
                     )}
                     <Badge className="absolute top-3 right-3 bg-[#1a5c2a] hover:bg-[#144a22]">
-                      News
+                      {t.news.badge}
                     </Badge>
                   </div>
                   <CardContent className="p-5 space-y-3">
@@ -93,7 +96,7 @@ export default function NewsContent({ initialNews = [] }: NewsContentProps) {
                     <div className="flex items-center gap-2 text-sm text-muted-foreground">
                       <Calendar className="h-4 w-4" />
                       <span>
-                        {new Date(item.createdAt).toLocaleDateString("en-US", {
+                        {formatDate(item.createdAt, dateLocale, {
                           weekday: "long",
                           year: "numeric",
                           month: "long",
@@ -103,7 +106,7 @@ export default function NewsContent({ initialNews = [] }: NewsContentProps) {
                     </div>
                     {item.author && (
                       <p className="text-xs text-muted-foreground">
-                        By {item.author.name}
+                        {t.news.byAuthor} {item.author.name}
                       </p>
                     )}
                   </CardContent>
@@ -114,7 +117,7 @@ export default function NewsContent({ initialNews = [] }: NewsContentProps) {
         )}
         {!loading && news.length === 0 && (
           <p className="text-center text-muted-foreground py-12">
-            No news articles available yet.
+            {t.news.noNewsAvailable}
           </p>
         )}
       </div>

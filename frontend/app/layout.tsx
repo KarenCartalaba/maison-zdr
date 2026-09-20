@@ -3,6 +3,7 @@ import { Geist, Geist_Mono } from "next/font/google"
 
 import "./globals.css"
 import { AuthProvider } from "@/context/AuthContext"
+import { LanguageProvider } from "@/context/LanguageContext"
 import PWARegistrar from "@/components/common/PWARegistrar"
 import { Toaster } from "sonner"
 import { cn } from "@/lib/utils";
@@ -45,8 +46,10 @@ export default function RootLayout({
       <body>
         <PWARegistrar />
         <AuthProvider>
-          {children}
-          <Toaster />
+          <LanguageProvider>
+            {children}
+            <Toaster />
+          </LanguageProvider>
         </AuthProvider>
       </body>
     </html>

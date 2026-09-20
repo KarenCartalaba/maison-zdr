@@ -8,6 +8,7 @@ import { Controller, useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { useAuth } from "@/context/AuthContext";
+import { useLanguage } from "@/context/LanguageContext";
 import { registrationService } from "@/services/registration.service";
 import { eventService } from "@/services/event.service";
 import { Button } from "@/components/ui/button";
@@ -17,12 +18,6 @@ import { Field, FieldError, FieldGroup, FieldLabel } from "@/components/ui/field
 import { ArrowLeft, Check, User, Users, ClipboardCheck, Trash2, Loader2 } from "lucide-react";
 import EventImage from "@/components/ui/event-image";
 import Link from "next/link";
-
-const STEPS = [
-  { label: "Personal Information", icon: User },
-  { label: "Guest Information", icon: Users },
-  { label: "Review Informations", icon: ClipboardCheck },
-];
 
 const step1Schema = z.object({
   firstName: z.string().min(1, "First name is required"),
@@ -50,7 +45,14 @@ export default function RegistrationWizardContent({ initialEvent = null }: { ini
   const router = useRouter();
   const params = useParams();
   const { user } = useAuth();
+  const { t, dateLocale } = useLanguage();
   const eventId = params.id as string;
+
+  const STEPS = [
+    { label: t.registration.stepPersonal, icon: User },
+    { label: t.registration.stepGuests, icon: Users },
+    { label: t.registration.stepReview, icon: ClipboardCheck },
+  ];
 
   const [currentStep, setCurrentStep] = useState(1);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -174,36 +176,35 @@ export default function RegistrationWizardContent({ initialEvent = null }: { ini
         <Card className="max-w-lg w-full">
           <CardContent className="p-8 space-y-6">
             <div className="text-center space-y-2">
-              <p className="text-sm font-medium text-muted-foreground uppercase tracking-wide">Registration Confirmed</p>
+              <p className="text-sm font-medium text-muted-foreground uppercase tracking-wide">{t.registration.registrationConfirmed}</p>
               <h2 className="text-2xl font-bold text-[#1a5c2a]">
-                You&apos;re on the list for {eventData?.title || "this event"}.
+                {t.registration.onTheList.replace("{title}", eventData?.title || "this event")}
               </h2>
             </div>
 
             <div className="rounded-lg border p-6 space-y-3">
-              <p className="text-sm font-medium text-muted-foreground uppercase tracking-wide">Registration Confirmed</p>
+              <p className="text-sm font-medium text-muted-foreground uppercase tracking-wide">{t.registration.registrationConfirmed}</p>
               <div className="flex items-center gap-3">
                 <span className="text-2xl font-bold">{referenceCode}</span>
                 <Button variant="outline" size="sm" onClick={() => navigator.clipboard.writeText(referenceCode)}>
-                  Copy
+                  {t.registration.copy}
                 </Button>
               </div>
               <p className="text-sm text-muted-foreground">
-                Give this reference number at the door and our team will find your registration.
-                Keep it handy — no printout needed.
+                {t.registration.giveReference}
               </p>
             </div>
 
             <div className="rounded-lg border p-6 space-y-4">
-              <h3 className="font-semibold text-[#1a5c2a]">Who&apos;s attending</h3>
+              <h3 className="font-semibold text-[#1a5c2a]">{t.registration.whosAttending}</h3>
               <div className="space-y-2">
                 <div className="flex items-center justify-between py-2 border-b">
-                  <span className="text-muted-foreground">Registrant</span>
-                  <span className="font-medium">{partySize} people</span>
+                  <span className="text-muted-foreground">{t.registration.registrant}</span>
+                  <span className="font-medium">{partySize} {partySize > 1 ? t.registration.people : t.registration.person}</span>
                 </div>
                 {guests.map((guest, i) => (
                   <div key={i} className="flex items-center justify-between py-2 border-b last:border-0">
-                    <span className="text-muted-foreground">Guest {i + 1}</span>
+                    <span className="text-muted-foreground">{t.registration.guestNumber.replace("{number}", String(i + 1))}</span>
                     <span className="font-medium">{guest.name}</span>
                   </div>
                 ))}
@@ -212,10 +213,10 @@ export default function RegistrationWizardContent({ initialEvent = null }: { ini
 
             <div className="flex gap-4">
               <Link href={`/events/${eventId}`} className="flex-1">
-                <Button variant="outline" className="w-full">Back to Event</Button>
+                <Button variant="outline" className="w-full">{t.registration.backToEvent}</Button>
               </Link>
               <Link href="/my-registrations" className="flex-1">
-                <Button className="w-full bg-[#1a5c2a] hover:bg-[#144a22]">My Registrations</Button>
+                <Button className="w-full bg-[#1a5c2a] hover:bg-[#144a22]">{t.registration.myRegistrations}</Button>
               </Link>
             </div>
           </CardContent>
@@ -228,11 +229,11 @@ export default function RegistrationWizardContent({ initialEvent = null }: { ini
     <div className="container px-4 py-8">
       <Link href={`/events/${eventId}`} className="inline-flex items-center text-sm text-muted-foreground hover:text-foreground mb-6">
         <ArrowLeft className="h-4 w-4 mr-2" />
-        Back to Events
+        {t.registration.backToEvents}
       </Link>
 
-      <h1 className="text-3xl font-bold mb-2">Event Registration</h1>
-      <p className="text-muted-foreground mb-8">Confirm your details below.</p>
+      <h1 className="text-3xl font-bold mb-2">{t.registration.eventRegistration}</h1>
+      <p className="text-muted-foreground mb-8">{t.registration.confirmDetails}</p>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         {/* Main Form */}
@@ -272,8 +273,8 @@ export default function RegistrationWizardContent({ initialEvent = null }: { ini
               {currentStep === 1 && (
                 <div className="space-y-6">
                   <div>
-                    <h2 className="text-xl font-bold mb-1">Personal Information</h2>
-                    <p className="text-sm text-muted-foreground">Please provide your details to continue with your event registration.</p>
+                    <h2 className="text-xl font-bold mb-1">{t.registration.step1Title}</h2>
+                    <p className="text-sm text-muted-foreground">{t.registration.step1Subtitle}</p>
                   </div>
                   <form onSubmit={(e) => { e.preventDefault(); goToStep2(); }} noValidate>
                     <FieldGroup>
@@ -282,7 +283,7 @@ export default function RegistrationWizardContent({ initialEvent = null }: { ini
                         control={step1Form.control}
                         render={({ field, fieldState }) => (
                           <Field data-invalid={fieldState.invalid}>
-                            <FieldLabel htmlFor="reg-firstName">First Name</FieldLabel>
+                            <FieldLabel htmlFor="reg-firstName">{t.registration.firstName}</FieldLabel>
                             <Input {...field} id="reg-firstName" aria-invalid={fieldState.invalid} />
                             {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
                           </Field>
@@ -293,7 +294,7 @@ export default function RegistrationWizardContent({ initialEvent = null }: { ini
                         control={step1Form.control}
                         render={({ field, fieldState }) => (
                           <Field data-invalid={fieldState.invalid}>
-                            <FieldLabel htmlFor="reg-lastName">Last Name</FieldLabel>
+                            <FieldLabel htmlFor="reg-lastName">{t.registration.lastName}</FieldLabel>
                             <Input {...field} id="reg-lastName" aria-invalid={fieldState.invalid} />
                             {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
                           </Field>
@@ -304,7 +305,7 @@ export default function RegistrationWizardContent({ initialEvent = null }: { ini
                         control={step1Form.control}
                         render={({ field, fieldState }) => (
                           <Field data-invalid={fieldState.invalid}>
-                            <FieldLabel htmlFor="reg-email">Email Address</FieldLabel>
+                            <FieldLabel htmlFor="reg-email">{t.registration.emailAddress}</FieldLabel>
                             <Input {...field} id="reg-email" type="email" aria-invalid={fieldState.invalid} />
                             {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
                           </Field>
@@ -312,7 +313,7 @@ export default function RegistrationWizardContent({ initialEvent = null }: { ini
                       />
                     </FieldGroup>
                     <Button type="submit" className="w-full bg-[#1a5c2a] hover:bg-[#144a22] mt-4">
-                      Continue
+                      {t.registration.continueBtn}
                     </Button>
                   </form>
                 </div>
@@ -322,22 +323,22 @@ export default function RegistrationWizardContent({ initialEvent = null }: { ini
               {currentStep === 2 && (
                 <div className="space-y-6">
                   <div>
-                    <h2 className="text-xl font-bold mb-1">Guest Information</h2>
-                    <p className="text-sm text-muted-foreground">Bringing anyone with you? Add your guests below.</p>
+                    <h2 className="text-xl font-bold mb-1">{t.registration.step2Title}</h2>
+                    <p className="text-sm text-muted-foreground">{t.registration.step2Subtitle}</p>
                   </div>
 
                   {guests.length === 0 ? (
                     <div className="rounded-lg border-2 border-dashed p-12 text-center space-y-2">
                       <Users className="h-8 w-8 mx-auto text-muted-foreground" />
-                      <p className="font-medium">You&apos;re registering solo.</p>
-                      <p className="text-sm text-muted-foreground">Add a guest below, or continue on your own.</p>
+                      <p className="font-medium">{t.registration.registeringSolo}</p>
+                      <p className="text-sm text-muted-foreground">{t.registration.addGuestHint}</p>
                     </div>
                   ) : (
                     <div className="space-y-4">
                       {guests.map((guest, index) => (
                         <div key={index} className="rounded-lg border p-4 space-y-3">
                           <div className="flex items-center justify-between">
-                            <h4 className="font-medium">Guest {index + 1}</h4>
+                            <h4 className="font-medium">{t.registration.guestNumber.replace("{number}", String(index + 1))}</h4>
                             <Button variant="ghost" size="icon" onClick={() => removeGuest(index)}>
                               <Trash2 className="h-4 w-4 text-muted-foreground" />
                             </Button>
@@ -347,11 +348,11 @@ export default function RegistrationWizardContent({ initialEvent = null }: { ini
                             control={step2Form.control}
                             render={({ field, fieldState }) => (
                               <Field data-invalid={fieldState.invalid}>
-                                <FieldLabel htmlFor={`guest-name-${index}`}>Guest Name</FieldLabel>
+                                <FieldLabel htmlFor={`guest-name-${index}`}>{t.registration.guestName}</FieldLabel>
                                 <Input
                                   {...field}
                                   id={`guest-name-${index}`}
-                                  placeholder="Enter guest name"
+                                  placeholder={t.registration.enterGuestName}
                                   aria-invalid={fieldState.invalid}
                                 />
                                 {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
@@ -366,20 +367,25 @@ export default function RegistrationWizardContent({ initialEvent = null }: { ini
                   {guests.length < maxGuests ? (
                     <div className="space-y-2">
                       <Button variant="outline" onClick={addGuest}>
-                        + Add Guest
+                        {t.registration.addGuest}
                       </Button>
                       <p className="text-xs text-muted-foreground">
-                        {guests.length === 0 ? `You can add up to ${maxGuests} guests.` : `You can add ${maxGuests - guests.length} more guest${maxGuests - guests.length > 1 ? "s" : ""}.`}
+                        {guests.length === 0
+                          ? t.registration.maxGuestsHint.replace("{max}", String(maxGuests))
+                          : (maxGuests - guests.length) === 1
+                            ? t.registration.oneMoreGuest
+                            : t.registration.moreGuests.replace("{count}", String(maxGuests - guests.length))
+                        }
                       </p>
                     </div>
                   ) : (
-                    <p className="text-xs text-muted-foreground">Maximum of {maxGuests} guests reached.</p>
+                    <p className="text-xs text-muted-foreground">{t.registration.maxGuestsReached.replace("{max}", String(maxGuests))}</p>
                   )}
 
                   <div className="border-t pt-4 flex gap-4">
-                    <Button variant="outline" onClick={() => setCurrentStep(1)}>Back</Button>
+                    <Button variant="outline" onClick={() => setCurrentStep(1)}>{t.registration.back}</Button>
                     <Button className="flex-1 bg-[#1a5c2a] hover:bg-[#144a22]" onClick={goToStep3}>
-                      Continue
+                      {t.registration.continueBtn}
                     </Button>
                   </div>
                 </div>
@@ -389,28 +395,28 @@ export default function RegistrationWizardContent({ initialEvent = null }: { ini
               {currentStep === 3 && (
                 <div className="space-y-6">
                   <div>
-                    <h2 className="text-xl font-bold mb-1">Review Information</h2>
-                    <p className="text-sm text-muted-foreground">Please review your information before confirming your registration.</p>
+                    <h2 className="text-xl font-bold mb-1">{t.registration.step3Title}</h2>
+                    <p className="text-sm text-muted-foreground">{t.registration.step3Subtitle}</p>
                   </div>
 
                   <div className="rounded-lg border p-6 space-y-4">
                     <div className="flex items-center justify-between">
-                      <h3 className="font-semibold">Personal Information</h3>
+                      <h3 className="font-semibold">{t.registration.step1Title}</h3>
                       <Button variant="ghost" size="sm" onClick={() => setCurrentStep(1)}>
-                        Edit
+                        {t.registration.edit}
                       </Button>
                     </div>
                     <div className="space-y-2 text-sm">
                       <div className="flex justify-between py-1 border-b">
-                        <span className="text-muted-foreground">First Name</span>
+                        <span className="text-muted-foreground">{t.registration.firstName}</span>
                         <span className="font-medium">{step1Form.getValues("firstName")}</span>
                       </div>
                       <div className="flex justify-between py-1 border-b">
-                        <span className="text-muted-foreground">Last Name</span>
+                        <span className="text-muted-foreground">{t.registration.lastName}</span>
                         <span className="font-medium">{step1Form.getValues("lastName")}</span>
                       </div>
                       <div className="flex justify-between py-1">
-                        <span className="text-muted-foreground">Email</span>
+                        <span className="text-muted-foreground">{t.registration.emailAddress}</span>
                         <span className="font-medium">{step1Form.getValues("email")}</span>
                       </div>
                     </div>
@@ -418,19 +424,19 @@ export default function RegistrationWizardContent({ initialEvent = null }: { ini
 
                   <div className="rounded-lg border p-6 space-y-4">
                     <div className="flex items-center justify-between">
-                      <h3 className="font-semibold">Guest Information</h3>
+                      <h3 className="font-semibold">{t.registration.step2Title}</h3>
                       <Button variant="ghost" size="sm" onClick={() => setCurrentStep(2)}>
-                        Edit
+                        {t.registration.edit}
                       </Button>
                     </div>
                     <div className="space-y-2 text-sm">
                       <div className="flex justify-between py-1 border-b">
-                        <span className="text-muted-foreground">Party size</span>
-                        <span className="font-medium">{partySize} people</span>
+                        <span className="text-muted-foreground">{t.registration.partySize}</span>
+                        <span className="font-medium">{partySize} {partySize > 1 ? t.registration.people : t.registration.person}</span>
                       </div>
                       {guests.map((guest, i) => (
                         <div key={i} className="flex justify-between py-1 border-b last:border-0">
-                          <span className="text-muted-foreground">Guest {i + 1}</span>
+                          <span className="text-muted-foreground">{t.registration.guestNumber.replace("{number}", String(i + 1))}</span>
                           <span className="font-medium">{guest.name}</span>
                         </div>
                       ))}
@@ -438,14 +444,9 @@ export default function RegistrationWizardContent({ initialEvent = null }: { ini
                   </div>
 
                   <div className="rounded-lg border p-6 space-y-4">
-                    <h3 className="font-semibold">Terms & Conditions</h3>
+                    <h3 className="font-semibold">{t.registration.termsTitle}</h3>
                     <p className="text-sm text-muted-foreground leading-relaxed">
-                      By registering for this event, you agree to the following terms:
-                      (1) Registration is non-transferable.
-                      (2) Cancellations must be made at least 24 hours before the event.
-                      (3) Guests are your responsibility and count toward the event&apos;s maximum capacity.
-                      (4) Maison ZDR reserves the right to cancel or reschedule events with prior notice.
-                      (5) You consent to photography and video recording during the event for promotional purposes.
+                      {t.registration.termsText}
                     </p>
                     <Controller
                       name="agreedToTerms"
@@ -460,7 +461,7 @@ export default function RegistrationWizardContent({ initialEvent = null }: { ini
                               className="mt-1 h-4 w-4 rounded border-gray-300"
                             />
                             <span className="text-sm font-medium">
-                              I have read and agree to the Terms & Conditions and Privacy Policy of Maison ZDR.
+                              {t.registration.agreeTerms}
                             </span>
                           </label>
                           {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
@@ -470,16 +471,16 @@ export default function RegistrationWizardContent({ initialEvent = null }: { ini
                   </div>
 
                   <div className="border-t pt-4 flex gap-4">
-                    <Button variant="outline" onClick={() => setCurrentStep(2)}>Back</Button>
+                    <Button variant="outline" onClick={() => setCurrentStep(2)}>{t.registration.back}</Button>
                     <Button
                       className="flex-1 bg-[#1a5c2a] hover:bg-[#144a22]"
                       disabled={!agreedToTerms || isSubmitting}
                       onClick={handleSubmit}
                     >
                       {isSubmitting ? (
-                        <><Loader2 className="mr-2 h-4 w-4 animate-spin" />Submitting...</>
+                        <><Loader2 className="mr-2 h-4 w-4 animate-spin" />{t.registration.submitting}</>
                       ) : (
-                        "Submit Registration"
+                        t.registration.submitRegistration
                       )}
                     </Button>
                   </div>
@@ -496,40 +497,40 @@ export default function RegistrationWizardContent({ initialEvent = null }: { ini
               <EventImage src={eventData?.gallery?.[0]} title={eventData?.title} className="aspect-video" />
               <CardContent className="p-6 space-y-4">
                 <div>
-                  <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Summary</p>
-                  <h3 className="text-lg font-bold mt-1">{eventData?.title || "Loading..."}</h3>
+                  <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">{t.registration.summary}</p>
+                  <h3 className="text-lg font-bold mt-1">{eventData?.title || t.registration.loading}</h3>
                 </div>
                 <div className="space-y-2 text-sm">
                   <div className="flex items-start gap-2">
                     <span className="text-muted-foreground">📅</span>
-                    <span>{eventData ? `${new Date(eventData.eventDate).toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric" })} ${new Date(eventData.eventDate).toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" })}` : "Loading..."}</span>
+                    <span>{eventData ? `${new Date(eventData.eventDate).toLocaleDateString(dateLocale, { weekday: "long", month: "long", day: "numeric" })} ${new Date(eventData.eventDate).toLocaleTimeString(dateLocale, { hour: "numeric", minute: "2-digit" })}` : t.registration.loading}</span>
                   </div>
                   <div className="flex items-start gap-2">
                     <span className="text-muted-foreground">📍</span>
-                    <span>{eventData?.location || "Loading..."}</span>
+                    <span>{eventData?.location || t.registration.loading}</span>
                   </div>
                 </div>
                 <div className="border-t pt-4 space-y-2 text-sm">
                   <div className="flex items-center gap-2">
                     <User className="h-4 w-4 text-muted-foreground" />
                     <div>
-                      <p className="text-xs text-muted-foreground">Registrant</p>
+                      <p className="text-xs text-muted-foreground">{t.registration.registrant}</p>
                       <p className="font-medium">{step1Form.watch("firstName")} {step1Form.watch("lastName")}</p>
                     </div>
                   </div>
                   <div className="flex items-center gap-2">
                     <Users className="h-4 w-4 text-muted-foreground" />
                     <div>
-                      <p className="text-xs text-muted-foreground">Party Size</p>
+                      <p className="text-xs text-muted-foreground">{t.registration.partySizeLabel}</p>
                       <p className="font-medium">
-                        {partySize} person{partySize > 1 ? "s" : ""}
-                        {guests.length > 0 && ` — ${guests.length} guest${guests.length > 1 ? "s" : ""}`}
+                        {partySize} {partySize > 1 ? t.registration.people : t.registration.person}
+                        {guests.length > 0 && ` — ${guests.length} ${guests.length > 1 ? t.registration.guests : t.registration.guest}`}
                       </p>
                     </div>
                   </div>
                 </div>
                 <div className="border-t pt-4 flex items-center justify-between text-sm">
-                  <span className="text-muted-foreground">Places Remaining</span>
+                  <span className="text-muted-foreground">{t.registration.placesRemaining}</span>
                   <span className="font-bold">{eventData ? eventData.maxParticipants - (eventData._count?.registrations || 0) : "—"}</span>
                 </div>
               </CardContent>

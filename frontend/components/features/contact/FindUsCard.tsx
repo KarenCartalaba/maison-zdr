@@ -1,10 +1,14 @@
+"use client";
+
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { useLanguage } from "@/context/LanguageContext";
 
 export default function FindUsCard() {
+  const { t } = useLanguage();
   return (
     <Card className="border shadow-md">
       <CardHeader>
-        <CardTitle>Find Us</CardTitle>
+        <CardTitle>{t.contact.findUs}</CardTitle>
       </CardHeader>
       <CardContent>
         {/* TODO: Replace with actual Google Maps embed or interactive map */}
