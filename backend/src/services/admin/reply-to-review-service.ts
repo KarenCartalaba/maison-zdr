@@ -10,7 +10,6 @@ export async function ReplyToReviewService(id: string, reply: string) {
     if (!review) return { code: 404, status: "error", message: "Review not found" };
 
     const updated = await adminRepo.replyToReview(id, reply);
-    await cacheInvalidatePattern("admin:reviews:*");
     await cacheInvalidatePattern("admin:*");
     await cacheInvalidate(`event:${review.eventId}`);
     await cacheInvalidatePattern(`event:${review.eventId}*`);

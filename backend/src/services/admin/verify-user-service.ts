@@ -10,7 +10,6 @@ export async function VerifyUserService(id: string) {
     if (!user) return { code: 404, status: "error", message: "User not found" };
 
     const updated = await adminRepo.verifyUser(id);
-    await cacheInvalidatePattern("admin:users:*");
     await cacheInvalidatePattern("admin:*");
     return { code: 200, status: "success", message: "User verified successfully", data: { user: { id: updated.id, name: updated.name, email: updated.email, emailVerified: updated.emailVerified } } };
   } catch (error) {

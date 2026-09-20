@@ -18,6 +18,7 @@ import {
   DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu";
 import { DataTable, type DataTableColumn } from "@/components/ui/data-table";
+import { DataTableColumnHeader } from "@/components/ui/data-table-column-header";
 import {
   Search,
   Users,
@@ -200,7 +201,7 @@ export default function UsersContent() {
   const usersColumns: DataTableColumn[] = [
     {
       accessorKey: "name",
-      header: "USER",
+      header: ({ column }) => <DataTableColumnHeader column={column} title="USER" />,
       cell: ({ row }) => (
         <div className="flex items-center gap-3">
           <div className="h-8 w-8 rounded-full bg-muted flex items-center justify-center">
@@ -256,7 +257,7 @@ export default function UsersContent() {
     },
     {
       accessorKey: "createdAt",
-      header: "JOINED",
+      header: ({ column }) => <DataTableColumnHeader column={column} title="JOINED" />,
       cell: ({ row }) => formatDate(row.original.createdAt),
     },
     {
@@ -417,7 +418,14 @@ export default function UsersContent() {
       ) : (
         <Card>
           <CardContent className="p-0">
-            <DataTable columns={usersColumns} data={users} />
+            <DataTable
+              columns={usersColumns}
+              data={users}
+              enablePagination
+              enableSorting
+              enableFiltering={false}
+              pageSize={10}
+            />
           </CardContent>
         </Card>
       )}

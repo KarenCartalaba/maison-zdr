@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import EventImage from "@/components/ui/event-image";
 import { DataTable, type DataTableColumn } from "@/components/ui/data-table";
+import { DataTableColumnHeader } from "@/components/ui/data-table-column-header";
 import {
   Calendar,
   Users,
@@ -61,7 +62,7 @@ const categoryChartConfig = {
 const upcomingColumns: DataTableColumn[] = [
   {
     accessorKey: "title",
-    header: "Title",
+    header: ({ column }) => <DataTableColumnHeader column={column} title="Title" />,
     cell: ({ row }) => (
       <div className="flex items-center gap-3">
         <div className="h-10 w-14 rounded overflow-hidden">
@@ -145,7 +146,7 @@ const recentColumns: DataTableColumn[] = [
   },
   {
     id: "createdAt",
-    header: "REGISTRATION DATE",
+    header: ({ column }) => <DataTableColumnHeader column={column} title="REGISTRATION DATE" />,
     cell: ({ row }) => (
       <span className="text-muted-foreground">
         {new Date(row.original.createdAt).toLocaleDateString("en-US", {
@@ -552,7 +553,7 @@ export default function DashboardContent({
           </CardTitle>
         </CardHeader>
         <CardContent className="p-0">
-          <DataTable columns={upcomingColumns} data={upcomingEvents} />
+          <DataTable columns={upcomingColumns} data={upcomingEvents} enablePagination enableSorting pageSize={5} />
         </CardContent>
       </Card>
 
@@ -562,7 +563,7 @@ export default function DashboardContent({
           <CardTitle className="text-base">Recent Registrations</CardTitle>
         </CardHeader>
         <CardContent className="p-0">
-          <DataTable columns={recentColumns} data={recentRegistrations} />
+          <DataTable columns={recentColumns} data={recentRegistrations} enablePagination enableSorting pageSize={5} />
         </CardContent>
       </Card>
 
@@ -594,7 +595,7 @@ export default function DashboardContent({
                         </span>
                       ))}
                     </div>
-                    <span className="text-sm font-medium">{event.rating}</span>
+                    <span className="text-sm font-medium">{event.rating.toFixed(1)}</span>
                   </div>
                 </div>
                 <div className="h-2 w-full rounded-full bg-muted">

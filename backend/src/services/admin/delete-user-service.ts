@@ -11,7 +11,6 @@ export async function DeleteUserService(id: string) {
     if (user.role === "ADMIN") return { code: 400, status: "error", message: "Cannot delete an admin user" };
 
     await adminRepo.deleteUser(id);
-    await cacheInvalidatePattern("admin:users:*");
     await cacheInvalidatePattern("admin:*");
     return { code: 200, status: "success", message: "User deleted successfully" };
   } catch (error) {

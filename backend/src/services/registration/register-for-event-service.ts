@@ -97,6 +97,7 @@ export async function RegisterForEventService(
     await cacheInvalidate(REG_BY_EVENT(eventId));
     await cacheInvalidate(REG_BY_USER(userId));
     await cacheInvalidatePattern("event:*");
+    await cacheInvalidatePattern("events:*");
     await cacheInvalidatePattern("admin:*");
 
     const user = await authRepo.findUserById(userId);

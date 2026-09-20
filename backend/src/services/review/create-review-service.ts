@@ -1,6 +1,6 @@
 import { ReviewRepository } from "@/repositories/review.repository";
 import { RegistrationRepository } from "@/repositories/registration.repository";
-import { cacheInvalidatePattern } from "@/lib/redis";
+import { cacheInvalidate, cacheInvalidatePattern } from "@/lib/redis";
 
 const reviewRepo = new ReviewRepository();
 const registrationRepo = new RegistrationRepository();
@@ -25,8 +25,10 @@ export async function CreateReviewService(userId: string, data: { eventId: strin
     if (existing) return { code: 409, status: "error", message: "You have already reviewed this event" };
 
     const review = await reviewRepo.createReview({ ...data, userId });
-    await cacheInvalidatePattern("admin:reviews:*");
     await cacheInvalidatePattern("admin:*");
+    await cacheInvalidate(`event:${data.eventId}`);
+    await cacheInvalidatePattern(`event:${data.eventId}*`);
+    await cacheInvalidatePattern("events:*");
 
     return { code: 201, status: "success", message: "Review submitted successfully", data: { review } };
   } catch (error) {

@@ -10,7 +10,6 @@ export async function UpdateUserRoleService(id: string, role: string) {
     if (!user) return { code: 404, status: "error", message: "User not found" };
 
     const updated = await adminRepo.updateUserRole(id, role);
-    await cacheInvalidatePattern("admin:users:*");
     await cacheInvalidatePattern("admin:*");
     return { code: 200, status: "success", message: "User role updated", data: { user: { id: updated.id, name: updated.name, email: updated.email, role: updated.role } } };
   } catch (error) {

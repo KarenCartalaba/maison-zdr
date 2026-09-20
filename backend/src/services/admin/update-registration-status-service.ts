@@ -1,6 +1,6 @@
 import { AdminRepository } from "@/repositories/admin.repository";
 import { RegistrationRepository } from "@/repositories/registration.repository";
-import { cacheInvalidatePattern } from "@/lib/redis";
+import { cacheInvalidate, cacheInvalidatePattern } from "@/lib/redis";
 import { prisma } from "@/lib/prisma";
 import { renderTemplate } from "@/utils/template";
 import { sendEmail } from "@/lib/nodemailer";
@@ -30,6 +30,7 @@ export async function UpdateRegistrationStatusService(id: string, status: string
     // Registration status affects public slot counts (events:all, event:{id})
     await cacheInvalidatePattern(`event:${registration.eventId}*`);
     await cacheInvalidatePattern("events:*");
+    await cacheInvalidate(`registrations:event:${registration.eventId}`);
     await cacheInvalidatePattern(`registrations:user:${registration.userId}`);
 
     // Notify the customer when an admin cancels their registration

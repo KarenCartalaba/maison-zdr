@@ -17,6 +17,7 @@ import {
   DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu";
 import { DataTable, type DataTableColumn } from "@/components/ui/data-table";
+import { DataTableColumnHeader } from "@/components/ui/data-table-column-header";
 import { ClipboardList, Download, Search, MoreHorizontal, Loader2 } from "lucide-react";
 import { adminService } from "@/services/admin.service";
 import type { AdminRegistration, RegistrationStats } from "@/types";
@@ -208,7 +209,8 @@ export default function RegistrationsContent() {
     },
     {
       id: "date",
-      header: "DATE",
+      accessorFn: (row) => row.event.eventDate,
+      header: ({ column }) => <DataTableColumnHeader column={column} title="DATE" />,
       cell: ({ row }) => formatDate(row.original.event.eventDate),
     },
     {
@@ -218,7 +220,7 @@ export default function RegistrationsContent() {
     },
     {
       accessorKey: "status",
-      header: "STATUS",
+      header: ({ column }) => <DataTableColumnHeader column={column} title="STATUS" />,
       cell: ({ row }) => (
         <Badge
           variant="outline"
@@ -392,7 +394,14 @@ export default function RegistrationsContent() {
       ) : (
         <Card>
           <CardContent className="p-0">
-            <DataTable columns={registrationColumns} data={filteredRegistrations} />
+            <DataTable
+              columns={registrationColumns}
+              data={filteredRegistrations}
+              enablePagination
+              enableSorting
+              enableFiltering={false}
+              pageSize={10}
+            />
           </CardContent>
         </Card>
       )}

@@ -8,6 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { DataTable, type DataTableColumn } from "@/components/ui/data-table";
+import { DataTableColumnHeader } from "@/components/ui/data-table-column-header";
 import { QrCode, Search, CheckCircle2, User, CalendarDays } from "lucide-react";
 import { adminService } from "@/services/admin.service";
 import type { AdminRegistration, CheckInEvent } from "@/types";
@@ -141,7 +142,8 @@ export default function CheckInsContent() {
   const checkInColumns: DataTableColumn[] = [
     {
       id: "guest",
-      header: "GUEST",
+      accessorFn: (row) => row.user.name,
+      header: ({ column }) => <DataTableColumnHeader column={column} title="GUEST" />,
       cell: ({ row }) => (
         <div className="flex items-center gap-3">
           <div className="h-8 w-8 rounded-full bg-muted flex items-center justify-center">
@@ -158,7 +160,7 @@ export default function CheckInsContent() {
     },
     {
       accessorKey: "checkedIn",
-      header: "STATUS",
+      header: ({ column }) => <DataTableColumnHeader column={column} title="STATUS" />,
       cell: ({ row }) => (
         <Badge
           variant={row.original.checkedIn ? "outline" : "secondary"}
@@ -314,7 +316,14 @@ export default function CheckInsContent() {
               </p>
             </div>
           ) : (
-            <DataTable columns={checkInColumns} data={filteredRegistrations} />
+            <DataTable
+              columns={checkInColumns}
+              data={filteredRegistrations}
+              enablePagination
+              enableSorting
+              enableFiltering={false}
+              pageSize={10}
+            />
           )}
         </CardContent>
       </Card>

@@ -11,11 +11,9 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Plus, Pencil, Trash2, Loader2, LayoutGrid, List } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { Pagination } from "@/components/ui/pagination";
 import { DataTable, type DataTableColumn } from "@/components/ui/data-table";
+import { DataTableColumnHeader } from "@/components/ui/data-table-column-header";
 import type { Event } from "@/types";
-
-const ITEMS_PER_PAGE = 6;
 
 interface AdminEventsContentProps {
   initialEvents?: any[];
@@ -27,7 +25,6 @@ export default function AdminEventsContent({ initialEvents = [] }: AdminEventsCo
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
   const { confirm, dialog } = useConfirm();
   const [activeTab, setActiveTab] = useState<"all" | "ongoing" | "upcoming" | "past" | "cancelled">("all");
-  const [currentPage, setCurrentPage] = useState(1);
 
   const now = new Date();
 
@@ -48,12 +45,6 @@ export default function AdminEventsContent({ initialEvents = [] }: AdminEventsCo
         return true;
     }
   });
-
-  const totalPages = Math.max(1, Math.ceil(filteredEvents.length / ITEMS_PER_PAGE));
-  const paginatedEvents = filteredEvents.slice(
-    (currentPage - 1) * ITEMS_PER_PAGE,
-    currentPage * ITEMS_PER_PAGE
-  );
 
   const eventTypeLabels: Record<string, string> = {
     FORMAL: "Formal",
@@ -83,10 +74,6 @@ export default function AdminEventsContent({ initialEvents = [] }: AdminEventsCo
     fetchEvents();
   }, [initialEvents.length]);
 
-  useEffect(() => {
-    setCurrentPage(1);
-  }, [activeTab]);
-
   const handleDelete = async (id: string) => {
     try {
       const response = await eventService.delete(id);
@@ -94,27 +81,6 @@ export default function AdminEventsContent({ initialEvents = [] }: AdminEventsCo
         const newEvents = events.filter((e) => e.id !== id);
         setEvents(newEvents);
         toast.success("Event deleted");
-        // Clamp page if last item on current page was deleted
-        const newFilteredCount = newEvents.filter((event) => {
-          const eventDate = new Date(event.eventDate);
-          const deadline = new Date(event.deadline);
-          switch (activeTab) {
-            case "ongoing":
-              return !event.isCancelled && eventDate <= now && deadline >= now;
-            case "upcoming":
-              return !event.isCancelled && eventDate > now;
-            case "past":
-              return !event.isCancelled && eventDate < now;
-            case "cancelled":
-              return event.isCancelled;
-            default:
-              return true;
-          }
-        }).length;
-        const newTotalPages = Math.max(1, Math.ceil(newFilteredCount / ITEMS_PER_PAGE));
-        if (currentPage > newTotalPages) {
-          setCurrentPage(newTotalPages);
-        }
       }
     } catch (err) {
       toast.error(getErrorMessage(err, "Failed to delete event"));
@@ -140,7 +106,7 @@ export default function AdminEventsContent({ initialEvents = [] }: AdminEventsCo
     },
     {
       accessorKey: "title",
-      header: "TITLE",
+      header: ({ column }) => <DataTableColumnHeader column={column} title="TITLE" />,
       cell: ({ row }) => (
         <span className="font-medium">{row.original.title}</span>
       ),
@@ -301,7 +267,7 @@ export default function AdminEventsContent({ initialEvents = [] }: AdminEventsCo
               No events found. Create your first event!
             </div>
           ) : (
-            paginatedEvents.map((event) => (
+            filteredEvents.map((event) => (
               <Card key={event.id} className="overflow-hidden">
                 <div className="h-40 bg-muted">
                   {event.gallery?.[0] ? (
@@ -372,18 +338,15 @@ export default function AdminEventsContent({ initialEvents = [] }: AdminEventsCo
             ) : (
             <DataTable
               columns={eventColumns}
-              data={paginatedEvents}
+              data={filteredEvents}
+              enablePagination
+              enableSorting
+              pageSize={10}
               getHeaderClassName={(id) => id === "actions" ? "text-right" : undefined}
             />
             )}
           </CardContent>
         </Card>
-      )}
-      {/* Pagination */}
-      {filteredEvents.length > 0 && (
-        <div className="mt-6">
-          <Pagination currentPage={currentPage} totalPages={totalPages} onPageChange={setCurrentPage} />
-        </div>
       )}
     </div>
   );

@@ -10,6 +10,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Plus, Pencil, Trash2, Loader2, X, Save } from "lucide-react";
 import { DataTable, type DataTableColumn } from "@/components/ui/data-table";
+import { DataTableColumnHeader } from "@/components/ui/data-table-column-header";
 import type { News } from "@/types";
 
 interface AdminNewsContentProps {
@@ -135,7 +136,7 @@ export default function AdminNewsContent({ initialNews = [] }: AdminNewsContentP
   const newsColumns: DataTableColumn[] = [
     {
       accessorKey: "title",
-      header: "TITLE",
+      header: ({ column }) => <DataTableColumnHeader column={column} title="TITLE" />,
       cell: ({ row }) => (
         <span className="font-medium">{row.original.title}</span>
       ),
@@ -351,7 +352,7 @@ export default function AdminNewsContent({ initialNews = [] }: AdminNewsContentP
               No news articles yet. Create your first article!
             </div>
           ) : (
-            <DataTable columns={newsColumns} data={news} />
+            <DataTable columns={newsColumns} data={news} enablePagination enableSorting pageSize={10} />
           )}
         </CardContent>
       </Card>

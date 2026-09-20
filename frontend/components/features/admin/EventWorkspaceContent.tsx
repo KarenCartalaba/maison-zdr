@@ -13,6 +13,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { DataTable, type DataTableColumn } from "@/components/ui/data-table";
+import { DataTableColumnHeader } from "@/components/ui/data-table-column-header";
 import { Field, FieldError, FieldGroup, FieldLabel } from "@/components/ui/field";
 import {
   ArrowLeft, Loader2, Pencil, Trash2, Calendar, MapPin, Users, Clock,
@@ -294,7 +295,8 @@ function ParticipantsTab({ eventId }: { eventId: string }) {
   const participantColumns: DataTableColumn[] = [
     {
       id: "guest",
-      header: "GUEST",
+      accessorFn: (row) => row.user?.name || "",
+      header: ({ column }) => <DataTableColumnHeader column={column} title="GUEST" />,
       cell: ({ row }) => (
         <div>
           <p className="font-medium">{row.original.user?.name || "Unknown"}</p>
@@ -304,7 +306,8 @@ function ParticipantsTab({ eventId }: { eventId: string }) {
     },
     {
       id: "status",
-      header: "STATUS",
+      accessorFn: (row) => row.status,
+      header: ({ column }) => <DataTableColumnHeader column={column} title="STATUS" />,
       cell: ({ row }) => (
         <Badge
           variant={
@@ -453,6 +456,10 @@ function ParticipantsTab({ eventId }: { eventId: string }) {
             <DataTable
               columns={participantColumns}
               data={filtered}
+              enablePagination
+              enableSorting
+              enableFiltering={false}
+              pageSize={10}
               emptyContent={
                 <div className="px-6 py-12 text-center text-muted-foreground">
                   <Inbox className="h-8 w-8 mx-auto mb-2 text-muted-foreground" />

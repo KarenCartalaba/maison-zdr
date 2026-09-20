@@ -10,9 +10,10 @@ export async function UpdateReviewStatusService(id: string, status: string) {
     if (!review) return { code: 404, status: "error", message: "Review not found" };
 
     const updated = await adminRepo.updateReviewStatus(id, status);
-    await cacheInvalidatePattern("admin:reviews:*");
     await cacheInvalidatePattern("admin:*");
     await cacheInvalidate(`event:${review.eventId}`);
+    await cacheInvalidatePattern(`event:${review.eventId}*`);
+    await cacheInvalidatePattern("events:*");
     return { code: 200, status: "success", message: "Review status updated", data: { review: updated } };
   } catch (error) {
     console.error("UpdateReviewStatusService error", error);

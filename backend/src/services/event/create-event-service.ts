@@ -37,6 +37,7 @@ export async function CreateEventService(data: {
 
     // Invalidate events list cache
     await cacheInvalidatePattern("events:*");
+    await cacheInvalidatePattern("admin:*");
 
     return {
       code: 201,

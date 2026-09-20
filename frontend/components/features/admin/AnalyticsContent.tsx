@@ -20,13 +20,14 @@ import {
   CartesianGrid,
 } from "recharts";
 import { DataTable, type DataTableColumn } from "@/components/ui/data-table";
+import { DataTableColumnHeader } from "@/components/ui/data-table-column-header";
 import { adminService } from "@/services/admin.service";
 import type { AnalyticsOverview } from "@/types";
 
 const performanceColumns: DataTableColumn[] = [
   {
     accessorKey: "title",
-    header: "EVENT",
+    header: ({ column }) => <DataTableColumnHeader column={column} title="EVENT" />,
     cell: ({ row }) => (
       <span className="font-medium">{row.original.title}</span>
     ),
@@ -371,7 +372,7 @@ export default function AnalyticsContent({ initialData = null }: AnalyticsConten
             <CardTitle className="text-base">Event Performance</CardTitle>
           </CardHeader>
           <CardContent className="p-0">
-            <DataTable columns={performanceColumns} data={data.eventPerformance ?? []} />
+            <DataTable columns={performanceColumns} data={data.eventPerformance ?? []} enablePagination enableSorting pageSize={10} />
           </CardContent>
         </Card>
       )}

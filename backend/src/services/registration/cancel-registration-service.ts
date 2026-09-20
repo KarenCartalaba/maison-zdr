@@ -30,6 +30,7 @@ export async function CancelRegistrationService(userId: string, eventId: string)
     await cacheInvalidate(REG_BY_EVENT(eventId));
     await cacheInvalidate(REG_BY_USER(userId));
     await cacheInvalidatePattern("event:*");
+    await cacheInvalidatePattern("events:*");
     await cacheInvalidatePattern("admin:*");
 
     const event = await eventRepo.findEventById(eventId);

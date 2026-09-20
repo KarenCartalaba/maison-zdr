@@ -145,18 +145,26 @@ export class AdminRepository {
 
   public getTopEvents = async (limit: number = 3) => {
     const events = await prisma.event.findMany({
-      include: { _count: { select: { registrations: true } } },
+      include: {
+        _count: { select: { registrations: true } },
+        reviews: { where: { status: "APPROVED" }, select: { rating: true } },
+      },
       orderBy: { createdAt: "desc" },
       take: 10,
     });
 
     return events
-      .map((e: { title: string; _count: { registrations: number }; maxParticipants: number }) => ({
-        title: e.title,
-        registrations: e._count.registrations,
-        fillRate: Math.round((e._count.registrations / e.maxParticipants) * 100),
-        rating: 4.5 + Math.random() * 0.5,
-      }))
+      .map((e: { title: string; _count: { registrations: number }; maxParticipants: number; reviews: { rating: number }[] }) => {
+        const rating = e.reviews.length > 0
+          ? Math.round((e.reviews.reduce((sum: number, r: { rating: number }) => sum + r.rating, 0) / e.reviews.length) * 10) / 10
+          : 0;
+        return {
+          title: e.title,
+          registrations: e._count.registrations,
+          fillRate: Math.round((e._count.registrations / e.maxParticipants) * 100),
+          rating,
+        };
+      })
       .sort((a: { registrations: number }, b: { registrations: number }) => b.registrations - a.registrations)
       .slice(0, limit);
   };
