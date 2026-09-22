@@ -2,6 +2,9 @@ import { Request, Response } from "express";
 import { SignupUserService, LoginCredentialsService, VerifyEmailService, RefreshTokenService, ResendEmailVerificationService, GetMeService, UpdateProfileService, ForgotPasswordService, ChangePasswordService, GoogleLoginService, ResetPasswordService, ValidateResetTokenService } from "@/services/auth";
 import { TokenExpiry, toMilliseconds } from "@/lib/jwt";
 import { ENV } from "@/config/env";
+import { AuthRepository } from "@/repositories/auth.repository";
+
+const authRepo = new AuthRepository();
 
 export class AuthController {
   private setAuthCookies(res: Response, tokens: { accessToken: string; refreshToken: string }) {
@@ -56,9 +59,17 @@ export class AuthController {
     return res.status(result.code).json(result);
   };
 
-  public logout = (req: Request, res: Response) => {
-    res.clearCookie("accessToken");
-    res.clearCookie("refreshToken");
+  public logout = async (req: Request, res: Response) => {
+    const userId = (req as any).user?.sub;
+    if (userId) {
+      await authRepo.revokeAllUserTokens(userId);
+    }
+
+    const isProduction = ENV.NODE_ENV === "production";
+    const cookieOpts = { path: "/", httpOnly: true, secure: isProduction, sameSite: isProduction ? "none" as const : "lax" as const };
+
+    res.clearCookie("accessToken", cookieOpts);
+    res.clearCookie("refreshToken", cookieOpts);
     return res.status(200).json({ code: 200, status: "success", message: "Logged out successfully" });
   };
 

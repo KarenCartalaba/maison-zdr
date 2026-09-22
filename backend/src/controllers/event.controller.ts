@@ -1,6 +1,8 @@
 import { Request, Response } from "express";
 import { CreateEventService, UpdateEventService, DeleteEventService, GetEventService, GetAllEventsService } from "@/services/event";
-import { prisma } from "@/lib/prisma";
+import { ReviewRepository } from "@/repositories/review.repository";
+
+const reviewRepo = new ReviewRepository();
 
 export class EventController {
   public createEvent = async (req: Request, res: Response) => {
@@ -62,13 +64,7 @@ export class EventController {
   public getEventReviews = async (req: Request, res: Response) => {
     const eventId = req.params.id as string;
     try {
-      const reviews = await prisma.review.findMany({
-        where: { eventId, status: "APPROVED" },
-        include: {
-          user: { select: { id: true, name: true, profilePic: true } },
-        },
-        orderBy: { createdAt: "desc" },
-      });
+      const reviews = await reviewRepo.findApprovedByEvent(eventId);
 
       const totalReviews = reviews.length;
       const avgRating = totalReviews > 0

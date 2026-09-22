@@ -40,4 +40,29 @@ export class EventRepository {
   public deleteEvent = async (id: string) => {
     return prisma.event.delete({ where: { id } });
   };
+
+  // ==================== Window queries ====================
+
+  /**
+   * Find non-cancelled events whose eventDate falls between `from` and `to`,
+   * including CONFIRMED registrations with full user data.
+   * Matching event-reminder-service.ts:71-85 window query.
+   */
+  public findEventsStartingBetween = async (from: Date, to: Date) => {
+    return prisma.event.findMany({
+      where: {
+        isCancelled: false,
+        eventDate: {
+          gte: from,
+          lte: to,
+        },
+      },
+      include: {
+        registrations: {
+          where: { status: "CONFIRMED" },
+          include: { user: true },
+        },
+      },
+    });
+  };
 }

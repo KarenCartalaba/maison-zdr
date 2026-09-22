@@ -1,12 +1,13 @@
 import { AdminRepository } from "@/repositories/admin.repository";
+import { RegistrationRepository } from "@/repositories/registration.repository";
 import { cacheInvalidatePattern } from "@/lib/redis";
-import { prisma } from "@/lib/prisma";
 
 const adminRepo = new AdminRepository();
+const registrationRepo = new RegistrationRepository();
 
 export async function CheckInRegistrationService(registrationId: string) {
   try {
-    const registration = await prisma.registration.findUnique({ where: { id: registrationId } });
+    const registration = await registrationRepo.findById(registrationId);
     if (!registration) return { code: 404, status: "error", message: "Registration not found" };
     if (registration.checkedIn) return { code: 400, status: "error", message: "Already checked in" };
 

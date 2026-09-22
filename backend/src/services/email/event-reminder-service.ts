@@ -1,7 +1,9 @@
-﻿import { prisma } from "@/lib/prisma";
+﻿import { EventRepository } from "@/repositories/event.repository";
 import { renderTemplate } from "@/utils/template";
 import { sendEmail } from "@/lib/nodemailer";
 import { redis } from "@/lib/redis";
+
+const eventRepo = new EventRepository();
 
 /**
  * Generate a Redis key for tracking whether a reminder has been sent.
@@ -32,7 +34,7 @@ async function markSent(eventId: string, userId: string): Promise<void> {
   try {
     await redis.setex(reminderKey(eventId, userId), 72 * 60 * 60, "1");
   } catch {
-    // Best-effort â€” if Redis fails we may send a duplicate, which is acceptable
+    // Best-effort — if Redis fails we may send a duplicate, which is acceptable
   }
 }
 
@@ -68,21 +70,7 @@ export async function sendEventReminders(): Promise<ReminderResult> {
 
   try {
     // Find all non-cancelled events happening within the 24-48h window
-    const events = await prisma.event.findMany({
-      where: {
-        isCancelled: false,
-        eventDate: {
-          gte: windowStart,
-          lte: windowEnd,
-        },
-      },
-      include: {
-        registrations: {
-          where: { status: "CONFIRMED" },
-          include: { user: true },
-        },
-      },
-    });
+    const events = await eventRepo.findEventsStartingBetween(windowStart, windowEnd);
 
     result.eventsProcessed = events.length;
 
@@ -128,11 +116,11 @@ export async function sendEventReminders(): Promise<ReminderResult> {
 
           await markSent(event.id, user.id);
           result.sentCount++;
-          result.details.push(`âœ… Sent to ${user.email} for "${event.title}"`);
+          result.details.push(`✅ Sent to ${user.email} for "${event.title}"`);
         } catch (error) {
           result.failedCount++;
           const msg = error instanceof Error ? error.message : String(error);
-          result.details.push(`âŒ Failed for ${user.email} (${event.title}): ${msg}`);
+          result.details.push(`❌ Failed for ${user.email} (${event.title}): ${msg}`);
           console.error(`Event reminder email failed for ${user.email}:`, error);
         }
       }
@@ -144,7 +132,7 @@ export async function sendEventReminders(): Promise<ReminderResult> {
   } catch (error) {
     console.error("[EventReminder] Critical error:", error);
     result.details.push(
-      `âŒ Critical error: ${error instanceof Error ? error.message : String(error)}`
+      `❌ Critical error: ${error instanceof Error ? error.message : String(error)}`
     );
   }
 

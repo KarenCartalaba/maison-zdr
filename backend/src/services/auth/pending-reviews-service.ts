@@ -1,4 +1,8 @@
-import { prisma } from "@/lib/prisma";
+import { RegistrationRepository } from "@/repositories/registration.repository";
+import { ReviewRepository } from "@/repositories/review.repository";
+
+const registrationRepo = new RegistrationRepository();
+const reviewRepo = new ReviewRepository();
 
 export async function PendingReviewsService(userId: string) {
   try {
@@ -6,37 +10,10 @@ export async function PendingReviewsService(userId: string) {
     // - registration is not cancelled
     // - the event is not cancelled
     // - either the event date has passed OR the admin force-opened reviews
-    const registrations = await prisma.registration.findMany({
-      where: {
-        userId,
-        status: { not: "CANCELLED" },
-        event: {
-          isCancelled: false,
-          OR: [
-            { eventDate: { lt: new Date() } },
-            { allowReviewsNow: true },
-          ],
-        },
-      },
-      include: {
-        event: {
-          select: {
-            id: true,
-            title: true,
-            eventDate: true,
-            location: true,
-            gallery: true,
-            allowReviewsNow: true,
-          },
-        },
-      },
-    });
+    const registrations = await registrationRepo.findRegistrationsForPendingReviews(userId);
 
     // Get event IDs the user already reviewed
-    const reviewedEventIds = await prisma.review.findMany({
-      where: { userId },
-      select: { eventId: true },
-    });
+    const reviewedEventIds = await reviewRepo.findReviewedEventIds(userId);
     const reviewedSet = new Set(reviewedEventIds.map((r: { eventId: string }) => r.eventId));
 
     // Filter out events already reviewed

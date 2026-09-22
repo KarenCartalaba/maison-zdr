@@ -180,8 +180,9 @@ export class AdminController {
 
   public updateUserRole = async (req: Request, res: Response) => {
     const { id } = req.params as { id: string };
+    const callerId = (req as any).user?.sub as string | undefined;
     const { role } = req.body ?? {};
-    const result = await UpdateUserRoleService(id, role);
+    const result = await UpdateUserRoleService(id, role, callerId);
     return res.status(result.code).json(result);
   };
 
@@ -199,13 +200,15 @@ export class AdminController {
 
   public suspendUser = async (req: Request, res: Response) => {
     const { id } = req.params as { id: string };
-    const result = await SuspendUserService(id);
+    const callerId = (req as any).user?.sub as string | undefined;
+    const result = await SuspendUserService(id, callerId);
     return res.status(result.code).json(result);
   };
 
   public deleteUser = async (req: Request, res: Response) => {
     const { id } = req.params as { id: string };
-    const result = await DeleteUserService(id);
+    const callerId = (req as any).user?.sub as string | undefined;
+    const result = await DeleteUserService(id, callerId);
     return res.status(result.code).json(result);
   };
 

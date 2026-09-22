@@ -1,22 +1,10 @@
-import { prisma } from "@/lib/prisma";
+import { ReviewRepository } from "@/repositories/review.repository";
+
+const reviewRepo = new ReviewRepository();
 
 export async function MyReviewsService(userId: string) {
   try {
-    const reviews = await prisma.review.findMany({
-      where: { userId },
-      include: {
-        event: {
-          select: {
-            id: true,
-            title: true,
-            eventDate: true,
-            location: true,
-            gallery: true,
-          },
-        },
-      },
-      orderBy: { createdAt: "desc" },
-    });
+    const reviews = await reviewRepo.findByUser(userId);
 
     return {
       code: 200,

@@ -1,13 +1,20 @@
 import { AdminRepository } from "@/repositories/admin.repository";
+import { AuthRepository } from "@/repositories/auth.repository";
 import { cacheInvalidatePattern } from "@/lib/redis";
-import { prisma } from "@/lib/prisma";
 
 const adminRepo = new AdminRepository();
+const authRepo = new AuthRepository();
 
-export async function DeleteUserService(id: string) {
+export async function DeleteUserService(id: string, callerId?: string) {
   try {
-    const user = await prisma.user.findUnique({ where: { id } });
+    const user = await authRepo.findUserById(id);
     if (!user) return { code: 404, status: "error", message: "User not found" };
+
+    // Block self-deletion
+    if (callerId && callerId === id) {
+      return { code: 400, status: "error", message: "Cannot delete yourself" };
+    }
+
     if (user.role === "ADMIN") return { code: 400, status: "error", message: "Cannot delete an admin user" };
 
     await adminRepo.deleteUser(id);

@@ -1,12 +1,13 @@
 import { AdminRepository } from "@/repositories/admin.repository";
+import { AuthRepository } from "@/repositories/auth.repository";
 import { cacheInvalidatePattern } from "@/lib/redis";
-import { prisma } from "@/lib/prisma";
 
 const adminRepo = new AdminRepository();
+const authRepo = new AuthRepository();
 
 export async function VerifyUserService(id: string) {
   try {
-    const user = await prisma.user.findUnique({ where: { id } });
+    const user = await authRepo.findUserById(id);
     if (!user) return { code: 404, status: "error", message: "User not found" };
 
     const updated = await adminRepo.verifyUser(id);

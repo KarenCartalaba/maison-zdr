@@ -1,7 +1,8 @@
 import jwt, { SignOptions } from "jsonwebtoken";
+import { ENV } from "@/config/env";
 
 export type JwtPayload = { sub: string; role: string; type: "access" | "refresh" };
-const jwtSecret = process.env.JWT_SECRET ? (process.env.JWT_SECRET as string) : "no-jwt-key";
+const jwtSecret = ENV.JWT_SECRET;
 
 export enum TokenExpiry {
   ACCESS_TOKEN_EXPIRES = "15m",

@@ -14,7 +14,7 @@ export async function ForgotPasswordService(email: string) {
       return { code: 200, status: "success", message: "If an account exists with that email, you will receive a password reset link." };
     }
 
-    const token = Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
+    const token = crypto.randomBytes(32).toString("hex");
     const expiresAt = new Date(Date.now() + 60 * 60 * 1000); // 1 hour
 
     await authRepo.createToken({

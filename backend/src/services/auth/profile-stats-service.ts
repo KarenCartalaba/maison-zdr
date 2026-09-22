@@ -1,18 +1,19 @@
-import { prisma } from "@/lib/prisma";
+import { RegistrationRepository } from "@/repositories/registration.repository";
+import { ReviewRepository } from "@/repositories/review.repository";
+
+const registrationRepo = new RegistrationRepository();
+const reviewRepo = new ReviewRepository();
 
 export async function ProfileStatsService(userId: string) {
   try {
     const [eventsRegistered, eventsAttended, reviewsWritten] = await Promise.all([
-      prisma.registration.count({ where: { userId } }),
-      prisma.registration.count({ where: { userId, checkedIn: true } }),
-      prisma.review.count({ where: { userId } }),
+      registrationRepo.countByUser(userId),
+      registrationRepo.countAttendedByUser(userId),
+      reviewRepo.countByUser(userId),
     ]);
 
     // Count guests (registrations with hasPlusOne = true)
-    const guestsResult = await prisma.registration.aggregate({
-      where: { userId, hasPlusOne: true },
-      _count: true,
-    });
+    const totalGuestsBrought = await registrationRepo.sumGuestsByUser(userId);
 
     return {
       code: 200,
@@ -21,7 +22,7 @@ export async function ProfileStatsService(userId: string) {
         eventsRegistered,
         eventsAttended,
         reviewsWritten,
-        totalGuestsBrought: guestsResult._count,
+        totalGuestsBrought,
       },
     };
   } catch (error) {

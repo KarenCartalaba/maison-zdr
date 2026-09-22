@@ -31,8 +31,12 @@ export async function CreateReviewService(userId: string, data: { eventId: strin
     await cacheInvalidatePattern("events:*");
 
     return { code: 201, status: "success", message: "Review submitted successfully", data: { review } };
-  } catch (error) {
+  } catch (error: any) {
     console.error("CreateReviewService error", error);
+    // Handle unique constraint violation (race between check and create)
+    if (error?.code === "P2002") {
+      return { code: 409, status: "error", message: "already reviewed" };
+    }
     return { code: 500, status: "error", message: "Unable to submit review" };
   }
 }

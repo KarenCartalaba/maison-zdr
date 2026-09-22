@@ -28,5 +28,17 @@ export default tseslint.config(
       "@typescript-eslint/no-unused-vars": ["warn", { "argsIgnorePattern": "^_" }],
       "no-console": "off",
     },
+  },
+  {
+    files: ["src/services/**/*.ts", "src/controllers/**/*.ts"],
+    ignores: ["src/services/**/index.ts"],
+    rules: {
+      "no-restricted-imports": ["error", {
+        name: "@/lib/prisma",
+        importNames: ["prisma"],
+        message: "Use the appropriate repository instead of importing prisma directly.",
+        allowTypeImports: true,
+      }],
+    },
   }
 );

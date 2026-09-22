@@ -1,12 +1,13 @@
 import { AdminRepository } from "@/repositories/admin.repository";
+import { ReviewRepository } from "@/repositories/review.repository";
 import { cacheInvalidatePattern, cacheInvalidate } from "@/lib/redis";
-import { prisma } from "@/lib/prisma";
 
 const adminRepo = new AdminRepository();
+const reviewRepo = new ReviewRepository();
 
 export async function ReplyToReviewService(id: string, reply: string) {
   try {
-    const review = await prisma.review.findUnique({ where: { id } });
+    const review = await reviewRepo.findById(id);
     if (!review) return { code: 404, status: "error", message: "Review not found" };
 
     const updated = await adminRepo.replyToReview(id, reply);

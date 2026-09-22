@@ -1,28 +1,10 @@
-import { prisma } from "@/lib/prisma";
+import { RegistrationRepository } from "@/repositories/registration.repository";
+
+const registrationRepo = new RegistrationRepository();
 
 export async function MyRegistrationsService(userId: string) {
   try {
-    const registrations = await prisma.registration.findMany({
-      where: { userId },
-      include: {
-        event: {
-          select: {
-            id: true,
-            slug: true,
-            title: true,
-            description: true,
-            location: true,
-            eventDate: true,
-            deadline: true,
-            maxParticipants: true,
-            isCancelled: true,
-            eventType: true,
-            gallery: true,
-          },
-        },
-      },
-      orderBy: { createdAt: "desc" },
-    });
+    const registrations = await registrationRepo.findByUser(userId);
 
     return {
       code: 200,

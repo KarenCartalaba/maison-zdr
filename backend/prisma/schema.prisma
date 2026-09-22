@@ -148,6 +148,7 @@ model Review {
   eventId String
   event   Event  @relation(fields: [eventId], references: [id], onDelete: Cascade)
 
+  @@unique([userId, eventId])
   @@index([eventId])
   @@index([userId])
   @@index([status])
