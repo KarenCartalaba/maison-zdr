@@ -92,7 +92,7 @@ export const authService = {
 
   updateProfile: async (data: { name?: string; email?: string; phone?: string; imageBase64?: string }) => {
     const response = await axiosInstance.put<ApiResponse<{ user: User }>>(
-      API_ENDPOINTS.AUTH.UPDATE_PROFILE,
+      API_ENDPOINTS.PROFILE.UPDATE,
       data
     );
     return response.data;
@@ -100,7 +100,7 @@ export const authService = {
 
   getMyRegistrations: async () => {
     const response = await axiosInstance.get<ApiResponse<{ registrations: any[] }>>(
-      "/api/auth/v1/my-registrations"
+      "/api/registrations/v1/mine"
     );
     return response.data;
   },
@@ -111,20 +111,20 @@ export const authService = {
       eventsAttended: number;
       reviewsWritten: number;
       totalGuestsBrought: number;
-    }>>("/api/auth/v1/profile-stats");
+    }>>("/api/profile/v1/stats");
     return response.data;
   },
 
   getMyReviews: async () => {
     const response = await axiosInstance.get<ApiResponse<{ reviews: any[] }>>(
-      "/api/auth/v1/my-reviews"
+      "/api/reviews/v1/mine"
     );
     return response.data;
   },
 
   getPendingReviews: async () => {
     const response = await axiosInstance.get<ApiResponse<{ pending: any[] }>>(
-      "/api/auth/v1/pending-reviews"
+      "/api/reviews/v1/pending"
     );
     return response.data;
   },

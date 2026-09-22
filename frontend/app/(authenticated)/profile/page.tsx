@@ -12,7 +12,7 @@ export default async function ProfilePage() {
         reviewsWritten: number;
         totalGuestsBrought: number;
       };
-    }>("/api/auth/v1/profile-stats");
+    }>("/api/profile/v1/stats");
     stats = res.data ?? null;
   } catch {}
 

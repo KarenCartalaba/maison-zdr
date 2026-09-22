@@ -8,18 +8,7 @@ const router = Router();
 const authMiddleware = new AuthMiddleware();
 const galleryController = new GalleryController();
 
-router.post(
-  "/v1/upload",
-  authMiddleware.execute,
-  permittedRole([Role.ADMIN]),
-  galleryController.upload
-);
-
-router.post(
-  "/v1/delete",
-  authMiddleware.execute,
-  permittedRole([Role.ADMIN]),
-  galleryController.delete
-);
+router.post("/v1/upload", authMiddleware.execute, permittedRole([Role.ADMIN]), galleryController.upload);
+router.post("/v1/delete", authMiddleware.execute, permittedRole([Role.ADMIN]), galleryController.delete);
 
 export default router;

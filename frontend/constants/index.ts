@@ -24,8 +24,11 @@ export const API_ENDPOINTS = {
     FORGOT_PASSWORD: "/api/auth/v1/forgot-password",
     RESET_PASSWORD: "/api/auth/v1/reset-password",
     CHANGE_PASSWORD: "/api/auth/v1/change-password",
-    UPDATE_PROFILE: "/api/auth/v1/update-profile",
     GOOGLE_LOGIN: "/api/auth/v1/google-login",
+  },
+  PROFILE: {
+    STATS: "/api/profile/v1/stats",
+    UPDATE: "/api/profile/v1/update",
   },
   CONTACT: {
     SEND: "/api/contact/v1/send",

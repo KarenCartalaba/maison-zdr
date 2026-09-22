@@ -4,7 +4,7 @@ import MyRegistrationsContent from "@/components/features/my-registrations/MyReg
 export default async function MyRegistrationsPage() {
   let registrations: any[] = [];
   try {
-    const res = await serverFetchAuth<{ data: { registrations: any[] } }>("/api/auth/v1/my-registrations");
+    const res = await serverFetchAuth<{ data: { registrations: any[] } }>("/api/registrations/v1/mine");
     registrations = res.data?.registrations ?? [];
   } catch {}
 

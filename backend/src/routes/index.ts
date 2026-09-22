@@ -8,6 +8,7 @@ import galleryRoutes from "@/routes/gallery.routes";
 import contactRoutes from "@/routes/contact.routes";
 import reviewRoutes from "@/routes/review.routes";
 import newsRoutes from "@/routes/news.routes";
+import profileRoutes from "@/routes/profile.routes";
 
 const router = Router();
 
@@ -20,5 +21,6 @@ router.use("/gallery", galleryRoutes);
 router.use("/contact", contactRoutes);
 router.use("/reviews", reviewRoutes);
 router.use("/news", newsRoutes);
+router.use("/profile", profileRoutes);
 
 export default router;
