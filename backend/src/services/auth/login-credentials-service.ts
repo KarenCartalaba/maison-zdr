@@ -4,38 +4,23 @@ import { signAccessToken, signRefreshToken, TokenExpiry } from "@/lib/jwt";
 
 const authRepo = new AuthRepository();
 
+const GENERIC_FAILURE = "Invalid email or password";
+
 export async function LoginCredentialsService(email: string, password: string) {
   try {
     const user = await authRepo.findUserByEmail(email);
     if (!user) {
-      return {
-        code: 400,
-        status: "error",
-        message: "No account found with this email address",
-        errors: [{ path: "body.email", message: "No account found with this email address" }],
-      };
+      return { code: 400, status: "error", message: GENERIC_FAILURE };
     }
 
-    if (!user.password) {
-      return {
-        code: 400,
-        status: "error",
-        message: "This account uses Google sign-in",
-        errors: [{ path: "body.password", message: "This account was created with Google sign-in. Please use the Google button below." }],
-      };
-    }
-
-    if (!verifyPassword(password, user.password)) {
-      return {
-        code: 400,
-        status: "error",
-        message: "Incorrect password",
-        errors: [{ path: "body.password", message: "Incorrect password. Please try again." }],
-      };
+    // Google-only accounts and wrong passwords both return the same message
+    // so attackers cannot enumerate account type or credential correctness.
+    if (!user.password || !verifyPassword(password, user.password)) {
+      return { code: 400, status: "error", message: GENERIC_FAILURE };
     }
 
     if (!user.emailVerified) {
-      return { code: 403, status: "error", message: "Please verify your email first" };
+      return { code: 400, status: "error", message: GENERIC_FAILURE };
     }
 
     const accessToken = signAccessToken(user.id, user.role, TokenExpiry.ACCESS_TOKEN_EXPIRES);

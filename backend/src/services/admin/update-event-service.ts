@@ -1,7 +1,9 @@
 import { AdminRepository } from "@/repositories/admin.repository";
+import { RegistrationRepository } from "@/repositories/registration.repository";
 import { cacheInvalidatePattern } from "@/lib/redis";
 
 const adminRepo = new AdminRepository();
+const registrationRepo = new RegistrationRepository();
 
 export async function UpdateEventService(
   eventId: string,
@@ -14,6 +16,18 @@ export async function UpdateEventService(
     const updateData: any = { ...data };
     if (data.eventDate) {
       updateData.eventDate = new Date(data.eventDate);
+    }
+
+    // Cross-validate: block maxParticipants below current confirmed count
+    if (data.maxParticipants !== undefined) {
+      const confirmedCount = await registrationRepo.countConfirmedRegistrations(eventId);
+      if (data.maxParticipants < confirmedCount) {
+        return {
+          code: 400,
+          status: "error",
+          message: `Cannot set maxParticipants below current confirmed count of ${confirmedCount}`,
+        };
+      }
     }
 
     const updated = await adminRepo.updateEvent(eventId, updateData);

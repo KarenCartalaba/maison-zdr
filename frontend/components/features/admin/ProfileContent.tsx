@@ -15,10 +15,11 @@ import { User, Mail, Shield, Loader2, Camera } from "lucide-react";
 import { useLanguage } from "@/context/LanguageContext";
 import { formatDate } from "@/lib/format-date";
 import { toast } from "sonner";
+import { isValidImageFile } from "@/lib/utils";
 
 const profileSchema = z.object({
-  firstName: z.string().min(1, "First name is required"),
-  lastName: z.string().min(1, "Last name is required"),
+  firstName: z.string().min(1, "First name is required").max(100, "First name must be at most 100 characters"),
+  lastName: z.string().min(1, "Last name is required").max(100, "Last name must be at most 100 characters"),
   email: z.string().email("Invalid email address"),
   phone: z.string().optional(),
 });
@@ -50,6 +51,11 @@ export default function ProfileContent() {
 
     if (file.size > 5 * 1024 * 1024) {
       toast.error(t.adminProfile.updateError);
+      return;
+    }
+
+    if (!isValidImageFile(file)) {
+      toast.error("Invalid image format. Accepted formats: JPEG, PNG, WebP, GIF");
       return;
     }
 
@@ -108,7 +114,7 @@ export default function ProfileContent() {
               <input
                 ref={fileInputRef}
                 type="file"
-                accept="image/*"
+                accept="image/jpeg,image/png,image/webp,image/gif"
                 className="hidden"
                 onChange={handleImageChange}
               />
@@ -153,7 +159,7 @@ export default function ProfileContent() {
                     render={({ field, fieldState }) => (
                       <Field data-invalid={fieldState.invalid}>
                         <FieldLabel htmlFor="admin-firstName">{t.adminProfile.labelFirstName}</FieldLabel>
-                        <Input {...field} id="admin-firstName" aria-invalid={fieldState.invalid} />
+                        <Input {...field} id="admin-firstName" maxLength={100} aria-invalid={fieldState.invalid} />
                         {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
                       </Field>
                     )}
@@ -164,7 +170,7 @@ export default function ProfileContent() {
                     render={({ field, fieldState }) => (
                       <Field data-invalid={fieldState.invalid}>
                         <FieldLabel htmlFor="admin-lastName">{t.adminProfile.labelLastName}</FieldLabel>
-                        <Input {...field} id="admin-lastName" aria-invalid={fieldState.invalid} />
+                        <Input {...field} id="admin-lastName" maxLength={100} aria-invalid={fieldState.invalid} />
                         {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
                       </Field>
                     )}

@@ -4,9 +4,9 @@ import { EventType } from "@/generated/prisma/enums";
 export const updateEventSchema = z.object({
   body: z.object({
     id: z.string().uuid("Invalid event ID"),
-    title: z.string().min(3).optional(),
-    description: z.string().min(10).optional(),
-    location: z.string().min(2).optional(),
+    title: z.string().min(3).max(100, "Title must be at most 100 characters").optional(),
+    description: z.string().min(10).max(5000, "Description must be at most 5000 characters").optional(),
+    location: z.string().min(2).max(200, "Location must be at most 200 characters").optional(),
     eventDate: z.string().datetime().optional(),
     deadline: z.string().datetime().optional(),
     minParticipants: z.number().int().min(0).optional(),

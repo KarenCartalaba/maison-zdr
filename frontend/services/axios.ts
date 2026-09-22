@@ -10,18 +10,26 @@ const axiosInstance = axios.create({
   },
 });
 
-let isRefreshing = false;
-let failedQueue: any[] = [];
+/** Shared refresh-promise lock: concurrent 401s share one refresh call. */
+let refreshPromise: Promise<void> | null = null;
+let failedQueue: Array<{ resolve: () => void; reject: (err: any) => void }> = [];
 
-const processQueue = (error: any, token: string | null = null) => {
-  failedQueue.forEach((prom) => {
+const processQueue = (error: any) => {
+  failedQueue.forEach(({ resolve, reject }) => {
     if (error) {
-      prom.reject(error);
+      reject(error);
     } else {
-      prom.resolve(token);
+      resolve();
     }
   });
   failedQueue = [];
+};
+
+const redirectToLogin = () => {
+  if (typeof window !== "undefined") {
+    localStorage.removeItem("user");
+    window.location.href = "/login";
+  }
 };
 
 axiosInstance.interceptors.response.use(
@@ -31,8 +39,9 @@ axiosInstance.interceptors.response.use(
     const status = error.response?.status;
 
     if (status === 401 && !originalRequest._retry) {
-      if (isRefreshing) {
-        return new Promise((resolve, reject) => {
+      if (refreshPromise) {
+        // Another refresh is in flight — queue behind it.
+        return new Promise<void>((resolve, reject) => {
           failedQueue.push({ resolve, reject });
         })
           .then(() => axiosInstance(originalRequest))
@@ -40,28 +49,26 @@ axiosInstance.interceptors.response.use(
       }
 
       originalRequest._retry = true;
-      isRefreshing = true;
+
+      // Start a single refresh call shared by all concurrent 401s.
+      refreshPromise = (async () => {
+        try {
+          const refreshUrl = `${axiosInstance.defaults.baseURL}/api/auth/v1/refresh-token`;
+          await axios.post(refreshUrl, {}, { withCredentials: true });
+          processQueue(null);
+        } catch (refreshError: any) {
+          processQueue(refreshError);
+          redirectToLogin();
+          throw refreshError;
+        } finally {
+          refreshPromise = null;
+        }
+      })();
 
       try {
-        const refreshUrl = `${axiosInstance.defaults.baseURL}/api/auth/v1/refresh-token`;
-        await axios.post(refreshUrl, {}, { withCredentials: true });
-
-        processQueue(null);
-        isRefreshing = false;
-
+        await refreshPromise;
         return axiosInstance(originalRequest);
-      } catch (refreshError: any) {
-        processQueue(refreshError, null);
-        isRefreshing = false;
-
-        const refreshStatus = refreshError.response?.status;
-        if (refreshStatus === 401 || refreshStatus === 403 || refreshStatus === 400) {
-          if (typeof window !== "undefined") {
-            localStorage.removeItem("user");
-            window.location.href = "/login";
-          }
-        }
-
+      } catch (refreshError) {
         return Promise.reject(refreshError);
       }
     }

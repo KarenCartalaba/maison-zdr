@@ -1,27 +1,28 @@
 import { AdminRepository } from "@/repositories/admin.repository";
 import { AuthRepository } from "@/repositories/auth.repository";
 import { cacheInvalidatePattern } from "@/lib/redis";
+import { Role } from "@/generated/prisma/enums";
 
 const adminRepo = new AdminRepository();
 const authRepo = new AuthRepository();
 
-export async function UpdateUserRoleService(id: string, role: string, callerId?: string) {
+export async function UpdateUserRoleService(id: string, role: Role, callerId?: string) {
   try {
     const user = await authRepo.findUserById(id);
     if (!user) return { code: 404, status: "error", message: "User not found" };
 
     // Block self-demotion to non-admin role
-    if (callerId && callerId === id && role !== "ADMIN") {
+    if (callerId && callerId === id && role !== Role.ADMIN) {
       return { code: 400, status: "error", message: "Cannot demote yourself from admin" };
     }
 
     // Block demoting another ADMIN unless caller is ADMIN and at least one other active ADMIN remains
-    if (user.role === "ADMIN" && role !== "ADMIN") {
+    if (user.role === Role.ADMIN && role !== Role.ADMIN) {
       if (!callerId) {
         return { code: 403, status: "error", message: "Forbidden" };
       }
       const caller = await authRepo.findUserById(callerId);
-      if (!caller || caller.role !== "ADMIN") {
+      if (!caller || caller.role !== Role.ADMIN) {
         return { code: 403, status: "error", message: "Only admins can demote other admins" };
       }
       // Count active (non-suspended) admins excluding the target

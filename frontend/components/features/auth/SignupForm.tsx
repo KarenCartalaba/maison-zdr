@@ -14,7 +14,7 @@ import { Loader2 } from "lucide-react";
 import { toast } from "sonner";
 
 const signupFormSchema = z.object({
-  name: z.string().min(2, "Name must be at least 2 characters"),
+  name: z.string().min(2, "Name must be at least 2 characters").max(100, "Name must be at most 100 characters"),
   email: z.string().min(1, "Email is required").email("Invalid email address"),
   password: z
     .string()
@@ -89,6 +89,7 @@ export default function SignupForm() {
                     type="text"
                     placeholder={t.auth.fullNamePlaceholder}
                     autoComplete="name"
+                    maxLength={100}
                     aria-invalid={fieldState.invalid}
                   />
                   {fieldState.invalid && <FieldError errors={[fieldState.error]} />}

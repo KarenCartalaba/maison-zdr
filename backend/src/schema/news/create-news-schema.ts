@@ -8,8 +8,8 @@ const optionalUrl = z.preprocess(
 
 export const createNewsSchema = z.object({
   body: z.object({
-    title: z.string().min(3, "Title must be at least 3 characters"),
-    content: z.string().min(10, "Content must be at least 10 characters"),
+    title: z.string().min(3, "Title must be at least 3 characters").max(100, "Title must be at most 100 characters"),
+    content: z.string().min(10, "Content must be at least 10 characters").max(10000, "Content must be at most 10000 characters"),
     summary: z.string().optional(),
     imageUrl: optionalUrl,
     isPublished: z.boolean().optional(),

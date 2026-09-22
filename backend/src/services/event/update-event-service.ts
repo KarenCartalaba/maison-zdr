@@ -35,8 +35,20 @@ export async function UpdateEventService(data: {
       updateData.slug = generateSlug(data.title);
     }
 
-    if (data.eventDate && data.deadline && new Date(data.deadline) >= new Date(data.eventDate)) {
-      return { code: 400, status: "error", message: "Deadline must be before the event date" };
+    // Merge supplied fields with existing to cross-validate min<=max and deadline<eventDate
+    const effectiveEventDate = data.eventDate ?? (existing.eventDate as Date);
+    const effectiveDeadline = data.deadline ?? (existing.deadline as Date);
+
+    if (data.eventDate || data.deadline) {
+      if (new Date(effectiveDeadline) >= new Date(effectiveEventDate)) {
+        return { code: 400, status: "error", message: "Deadline must be before the event date" };
+      }
+    }
+
+    const effectiveMin = data.minParticipants ?? existing.minParticipants;
+    const effectiveMax = data.maxParticipants ?? existing.maxParticipants;
+    if ((data.minParticipants !== undefined || data.maxParticipants !== undefined) && effectiveMin > effectiveMax) {
+      return { code: 400, status: "error", message: "Min participants cannot exceed max participants" };
     }
 
     const event = await eventRepo.updateEvent(data.id, updateData);

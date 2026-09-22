@@ -44,6 +44,19 @@ export class AuthRepository {
     return prisma.token.update({ where: { id }, data: { consumedAt: new Date() } });
   };
 
+  /**
+   * Atomically consume a refresh token: set consumedAt only if it is still NULL.
+   * Returns the number of rows updated — 0 means the token was already consumed
+   * or revoked (race-condition safe).
+   */
+  public consumeRefreshToken = async (token: string): Promise<number> => {
+    const result = await prisma.token.updateMany({
+      where: { token, type: "REFRESH", consumedAt: null, revokedAt: null },
+      data: { consumedAt: new Date() },
+    });
+    return result.count;
+  };
+
   public revokeToken = async (id: string) => {
     return prisma.token.update({ where: { id }, data: { revokedAt: new Date() } });
   };
@@ -104,5 +117,16 @@ export class AuthRepository {
       where: { id },
       data: { suspended },
     });
+  };
+
+  /**
+   * Delete all expired tokens (regardless of consumed/revoked status).
+   * Called periodically by the scheduler to keep the tokens table lean.
+   */
+  public deleteExpiredTokens = async (): Promise<number> => {
+    const result = await prisma.token.deleteMany({
+      where: { expiresAt: { lt: new Date() } },
+    });
+    return result.count;
   };
 }

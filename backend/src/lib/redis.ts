@@ -97,11 +97,4 @@ export async function cacheInvalidatePattern(pattern: string): Promise<void> {
   }
 }
 
-/**
- * Check if Redis is connected.
- */
-export function isRedisConnected(): boolean {
-  return redis !== null && redis.status === "ready";
-}
-
 export { redis };

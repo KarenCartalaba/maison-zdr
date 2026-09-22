@@ -7,6 +7,7 @@ import { useLanguage } from "@/context/LanguageContext";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { authService } from "@/services/auth.service";
+import { isValidImageFile } from "@/lib/utils";
 
 interface ProfileHeaderProps {
   onEditProfile?: () => void;
@@ -29,6 +30,11 @@ export default function ProfileHeader({ onEditProfile, eventsAttended = 0 }: Pro
 
     if (file.size > 5 * 1024 * 1024) {
       toast.error(t.profile.imageTooLarge);
+      return;
+    }
+
+    if (!isValidImageFile(file)) {
+      toast.error("Invalid image format. Accepted formats: JPEG, PNG, WebP, GIF");
       return;
     }
 
@@ -70,7 +76,7 @@ export default function ProfileHeader({ onEditProfile, eventsAttended = 0 }: Pro
           <input
             ref={fileInputRef}
             type="file"
-            accept="image/*"
+            accept="image/jpeg,image/png,image/webp,image/gif"
             className="hidden"
             onChange={handleProfilePicChange}
           />

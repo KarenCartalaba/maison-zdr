@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/prisma";
+import { RegistrationStatus, ReviewStatus, Role as PrismaRole } from "@/generated/prisma/enums";
 
 export class AdminRepository {
   // ==================== Dashboard Stats ====================
@@ -235,10 +236,10 @@ export class AdminRepository {
     return { total, confirmed, pending, waitlisted, cancelled };
   };
 
-  public updateRegistrationStatus = async (id: string, status: string) => {
+  public updateRegistrationStatus = async (id: string, status: RegistrationStatus) => {
     // Cancelling voids the whole attendance record (clears any stale check-in)
-    const data: any = { status: status as any };
-    if (status === "CANCELLED") {
+    const data: { status: RegistrationStatus; checkedIn?: boolean; checkedInAt?: null } = { status };
+    if (status === RegistrationStatus.CANCELLED) {
       data.checkedIn = false;
       data.checkedInAt = null;
     }
@@ -307,8 +308,8 @@ export class AdminRepository {
     return { total, pending, approved, rejected, avgRating: Math.round(avgRating * 10) / 10 };
   };
 
-  public updateReviewStatus = async (id: string, status: string) => {
-    return prisma.review.update({ where: { id }, data: { status: status as any } });
+  public updateReviewStatus = async (id: string, status: ReviewStatus) => {
+    return prisma.review.update({ where: { id }, data: { status } });
   };
 
   public replyToReview = async (id: string, reply: string) => {
@@ -353,8 +354,8 @@ export class AdminRepository {
     return { total, verified, unverified: total - verified, admins };
   };
 
-  public updateUserRole = async (id: string, role: string) => {
-    return prisma.user.update({ where: { id }, data: { role: role as any } });
+  public updateUserRole = async (id: string, role: PrismaRole) => {
+    return prisma.user.update({ where: { id }, data: { role } });
   };
 
   public findUserById = async (id: string) => {

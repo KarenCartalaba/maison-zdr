@@ -1,14 +1,26 @@
 import { AdminRepository } from "@/repositories/admin.repository";
 import { ReviewRepository } from "@/repositories/review.repository";
 import { cacheInvalidatePattern, cacheInvalidate } from "@/lib/redis";
+import { ReviewStatus } from "@/generated/prisma/enums";
+import { REVIEW_TRANSITIONS, isAllowedTransition } from "@/schema/shared";
 
 const adminRepo = new AdminRepository();
 const reviewRepo = new ReviewRepository();
 
-export async function UpdateReviewStatusService(id: string, status: string) {
+export async function UpdateReviewStatusService(id: string, status: ReviewStatus) {
   try {
     const review = await reviewRepo.findById(id);
     if (!review) return { code: 404, status: "error", message: "Review not found" };
+
+    const currentStatus = review.status as ReviewStatus;
+
+    if (!isAllowedTransition(currentStatus, status, REVIEW_TRANSITIONS)) {
+      return {
+        code: 400,
+        status: "error",
+        message: `Cannot transition review from ${currentStatus} to ${status}`,
+      };
+    }
 
     const updated = await adminRepo.updateReviewStatus(id, status);
     await cacheInvalidatePattern("admin:*");

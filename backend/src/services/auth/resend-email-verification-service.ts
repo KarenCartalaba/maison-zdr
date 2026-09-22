@@ -5,24 +5,29 @@ import { sendEmailWithTimeout } from "@/lib/nodemailer";
 
 const authRepo = new AuthRepository();
 
+const GENERIC_SUCCESS = "If an account with that email exists, a verification link has been sent.";
+
 export async function ResendEmailVerificationService(email: string) {
   try {
     const user = await authRepo.findUserByEmail(email);
+
+    // Unknown email returns the same shaped response as a known one to prevent
+    // email-enumeration attacks.
     if (!user) {
-      return { code: 404, status: "error", message: "User not found" };
+      return { code: 200, status: "success", message: GENERIC_SUCCESS };
     }
 
     if (user.emailVerified) {
-      return { code: 200, status: "success", message: "Email already verified" };
+      return { code: 200, status: "success", message: GENERIC_SUCCESS };
     }
 
     const previousToken = await authRepo.findTokenByUser(user.id, "EMAIL_VERIFY");
     if (previousToken && previousToken.consumedAt) {
-      return { code: 400, status: "error", message: "Verification link already used" };
+      return { code: 200, status: "success", message: GENERIC_SUCCESS };
     }
 
     if (previousToken && previousToken.expiresAt.getTime() > Date.now()) {
-      return { code: 400, status: "error", message: "Current verification link is still valid" };
+      return { code: 200, status: "success", message: GENERIC_SUCCESS };
     }
 
     if (previousToken) {
@@ -51,7 +56,7 @@ export async function ResendEmailVerificationService(email: string) {
     return {
       code: 200,
       status: "success",
-      message: "Verification email resent successfully",
+      message: GENERIC_SUCCESS,
     };
   } catch (error) {
     console.error("ResendEmailVerificationService error", error);

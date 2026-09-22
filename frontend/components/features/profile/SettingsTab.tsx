@@ -14,8 +14,8 @@ import { Mail, Lock, ChevronRight, Loader2, AlertTriangle } from "lucide-react";
 import { toast } from "sonner";
 
 const profileSchema = z.object({
-  firstName: z.string().min(1, "First name is required"),
-  lastName: z.string().min(1, "Last name is required"),
+  firstName: z.string().min(1, "First name is required").max(100, "First name must be at most 100 characters"),
+  lastName: z.string().min(1, "Last name is required").max(100, "Last name must be at most 100 characters"),
   email: z.string().email("Invalid email"),
 });
 
@@ -142,7 +142,7 @@ export default function SettingsTab() {
                 render={({ field, fieldState }) => (
                   <Field data-invalid={fieldState.invalid}>
                     <FieldLabel htmlFor="settings-firstName">{t.profile.firstName}</FieldLabel>
-                    <Input {...field} id="settings-firstName" aria-invalid={fieldState.invalid} />
+                     <Input {...field} id="settings-firstName" maxLength={100} aria-invalid={fieldState.invalid} />
                     {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
                   </Field>
                 )}
@@ -153,7 +153,7 @@ export default function SettingsTab() {
                 render={({ field, fieldState }) => (
                   <Field data-invalid={fieldState.invalid}>
                     <FieldLabel htmlFor="settings-lastName">{t.profile.lastName}</FieldLabel>
-                    <Input {...field} id="settings-lastName" aria-invalid={fieldState.invalid} />
+                     <Input {...field} id="settings-lastName" maxLength={100} aria-invalid={fieldState.invalid} />
                     {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
                   </Field>
                 )}

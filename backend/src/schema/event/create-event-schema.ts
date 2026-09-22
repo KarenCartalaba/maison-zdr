@@ -3,9 +3,9 @@ import { EventType } from "@/generated/prisma/enums";
 
 export const createEventSchema = z.object({
   body: z.object({
-    title: z.string().min(3, "Title must be at least 3 characters"),
-    description: z.string().min(10, "Description must be at least 10 characters"),
-    location: z.string().min(2, "Location is required"),
+    title: z.string().min(3, "Title must be at least 3 characters").max(100, "Title must be at most 100 characters"),
+    description: z.string().min(10, "Description must be at least 10 characters").max(5000, "Description must be at most 5000 characters"),
+    location: z.string().min(2, "Location is required").max(200, "Location must be at most 200 characters"),
     eventDate: z.string().datetime("Invalid event date"),
     deadline: z.string().datetime("Invalid deadline"),
     minParticipants: z.number().int().min(0, "Minimum participants must be at least 0"),

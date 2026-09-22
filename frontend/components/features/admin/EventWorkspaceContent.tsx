@@ -20,6 +20,7 @@ import {
   Search, Star, MessageSquare, Inbox, Upload, CheckCircle2, ImagePlus,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { isValidImageFile } from "@/lib/utils";
 import { eventService } from "@/services/event.service";
 import { adminService } from "@/services/admin.service";
 import { galleryService } from "@/services/gallery.service";
@@ -697,7 +698,7 @@ function HighlightsTab({ event, t, dateLocale }: { event: Event; t: any; dateLoc
     const file = e.target.files?.[0];
     if (!file) return;
 
-    if (!file.type.startsWith("image/")) {
+    if (!isValidImageFile(file)) {
       toast.error(t.adminWorkspace.highlightsErrorFile);
       return;
     }
@@ -790,7 +791,7 @@ function HighlightsTab({ event, t, dateLocale }: { event: Event; t: any; dateLoc
           <input
             ref={fileInputRef}
             type="file"
-            accept="image/*"
+            accept="image/jpeg,image/png,image/webp,image/gif"
             className="hidden"
             onChange={handleUpload}
           />
@@ -855,9 +856,9 @@ function HighlightsTab({ event, t, dateLocale }: { event: Event; t: any; dateLoc
 // ==================== Settings Tab ====================
 
 const eventSettingsSchema = z.object({
-  title: z.string().min(1, "Title is required"),
-  description: z.string().min(1, "Description is required"),
-  location: z.string().min(1, "Location is required"),
+  title: z.string().min(1, "Title is required").max(100, "Title must be at most 100 characters"),
+  description: z.string().min(1, "Description is required").max(5000, "Description must be at most 5000 characters"),
+  location: z.string().min(1, "Location is required").max(200, "Location must be at most 200 characters"),
   maxParticipants: z.number().min(1, "Must be at least 1"),
   isCancelled: z.boolean(),
   allowReviewsNow: z.boolean(),
@@ -929,7 +930,7 @@ function SettingsTab({ event, t, dateLocale, onUpdated }: { event: Event; t: any
               render={({ field, fieldState }) => (
                 <Field data-invalid={fieldState.invalid}>
                   <FieldLabel htmlFor="event-title">{t.adminWorkspace.settingsLabelTitle}</FieldLabel>
-                  <Input {...field} id="event-title" aria-invalid={fieldState.invalid} />
+                   <Input {...field} id="event-title" maxLength={100} aria-invalid={fieldState.invalid} />
                   {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
                 </Field>
               )}
@@ -940,7 +941,7 @@ function SettingsTab({ event, t, dateLocale, onUpdated }: { event: Event; t: any
               render={({ field, fieldState }) => (
                 <Field data-invalid={fieldState.invalid}>
                   <FieldLabel htmlFor="event-description">{t.adminWorkspace.settingsLabelDescription}</FieldLabel>
-                  <Textarea {...field} id="event-description" rows={4} aria-invalid={fieldState.invalid} />
+                   <Textarea {...field} id="event-description" rows={4} maxLength={5000} aria-invalid={fieldState.invalid} />
                   {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
                 </Field>
               )}
@@ -951,7 +952,7 @@ function SettingsTab({ event, t, dateLocale, onUpdated }: { event: Event; t: any
               render={({ field, fieldState }) => (
                 <Field data-invalid={fieldState.invalid}>
                   <FieldLabel htmlFor="event-location">{t.adminWorkspace.settingsLabelLocation}</FieldLabel>
-                  <Input {...field} id="event-location" aria-invalid={fieldState.invalid} />
+                   <Input {...field} id="event-location" maxLength={200} aria-invalid={fieldState.invalid} />
                   {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
                 </Field>
               )}

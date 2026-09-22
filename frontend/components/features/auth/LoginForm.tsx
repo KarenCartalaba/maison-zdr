@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, useCallback } from "react";
 import Link from "next/link";
 import { Controller, useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -32,7 +32,29 @@ export default function LoginForm() {
   const [isLoading, setIsLoading] = useState(false);
   const [isGoogleLoading, setIsGoogleLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+  const [cooldown, setCooldown] = useState(0);
+  const cooldownRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const googleButtonRef = useRef<HTMLDivElement>(null);
+
+  const startCooldown = useCallback((seconds: number) => {
+    setCooldown(seconds);
+    if (cooldownRef.current) clearInterval(cooldownRef.current);
+    cooldownRef.current = setInterval(() => {
+      setCooldown((prev) => {
+        if (prev <= 1) {
+          if (cooldownRef.current) clearInterval(cooldownRef.current);
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+  }, []);
+
+  useEffect(() => {
+    return () => {
+      if (cooldownRef.current) clearInterval(cooldownRef.current);
+    };
+  }, []);
 
   const form = useForm<LoginFormValues>({
     resolver: zodResolver(loginFormSchema),
@@ -88,11 +110,16 @@ export default function LoginForm() {
   };
 
   const handleSubmit = async (data: LoginFormValues) => {
+    if (cooldown > 0) return;
     setIsLoading(true);
     try {
       await login(data);
     } catch (error: any) {
-      if (error.errors?.length) {
+      const status = error.response?.status;
+      if (status === 429) {
+        startCooldown(30);
+        toast.error(t.auth.rateLimited.replace("{seconds}", "30"));
+      } else if (error.errors?.length) {
         error.errors.forEach((err: { path: string; message: string }) => {
           const fieldName = err.path.replace("body.", "") as keyof LoginFormValues;
           if (fieldName in form.getValues()) {
@@ -182,9 +209,11 @@ export default function LoginForm() {
           <Button
             type="submit"
             className="w-full bg-[#1a5c2a] hover:bg-[#144a22]"
-            disabled={isLoading}
+            disabled={isLoading || cooldown > 0}
           >
-            {isLoading ? (
+            {cooldown > 0 ? (
+              t.auth.rateLimited.replace("{seconds}", String(cooldown))
+            ) : isLoading ? (
               <>
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                 {t.auth.signingIn}

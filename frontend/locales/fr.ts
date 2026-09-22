@@ -394,6 +394,10 @@ export const fr: AdminDict = {
     noVerificationToken: "Aucun jeton de vérification fourni",
     // Auth guard
     verifyingSession: "Vérification de la session...",
+    // Rate limiting
+    rateLimited: "Trop de tentatives de connexion. Veuillez patienter {seconds} secondes.",
+    // Logout
+    logoutFailed: "Déconnecté localement (serveur inaccessible)",
   },
 
   // ── Customer authenticated surfaces ────────────────────────────
@@ -877,7 +881,7 @@ export const fr: AdminDict = {
     deleteSuccess: "Image supprimée",
     deleteError: "Échec de la suppression de l'image",
     loadError: "Échec du chargement des événements",
-    errorSize: "L'image doit faire moins de 10 Mo",
+    errorSize: "L'image doit faire moins de 5 Mo",
     errorRead: "Échec de la lecture du fichier",
     photoCount: "photo",
     photoCountPlural: "photos",

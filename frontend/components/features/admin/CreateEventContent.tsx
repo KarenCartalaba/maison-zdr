@@ -13,11 +13,12 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Loader2, ImagePlus } from "lucide-react";
 import { useLanguage } from "@/context/LanguageContext";
 import { toast } from "sonner";
+import { isValidImageFile } from "@/lib/utils";
 
 const createEventSchema = z.object({
-  title: z.string().min(3, "Title must be at least 3 characters"),
-  description: z.string().min(10, "Description must be at least 10 characters"),
-  location: z.string().min(2, "Location is required"),
+  title: z.string().min(3, "Title must be at least 3 characters").max(100, "Title must be at most 100 characters"),
+  description: z.string().min(10, "Description must be at least 10 characters").max(5000, "Description must be at most 5000 characters"),
+  location: z.string().min(2, "Location is required").max(200, "Location must be at most 200 characters"),
   eventDate: z.string().min(1, "Event date is required"),
   deadline: z.string().min(1, "Deadline is required"),
   minParticipants: z.number().min(0, "Must be at least 0"),
@@ -53,6 +54,10 @@ export default function CreateEventContent() {
     if (!file) return;
     if (file.size > 5 * 1024 * 1024) {
       toast.error(t.adminEventsForm.coverHint);
+      return;
+    }
+    if (!isValidImageFile(file)) {
+      toast.error("Invalid image format. Accepted formats: JPEG, PNG, WebP, GIF");
       return;
     }
     setCoverImage(file);
@@ -127,7 +132,7 @@ export default function CreateEventContent() {
               <input
                 ref={fileInputRef}
                 type="file"
-                accept="image/*"
+                accept="image/jpeg,image/png,image/webp,image/gif"
                 className="hidden"
                 onChange={handleImageSelect}
               />
@@ -137,7 +142,7 @@ export default function CreateEventContent() {
               <label htmlFor="title" className="text-sm font-medium">
                 {t.adminEventsForm.labelTitle}
               </label>
-              <Input id="title" {...register("title")} />
+              <Input id="title" {...register("title")} maxLength={100} />
               {errors.title && (
                 <p className="text-sm text-red-500">{errors.title.message}</p>
               )}
@@ -151,6 +156,7 @@ export default function CreateEventContent() {
                 id="description"
                 className="flex min-h-[120px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
                 {...register("description")}
+                maxLength={5000}
               />
               {errors.description && (
                 <p className="text-sm text-red-500">{errors.description.message}</p>
@@ -184,7 +190,7 @@ export default function CreateEventContent() {
               <label htmlFor="location" className="text-sm font-medium">
                 {t.adminEventsForm.labelLocation}
               </label>
-              <Input id="location" {...register("location")} />
+              <Input id="location" {...register("location")} maxLength={200} />
               {errors.location && (
                 <p className="text-sm text-red-500">{errors.location.message}</p>
               )}

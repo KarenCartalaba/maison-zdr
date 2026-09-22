@@ -14,7 +14,7 @@ import { toast } from "sonner";
 import { useLanguage } from "@/context/LanguageContext";
 
 const contactSchema = z.object({
-  name: z.string().min(2, "Name must be at least 2 characters"),
+  name: z.string().min(2, "Name must be at least 2 characters").max(100, "Name must be at most 100 characters"),
   email: z.string().min(1, "Email is required").email("Invalid email address"),
   message: z.string().min(10, "Message must be at least 10 characters").max(1000, "Message must be at most 1000 characters"),
 });
@@ -76,7 +76,7 @@ export default function ContactForm() {
           render={({ field, fieldState }) => (
             <Field data-invalid={fieldState.invalid}>
               <FieldLabel htmlFor="contact-name">{t.contact.name}</FieldLabel>
-              <Input {...field} id="contact-name" placeholder={t.contact.namePlaceholder} autoComplete="name" aria-invalid={fieldState.invalid} />
+              <Input {...field} id="contact-name" placeholder={t.contact.namePlaceholder} autoComplete="name" maxLength={100} aria-invalid={fieldState.invalid} />
               {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
             </Field>
           )}

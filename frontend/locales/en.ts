@@ -392,6 +392,10 @@ export const en = {
     noVerificationToken: "No verification token provided",
     // Auth guard
     verifyingSession: "Verifying session...",
+    // Rate limiting
+    rateLimited: "Too many login attempts. Please wait {seconds} seconds.",
+    // Logout
+    logoutFailed: "Logged out locally (server unreachable)",
   },
 
   // ── Customer authenticated surfaces ────────────────────────────
@@ -864,7 +868,7 @@ export const en = {
     deleteSuccess: "Image deleted",
     deleteError: "Failed to delete image",
     loadError: "Failed to load events",
-    errorSize: "Image must be under 10MB",
+    errorSize: "Image must be under 5MB",
     errorRead: "Failed to read file",
     photoCount: "photo",
     photoCountPlural: "photos",

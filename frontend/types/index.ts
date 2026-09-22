@@ -191,10 +191,6 @@ export interface CheckInEvent {
   _count: { registrations: number };
 }
 
-export interface GuestInfo {
-  name: string;
-}
-
 export interface News {
   id: string;
   title: string;

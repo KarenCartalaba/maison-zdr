@@ -26,6 +26,23 @@ import type { AdminRegistration, RegistrationStats } from "@/types";
 
 const STATUS_FILTERS = ["ALL", "CONFIRMED", "PENDING", "WAITLISTED", "CANCELLED"];
 
+/** Legal status transitions: only expose options the backend will accept. */
+function getLegalTransitions(currentStatus: string): string[] {
+  switch (currentStatus) {
+    case "CONFIRMED":
+      return ["PENDING", "WAITLISTED", "CANCELLED"];
+    case "PENDING":
+      return ["CONFIRMED", "WAITLISTED", "CANCELLED"];
+    case "WAITLISTED":
+      return ["CONFIRMED", "PENDING", "CANCELLED"];
+    case "CANCELLED":
+      // Restore paths only – backend rejects other transitions from CANCELLED.
+      return ["CONFIRMED", "PENDING"];
+    default:
+      return ["CONFIRMED", "PENDING", "WAITLISTED", "CANCELLED"];
+  }
+}
+
 function statusBadgeColor(status: string) {
   switch (status) {
     case "CONFIRMED":
@@ -229,52 +246,66 @@ export default function RegistrationsContent() {
     {
       id: "actions",
       header: t.adminRegs.colActions,
-      cell: ({ row }) => (
-        <DropdownMenu>
-          <DropdownMenuTrigger className="inline-flex items-center justify-center h-7 w-7 rounded-md hover:bg-muted text-muted-foreground">
-            <MoreHorizontal className="h-4 w-4" />
-          </DropdownMenuTrigger>
-          <DropdownMenuContent>
-            <DropdownMenuGroup>
-              <DropdownMenuLabel>{t.adminRegs.changeStatus}</DropdownMenuLabel>
-              <DropdownMenuItem
-                onClick={() =>
-                  handleStatusChange(row.original.id, "CONFIRMED")
-                }
-                disabled={updatingId === row.original.id}
-              >
-                {t.adminRegs.confirm}
-              </DropdownMenuItem>
-              <DropdownMenuItem
-                onClick={() =>
-                  handleStatusChange(row.original.id, "PENDING")
-                }
-                disabled={updatingId === row.original.id}
-              >
-                {t.adminRegs.setPending}
-              </DropdownMenuItem>
-              <DropdownMenuItem
-                onClick={() =>
-                  handleStatusChange(row.original.id, "WAITLISTED")
-                }
-                disabled={updatingId === row.original.id}
-              >
-                {t.adminRegs.waitlist}
-              </DropdownMenuItem>
-            </DropdownMenuGroup>
-            <DropdownMenuSeparator />
-            <DropdownMenuItem
-              variant="destructive"
-              onClick={() =>
-                handleStatusChange(row.original.id, "CANCELLED")
-              }
-              disabled={updatingId === row.original.id}
-            >
-              {t.adminRegs.cancel}
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
-      ),
+      cell: ({ row }) => {
+        const currentStatus = row.original.status;
+        const legalTransitions = getLegalTransitions(currentStatus);
+        return (
+          <DropdownMenu>
+            <DropdownMenuTrigger className="inline-flex items-center justify-center h-7 w-7 rounded-md hover:bg-muted text-muted-foreground">
+              <MoreHorizontal className="h-4 w-4" />
+            </DropdownMenuTrigger>
+            <DropdownMenuContent>
+              <DropdownMenuGroup>
+                <DropdownMenuLabel>{t.adminRegs.changeStatus}</DropdownMenuLabel>
+                {legalTransitions.includes("CONFIRMED") && (
+                  <DropdownMenuItem
+                    onClick={() =>
+                      handleStatusChange(row.original.id, "CONFIRMED")
+                    }
+                    disabled={updatingId === row.original.id}
+                  >
+                    {t.adminRegs.confirm}
+                  </DropdownMenuItem>
+                )}
+                {legalTransitions.includes("PENDING") && (
+                  <DropdownMenuItem
+                    onClick={() =>
+                      handleStatusChange(row.original.id, "PENDING")
+                    }
+                    disabled={updatingId === row.original.id}
+                  >
+                    {t.adminRegs.setPending}
+                  </DropdownMenuItem>
+                )}
+                {legalTransitions.includes("WAITLISTED") && (
+                  <DropdownMenuItem
+                    onClick={() =>
+                      handleStatusChange(row.original.id, "WAITLISTED")
+                    }
+                    disabled={updatingId === row.original.id}
+                  >
+                    {t.adminRegs.waitlist}
+                  </DropdownMenuItem>
+                )}
+              </DropdownMenuGroup>
+              {legalTransitions.includes("CANCELLED") && (
+                <>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem
+                    variant="destructive"
+                    onClick={() =>
+                      handleStatusChange(row.original.id, "CANCELLED")
+                    }
+                    disabled={updatingId === row.original.id}
+                  >
+                    {t.adminRegs.cancel}
+                  </DropdownMenuItem>
+                </>
+              )}
+            </DropdownMenuContent>
+          </DropdownMenu>
+        );
+      },
     },
   ], [t, dateLocale, updatingId]);
 

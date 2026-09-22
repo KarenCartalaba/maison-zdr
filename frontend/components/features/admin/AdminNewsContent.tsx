@@ -14,6 +14,12 @@ import { DataTableColumnHeader } from "@/components/ui/data-table-column-header"
 import { useLanguage } from "@/context/LanguageContext";
 import { formatDate } from "@/lib/format-date";
 import type { News } from "@/types";
+import { z } from "zod";
+
+const newsContentSchema = z.object({
+  title: z.string().min(1, "Title is required").max(100, "Title must be at most 100 characters"),
+  content: z.string().min(1, "Content is required").max(10000, "Content must be at most 10000 characters"),
+});
 
 interface AdminNewsContentProps {
   initialNews?: any[];
@@ -272,6 +278,7 @@ export default function AdminNewsContent({ initialNews = [] }: AdminNewsContentP
                   value={formData.title}
                   onChange={(e) => updateField("title", e.target.value)}
                   placeholder={t.adminNews.placeholderTitle}
+                  maxLength={100}
                   className="w-full px-3 py-2 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#1a5c2a]"
                 />
                 {fieldErrors.title && (
@@ -298,6 +305,7 @@ export default function AdminNewsContent({ initialNews = [] }: AdminNewsContentP
                   onChange={(e) => updateField("content", e.target.value)}
                   placeholder={t.adminNews.placeholderContent}
                   rows={8}
+                  maxLength={10000}
                   className="w-full px-3 py-2 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#1a5c2a]"
                 />
                 {fieldErrors.content && (

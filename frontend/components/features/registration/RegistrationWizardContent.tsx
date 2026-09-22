@@ -20,8 +20,8 @@ import EventImage from "@/components/ui/event-image";
 import Link from "next/link";
 
 const step1Schema = z.object({
-  firstName: z.string().min(1, "First name is required"),
-  lastName: z.string().min(1, "Last name is required"),
+  firstName: z.string().min(1, "First name is required").max(100, "First name must be at most 100 characters"),
+  lastName: z.string().min(1, "Last name is required").max(100, "Last name must be at most 100 characters"),
   email: z.string().min(1, "Email is required").email("Invalid email address"),
 });
 
@@ -29,7 +29,7 @@ type Step1Values = z.infer<typeof step1Schema>;
 
 const guestSchema = z.object({
   guests: z.array(z.object({
-    name: z.string().min(1, "Guest name is required"),
+    name: z.string().min(1, "Guest name is required").max(100, "Guest name must be at most 100 characters"),
   })).max(2, "Maximum 2 guests allowed"),
 });
 
@@ -284,7 +284,7 @@ export default function RegistrationWizardContent({ initialEvent = null }: { ini
                         render={({ field, fieldState }) => (
                           <Field data-invalid={fieldState.invalid}>
                             <FieldLabel htmlFor="reg-firstName">{t.registration.firstName}</FieldLabel>
-                            <Input {...field} id="reg-firstName" aria-invalid={fieldState.invalid} />
+                            <Input {...field} id="reg-firstName" maxLength={100} aria-invalid={fieldState.invalid} />
                             {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
                           </Field>
                         )}
@@ -295,7 +295,7 @@ export default function RegistrationWizardContent({ initialEvent = null }: { ini
                         render={({ field, fieldState }) => (
                           <Field data-invalid={fieldState.invalid}>
                             <FieldLabel htmlFor="reg-lastName">{t.registration.lastName}</FieldLabel>
-                            <Input {...field} id="reg-lastName" aria-invalid={fieldState.invalid} />
+                            <Input {...field} id="reg-lastName" maxLength={100} aria-invalid={fieldState.invalid} />
                             {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
                           </Field>
                         )}
@@ -353,6 +353,7 @@ export default function RegistrationWizardContent({ initialEvent = null }: { ini
                                   {...field}
                                   id={`guest-name-${index}`}
                                   placeholder={t.registration.enterGuestName}
+                                  maxLength={100}
                                   aria-invalid={fieldState.invalid}
                                 />
                                 {fieldState.invalid && <FieldError errors={[fieldState.error]} />}

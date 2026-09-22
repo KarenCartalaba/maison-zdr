@@ -1,12 +1,15 @@
 import cron from "node-cron";
 import { sendEventReminders } from "@/services/email";
+import { AuthRepository } from "@/repositories/auth.repository";
+
+const authRepo = new AuthRepository();
 
 let isRunning = false;
 
 export function startReminderScheduler(): void {
   console.log("⏰ Event reminder scheduler initialized");
 
-  // Run every hour at the top of the hour
+  // Run every hour at the top of the hour — event reminders
   cron.schedule("0 * * * *", async () => {
     if (isRunning) {
       console.log("[Scheduler] Previous run still in progress, skipping...");
@@ -28,5 +31,16 @@ export function startReminderScheduler(): void {
     }
   });
 
-  console.log("⏰ Cron job scheduled: every hour (0 * * * *)");
+  // Run every hour at :05 — prune expired tokens (offset from reminder to
+  // reduce contention on the same minute boundary).
+  cron.schedule("5 * * * *", async () => {
+    try {
+      const deleted = await authRepo.deleteExpiredTokens();
+      console.log(`[Scheduler] Token pruning: deleted ${deleted} expired token(s)`);
+    } catch (error) {
+      console.error("[Scheduler] Token pruning failed:", error);
+    }
+  });
+
+  console.log("⏰ Cron jobs scheduled: reminders (0 * * * *) + token pruning (5 * * * *)");
 }

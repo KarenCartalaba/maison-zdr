@@ -9,8 +9,8 @@ const optionalUrl = z.preprocess(
 export const updateNewsSchema = z.object({
   body: z.object({
     id: z.string().uuid("Invalid news ID"),
-    title: z.string().min(3).optional(),
-    content: z.string().min(10).optional(),
+    title: z.string().min(3).max(100, "Title must be at most 100 characters").optional(),
+    content: z.string().min(10).max(10000, "Content must be at most 10000 characters").optional(),
     summary: z.string().optional(),
     imageUrl: optionalUrl,
     isPublished: z.boolean().optional(),

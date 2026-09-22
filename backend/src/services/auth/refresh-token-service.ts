@@ -10,9 +10,10 @@ export async function RefreshTokenService(refreshToken?: string) {
     return { code: 401, status: "error", message: "Invalid or expired refresh token" };
   }
 
-  const dbToken = await authRepo.findToken(refreshToken!, "REFRESH");
-  if (!dbToken || dbToken.consumedAt || dbToken.revokedAt) {
-    return { code: 401, status: "error", message: "Token is no longer valid or has been used" };
+  // Atomic consume: only one concurrent request wins the race.
+  const consumedCount = await authRepo.consumeRefreshToken(refreshToken!);
+  if (consumedCount === 0) {
+    return { code: 401, status: "error", message: "Invalid refresh token" };
   }
 
   const user = await authRepo.findUserById(payload.sub);
@@ -23,8 +24,6 @@ export async function RefreshTokenService(refreshToken?: string) {
   if (!user.emailVerified) {
     return { code: 403, status: "error", message: "Email not verified" };
   }
-
-  await authRepo.consumeToken(dbToken.id);
 
   const accessToken = signAccessToken(user.id, user.role, TokenExpiry.ACCESS_TOKEN_EXPIRES);
   const newRefreshToken = signRefreshToken(user.id, user.role, TokenExpiry.REFRESH_TOKEN_EXPIRES);

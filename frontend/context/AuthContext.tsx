@@ -5,6 +5,7 @@ import { authService, LoginInput, SignupInput } from "@/services/auth.service";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import type { User } from "@/types";
+import { useLanguage } from "@/context/LanguageContext";
 
 interface AuthContextType {
   user: User | null;
@@ -27,6 +28,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const router = useRouter();
+  const { t } = useLanguage();
 
   useEffect(() => {
     const initializeAuth = async () => {
@@ -156,14 +158,20 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   const logout = async () => {
+    let serverOk = false;
     try {
       await authService.logout();
+      serverOk = true;
     } catch (error) {
-      console.error("Logout error", error);
+      console.error("Logout server error", error);
     } finally {
       setUser(null);
       localStorage.removeItem("user");
-      toast.success("Logged out successfully");
+      if (serverOk) {
+        toast.success("Logged out successfully");
+      } else {
+        toast.warning(t.auth.logoutFailed);
+      }
       router.push("/login");
     }
   };

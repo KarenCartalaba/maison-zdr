@@ -19,6 +19,7 @@ import { toast } from "sonner";
 import { useConfirm } from "@/components/ui/confirm-dialog";
 import { useLanguage } from "@/context/LanguageContext";
 import { formatDate } from "@/lib/format-date";
+import { isValidImageFile } from "@/lib/utils";
 import type { Event } from "@/types";
 
 interface EventWithGallery extends Event {
@@ -60,8 +61,13 @@ export default function AdminGalleryContent() {
     const file = e.target.files?.[0];
     if (!file || !selectedEvent) return;
 
-    if (file.size > 10 * 1024 * 1024) {
+    if (file.size > 5 * 1024 * 1024) {
       toast.error(t.adminGallery.errorSize);
+      return;
+    }
+
+    if (!isValidImageFile(file)) {
+      toast.error("Invalid image format. Accepted formats: JPEG, PNG, WebP, GIF");
       return;
     }
 
@@ -173,7 +179,7 @@ export default function AdminGalleryContent() {
           <input
             ref={fileInputRef}
             type="file"
-            accept="image/*"
+            accept="image/jpeg,image/png,image/webp,image/gif"
             className="hidden"
             onChange={handleFileSelect}
           />

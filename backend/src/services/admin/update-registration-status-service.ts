@@ -4,19 +4,36 @@ import { AuthRepository } from "@/repositories/auth.repository";
 import { cacheInvalidate, cacheInvalidatePattern } from "@/lib/redis";
 import { renderTemplate } from "@/utils/template";
 import { sendEmail } from "@/lib/nodemailer";
+import { RegistrationStatus } from "@/generated/prisma/enums";
+import { REGISTRATION_TRANSITIONS, isAllowedTransition } from "@/schema/shared";
 
 const adminRepo = new AdminRepository();
 const registrationRepo = new RegistrationRepository();
 const authRepo = new AuthRepository();
 
-export async function UpdateRegistrationStatusService(id: string, status: string) {
+export async function UpdateRegistrationStatusService(id: string, status: RegistrationStatus) {
   try {
     const registration = await registrationRepo.findById(id);
     if (!registration) return { code: 404, status: "error", message: "Registration not found" };
 
+    const currentStatus = registration.status as RegistrationStatus;
+
+    // CANCELLED → CONFIRMED is the capacity-guarded restore path:
+    // skip the generic transition check and fall through to the
+    // confirmWithCapacity branch below.
+    const isCapacityRestore = currentStatus === RegistrationStatus.CANCELLED && status === RegistrationStatus.CONFIRMED;
+
+    if (!isCapacityRestore && !isAllowedTransition(currentStatus, status, REGISTRATION_TRANSITIONS)) {
+      return {
+        code: 400,
+        status: "error",
+        message: `Cannot transition registration from ${currentStatus} to ${status}`,
+      };
+    }
+
     // Entering CONFIRMED from any other status consumes a slot — enforce capacity
     // via repository transaction with row-level lock on the Event to prevent races
-    if (status === "CONFIRMED" && registration.status !== "CONFIRMED") {
+    if (status === RegistrationStatus.CONFIRMED && currentStatus !== RegistrationStatus.CONFIRMED) {
       const updated = await registrationRepo.confirmWithCapacity({ id });
 
       await cacheInvalidatePattern("admin:regs:*");
@@ -40,7 +57,7 @@ export async function UpdateRegistrationStatusService(id: string, status: string
 
     // Notify the customer when an admin cancels their registration
     // (mirrors the self-cancel email; restore sends nothing — same reference kept)
-    if (status === "CANCELLED" && registration.status !== "CANCELLED") {
+    if (status === RegistrationStatus.CANCELLED && currentStatus !== RegistrationStatus.CANCELLED) {
       const [user, event] = await Promise.all([
         authRepo.findUserForEmail(registration.userId),
         adminRepo.findEventById(registration.eventId),

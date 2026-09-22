@@ -3,22 +3,24 @@ import { invalidateUserCache } from "./get-me-service";
 
 const authRepo = new AuthRepository();
 
+const GENERIC_INVALID = "Invalid or expired verification link";
+
 export async function VerifyEmailService(token: string) {
   try {
     const record = await authRepo.findToken(token, "EMAIL_VERIFY");
     if (!record) {
-      return { code: 404, status: "error", message: "Verification token not found" };
+      return { code: 400, status: "error", message: GENERIC_INVALID };
     }
 
     if (record.expiresAt.getTime() < Date.now()) {
       await authRepo.revokeToken(record.id);
-      return { code: 410, status: "error", message: "Verification token expired" };
+      return { code: 400, status: "error", message: GENERIC_INVALID };
     }
 
     const user = await authRepo.findUserById(record.userId);
     if (!user) {
       await authRepo.revokeToken(record.id);
-      return { code: 404, status: "error", message: "User not found for this token" };
+      return { code: 400, status: "error", message: GENERIC_INVALID };
     }
 
     if (user.emailVerified) {

@@ -2,6 +2,8 @@ import { Router } from "express";
 import { AdminController } from "@/controllers/admin.controller";
 import { AuthMiddleware } from "@/middlewares/auth-middleware";
 import { permittedRole } from "@/middlewares/rbac-middleware";
+import { validateSchema } from "@/middlewares/validate-schema";
+import { updateRegistrationStatusSchema, updateReviewStatusSchema } from "@/schema/shared";
 import { Role } from "@/generated/prisma/enums";
 
 const router = Router();
@@ -114,6 +116,7 @@ router.put(
   "/v1/registrations/:id/status",
   authMiddleware.execute,
   modOrAdmin,
+  validateSchema(updateRegistrationStatusSchema),
   adminController.updateRegistrationStatus
 );
 
@@ -153,6 +156,7 @@ router.put(
   "/v1/reviews/:id/status",
   authMiddleware.execute,
   modOrAdmin,
+  validateSchema(updateReviewStatusSchema),
   adminController.updateReviewStatus
 );
 
