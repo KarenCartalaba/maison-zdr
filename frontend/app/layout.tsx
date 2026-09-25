@@ -16,11 +16,20 @@ const fontMono = Geist_Mono({
 })
 
 export const metadata: Metadata = {
+  metadataBase: new URL(
+    (process.env.NEXT_PUBLIC_APP_URL || "https://www.maison-zdr.online").replace(/\/+$/, "")
+  ),
   title: {
     default: "Zone de Rassemblement | Maison ZDR",
     template: "%s | Zone de Rassemblement",
   },
   description: "Discover and register for events at Maison ZDR. Browse upcoming activities, subscribe to events, and join our community.",
+  alternates: {
+    canonical: "/",
+  },
+  verification: {
+    google: "S4uX1xFnr89z8ikskNobxhUtMCm529r7tcFHdqNjMQg",
+  },
   openGraph: {
     title: "Zone de Rassemblement | Maison ZDR",
     description: "Discover and register for events at Maison ZDR",
