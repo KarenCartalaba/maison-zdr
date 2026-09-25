@@ -156,7 +156,7 @@ export default function ResetPasswordForm() {
                   {...field}
                   id="reset-password"
                   type="password"
-                  placeholder="\u2022\u2022\u2022\u2022\u2022\u2022\u2022\u2022"
+                  placeholder={"••••••••"}
                   autoComplete="new-password"
                   aria-invalid={fieldState.invalid}
                 />
@@ -174,7 +174,7 @@ export default function ResetPasswordForm() {
                   {...field}
                   id="reset-confirmPassword"
                   type="password"
-                  placeholder="\u2022\u2022\u2022\u2022\u2022\u2022\u2022\u2022"
+                  placeholder={"••••••••"}
                   autoComplete="new-password"
                   aria-invalid={fieldState.invalid}
                 />
