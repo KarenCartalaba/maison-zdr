@@ -25,9 +25,8 @@ if (!parsed.success) {
 
 // ── Warn (but do not crash) on optional variables ───────────────────────────
 const optionalWarnings: string[] = [];
-if (!process.env.SMTP_HOST) optionalWarnings.push('SMTP_HOST');
-if (!process.env.SMTP_USER) optionalWarnings.push('SMTP_USER');
-if (!process.env.SMTP_PASSWORD) optionalWarnings.push('SMTP_PASSWORD');
+if (!process.env.RESEND_API_KEY) optionalWarnings.push('RESEND_API_KEY');
+if (!process.env.EMAIL_FROM) optionalWarnings.push('EMAIL_FROM');
 if (!process.env.CLOUDINARY_CLOUD_NAME) optionalWarnings.push('CLOUDINARY_CLOUD_NAME');
 if (!process.env.CLOUDINARY_API_KEY) optionalWarnings.push('CLOUDINARY_API_KEY');
 if (!process.env.CLOUDINARY_SECRET_KEY) optionalWarnings.push('CLOUDINARY_SECRET_KEY');
@@ -47,12 +46,9 @@ export const ENV = {
   BACKEND_URL: process.env.BACKEND_URL || 'http://localhost:8000',
   GOOGLE_CLIENT_ID: process.env.GOOGLE_CLIENT_ID || '',
 
-  SMTP: {
-    HOST: process.env.SMTP_HOST,
-    PORT: parseInt(process.env.SMTP_PORT || '587', 10),
-    USER: process.env.SMTP_USER,
-    PASS: process.env.SMTP_PASSWORD,
-    FROM: process.env.SMTP_FROM,
+  EMAIL: {
+    RESEND_API_KEY: process.env.RESEND_API_KEY,
+    FROM: process.env.EMAIL_FROM,
   },
 
   CLOUD_NAME: process.env.CLOUDINARY_CLOUD_NAME,

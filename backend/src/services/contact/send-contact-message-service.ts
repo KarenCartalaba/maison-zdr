@@ -1,5 +1,5 @@
 import { ContactRepository } from "@/repositories/contact.repository";
-import { sendEmail } from "@/lib/nodemailer";
+import { sendEmail } from "@/lib/email";
 import { ENV } from "@/config/env";
 
 const contactRepo = new ContactRepository();
@@ -10,7 +10,7 @@ export async function SendContactMessageService(name: string, email: string, mes
 
     // Send notification email to admin (don't block on failure)
     sendEmail({
-      to: ENV.SMTP.FROM || "",
+      to: ENV.EMAIL.FROM || "",
       subject: `Contact Form: ${name}`,
       html: `
         <h3>New Contact Form Submission</h3>

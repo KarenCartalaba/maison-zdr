@@ -3,7 +3,7 @@ import { RegistrationRepository } from "@/repositories/registration.repository";
 import { AuthRepository } from "@/repositories/auth.repository";
 import { cacheInvalidate, cacheInvalidatePattern } from "@/lib/redis";
 import { renderTemplate } from "@/utils/template";
-import { sendEmail } from "@/lib/nodemailer";
+import { sendEmail } from "@/lib/email";
 import { RegistrationStatus } from "@/generated/prisma/enums";
 import { REGISTRATION_TRANSITIONS, isAllowedTransition } from "@/schema/shared";
 
