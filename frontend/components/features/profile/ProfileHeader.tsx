@@ -66,12 +66,16 @@ export default function ProfileHeader({ onEditProfile, eventsAttended = 0 }: Pro
       <div className="flex items-center gap-6">
         {/* Profile Photo */}
         <div className="relative">
-          <div className="h-24 w-24 rounded-full bg-muted overflow-hidden">
-            <img
-              src={user?.profilePic || "/images/profile-placeholder.jpg"}
-              alt={user?.name || "Profile"}
-              className="h-full w-full object-cover"
-            />
+          <div className="h-24 w-24 rounded-full bg-muted overflow-hidden flex items-center justify-center">
+            {user?.profilePic ? (
+              <img
+                src={user.profilePic}
+                alt={user?.name || "Profile"}
+                className="h-full w-full object-cover"
+              />
+            ) : (
+              <User className="h-10 w-10 text-muted-foreground" />
+            )}
           </div>
           <input
             ref={fileInputRef}

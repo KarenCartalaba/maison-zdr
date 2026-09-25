@@ -121,13 +121,17 @@ export default function ProfileContent() {
               <button
                 type="button"
                 onClick={() => fileInputRef.current?.click()}
-                className="relative h-24 w-24 rounded-full bg-muted overflow-hidden mb-4 group cursor-pointer"
+                className="relative h-24 w-24 rounded-full bg-muted overflow-hidden mb-4 group cursor-pointer flex items-center justify-center"
               >
-                <img
-                  src={previewUrl || user?.profilePic || "/images/profile-placeholder.jpg"}
-                  alt={user?.name || "Admin"}
-                  className="h-full w-full object-cover"
-                />
+                {(previewUrl || user?.profilePic) ? (
+                  <img
+                    src={previewUrl || user?.profilePic || ""}
+                    alt={user?.name || "Admin"}
+                    className="h-full w-full object-cover"
+                  />
+                ) : (
+                  <User className="h-10 w-10 text-muted-foreground" />
+                )}
                 <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center rounded-full">
                   <Camera className="h-5 w-5 text-white" />
                 </div>

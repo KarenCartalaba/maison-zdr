@@ -2,7 +2,7 @@
 
 import { useAuth } from "@/context/AuthContext";
 import { useLanguage, type Locale } from "@/context/LanguageContext";
-import { Bell, Search, Check } from "lucide-react";
+import { Bell, Search, Check, User } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -72,12 +72,16 @@ export default function AdminHeader() {
               <p className="text-sm font-bold uppercase tracking-wide">{user?.name || "AUREL BAZ"}</p>
               <p className="text-xs text-muted-foreground uppercase">{t.header.administrator}</p>
             </div>
-            <div className="h-10 w-10 rounded-full bg-muted overflow-hidden">
-              <img
-                src={user?.profilePic || "/images/profile-placeholder.jpg"}
-                alt={user?.name || "Admin"}
-                className="h-full w-full object-cover"
-              />
+            <div className="h-10 w-10 rounded-full bg-muted overflow-hidden flex items-center justify-center">
+              {user?.profilePic ? (
+                <img
+                  src={user.profilePic}
+                  alt={user?.name || "Admin"}
+                  className="h-full w-full object-cover"
+                />
+              ) : (
+                <User className="h-5 w-5 text-muted-foreground" />
+              )}
             </div>
           </div>
         </div>

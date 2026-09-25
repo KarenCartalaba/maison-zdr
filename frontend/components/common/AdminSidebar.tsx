@@ -83,12 +83,16 @@ export default function AdminSidebar() {
       <div className="p-4 border-t border-white/20">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3 min-w-0">
-            <div className="h-9 w-9 rounded-full bg-white/20 overflow-hidden shrink-0">
-              <img
-                src={user?.profilePic || "/images/profile-placeholder.jpg"}
-                alt={user?.name || "Admin"}
-                className="h-full w-full object-cover"
-              />
+            <div className="h-9 w-9 rounded-full bg-white/20 overflow-hidden shrink-0 flex items-center justify-center">
+              {user?.profilePic ? (
+                <img
+                  src={user.profilePic}
+                  alt={user?.name || "Admin"}
+                  className="h-full w-full object-cover"
+                />
+              ) : (
+                <User className="h-4 w-4 text-white/80" />
+              )}
             </div>
             <div className="min-w-0">
               <p className="text-sm font-medium truncate">{user?.name || "Admin"}</p>

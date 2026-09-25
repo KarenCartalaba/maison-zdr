@@ -107,12 +107,16 @@ export default function Navbar() {
 
                 {/* User Avatar */}
                 <Link href="/profile">
-                  <div className="h-8 w-8 rounded-full bg-muted overflow-hidden">
-                    <img
-                      src={user?.profilePic || "/images/profile-placeholder.jpg"}
-                      alt={user?.name || "Profile"}
-                      className="h-full w-full object-cover"
-                    />
+                  <div className="h-8 w-8 rounded-full bg-muted overflow-hidden flex items-center justify-center">
+                    {user?.profilePic ? (
+                      <img
+                        src={user.profilePic}
+                        alt={user?.name || "Profile"}
+                        className="h-full w-full object-cover"
+                      />
+                    ) : (
+                      <User className="h-4 w-4 text-muted-foreground" />
+                    )}
                   </div>
                 </Link>
 
