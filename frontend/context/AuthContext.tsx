@@ -1,7 +1,9 @@
 "use client";
 
 import React, { createContext, useContext, useEffect, useState } from "react";
+import axios from "axios";
 import { authService, LoginInput, SignupInput } from "@/services/auth.service";
+import { API_ENDPOINTS } from "@/constants";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import type { User } from "@/types";
@@ -82,6 +84,32 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     });
   };
 
+  // Cookie-blocked detection: the session lives in httpOnly cookies, so if
+  // the browser dropped them (e.g. private/incognito blocking) the user
+  // would otherwise be silently logged out on the very next request. Uses a
+  // bare axios call (no refresh interceptor) — a 401 here must NOT trigger
+  // a refresh + redirectToLogin, or the message below would be lost.
+  const verifySessionCookies = async () => {
+    try {
+      await axios.get(API_ENDPOINTS.AUTH.ME, { withCredentials: true });
+    } catch (e: any) {
+      const status = e.response?.status;
+      if (status === 401 || status === 403) {
+        setUser(null);
+        localStorage.removeItem("user");
+        const cookieError: any = new Error(
+          "Login succeeded, but your browser blocked the session cookies, so you were signed out right away. " +
+            "This often happens in private/incognito windows that block cookies. " +
+            "Please allow cookies for this site — or use a regular (non-private) window — and try again."
+        );
+        cookieError.cookieBlocked = true;
+        throw cookieError;
+      }
+      // Network hiccup (no HTTP response) — leave the fresh login intact;
+      // later requests surface real problems via the normal refresh flow.
+    }
+  };
+
   const login = async (data: LoginInput) => {
     try {
       const response = await authService.login(data);
@@ -89,6 +117,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         const userData = response.data.user;
         setUser(userData);
         localStorage.setItem("user", JSON.stringify(userData));
+
+        await verifySessionCookies();
 
         if (userData.role === "ADMIN" || userData.role === "MODERATOR") {
           router.push("/admin");
@@ -117,6 +147,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         const userData = response.data.user;
         setUser(userData);
         localStorage.setItem("user", JSON.stringify(userData));
+
+        await verifySessionCookies();
 
         if (userData.role === "ADMIN" || userData.role === "MODERATOR") {
           router.push("/admin");

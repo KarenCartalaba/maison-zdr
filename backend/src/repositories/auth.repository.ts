@@ -78,7 +78,9 @@ export class AuthRepository {
   };
 
   public linkGoogleToUser = async (userId: string, googleId: string) => {
-    return prisma.user.update({ where: { id: userId }, data: { googleId } });
+    // Google already verified the email, so mark it verified here too.
+    // Otherwise a later refresh returns 403 "Email not verified".
+    return prisma.user.update({ where: { id: userId }, data: { googleId, emailVerified: new Date() } });
   };
 
   // ==================== Admin helpers ====================

@@ -56,6 +56,23 @@ const nextConfig: NextConfig = {
     ]
   },
 
+  // Same-origin API proxy: browser calls /api/* and Next.js forwards them
+  // to the backend. The backend's Set-Cookie then lands as a first-party
+  // cookie, so incognito third-party-cookie blocking no longer drops the
+  // session. Returns [] when the backend URL is missing so local dev is
+  // unaffected. (Rewrites API per node_modules/next/dist/docs: async
+  // rewrites() returning an array of { source, destination }.)
+  async rewrites() {
+    const backend = (process.env.NEXT_PUBLIC_BACKEND_URL || "").replace(/\/+$/, "");
+    if (!backend) return [];
+    return [
+      {
+        source: "/api/:path*",
+        destination: `${backend}/api/:path*`,
+      },
+    ];
+  },
+
   // Bundle analysis (run ANALYZE=true npm run build)
   ...(process.env.ANALYZE === "true" && {}),
 }

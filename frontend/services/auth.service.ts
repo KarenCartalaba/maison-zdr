@@ -1,4 +1,4 @@
-import axiosInstance from "@/services/axios";
+import axiosInstance, { BACKEND_URL } from "@/services/axios";
 import { z } from "zod";
 import { API_ENDPOINTS } from "@/constants";
 import type { ApiResponse, LoginResponse, User } from "@/types";
@@ -91,8 +91,15 @@ export const authService = {
   },
 
   updateProfile: async (data: { name?: string; email?: string; phone?: string; imageBase64?: string }) => {
+    // NOTE: small JSON edits (name/email/phone) go through the same-origin
+    // /api proxy (first-party cookies). A base64 profile picture is a large
+    // payload (often multi-MB) that can choke the rewrite proxy (buffering /
+    // request-size limits), so only that case hits the backend directly.
+    const url = data.imageBase64
+      ? `${BACKEND_URL}${API_ENDPOINTS.PROFILE.UPDATE}`
+      : API_ENDPOINTS.PROFILE.UPDATE;
     const response = await axiosInstance.put<ApiResponse<{ user: User }>>(
-      API_ENDPOINTS.PROFILE.UPDATE,
+      url,
       data
     );
     return response.data;

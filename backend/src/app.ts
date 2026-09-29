@@ -6,7 +6,10 @@ import routes from '@/routes';
 import { globalLimiter } from "@/lib/rate-limit";
 
 const app = express();
-app.set('trust proxy', 1);
+// 2 hops: Vercel reverse proxy (edge) + hosting proxy (e.g. Render).
+// Leaving this at 1 makes express-rate-limit see the shared proxy IP and
+// lump all customers into a single rate-limit bucket.
+app.set('trust proxy', 2);
 
 app.use(cors({
   origin: ENV.FRONTEND_URL,

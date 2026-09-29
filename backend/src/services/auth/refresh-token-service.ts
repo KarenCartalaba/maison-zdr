@@ -3,6 +3,10 @@ import { signAccessToken, signRefreshToken, TokenExpiry, verifyRefreshToken } fr
 
 const authRepo = new AuthRepository();
 
+// Grace window for concurrent refreshes (e.g. two tabs refreshing at once).
+// Uses the Token.consumedAt column, so no migration or in-memory state needed.
+const REFRESH_REUSE_GRACE_MS = 10_000;
+
 export async function RefreshTokenService(refreshToken?: string) {
   const payload = verifyRefreshToken(refreshToken!);
 
@@ -13,7 +17,21 @@ export async function RefreshTokenService(refreshToken?: string) {
   // Atomic consume: only one concurrent request wins the race.
   const consumedCount = await authRepo.consumeRefreshToken(refreshToken!);
   if (consumedCount === 0) {
-    return { code: 401, status: "error", message: "Invalid refresh token" };
+    // Token already consumed/revoked — allow reuse only if THIS exact token
+    // was consumed within the grace window (concurrent-tab race). Otherwise
+    // it is a genuinely old/replayed token.
+    const existing = await authRepo.findToken(refreshToken!, "REFRESH");
+    const consumedAtMs = existing?.consumedAt?.getTime();
+    const isRecentReuse =
+      !!existing &&
+      existing.userId === payload.sub &&
+      existing.revokedAt == null &&
+      existing.expiresAt.getTime() > Date.now() &&
+      consumedAtMs != null &&
+      Date.now() - consumedAtMs <= REFRESH_REUSE_GRACE_MS;
+    if (!isRecentReuse) {
+      return { code: 401, status: "error", message: "Invalid refresh token" };
+    }
   }
 
   const user = await authRepo.findUserById(payload.sub);
