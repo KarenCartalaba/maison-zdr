@@ -6,7 +6,8 @@ import { useLanguage } from "@/context/LanguageContext";
 export default function EventHeroBanner() {
   const { t } = useLanguage();
   return (
-    <section className="relative h-[300px] md:h-[400px]">
+    <div className="container px-4 pt-6 md:pt-8">
+      <section className="relative h-[300px] md:h-[400px] overflow-hidden rounded-2xl">
       {/* TODO: Replace with actual venue exterior image */}
       <img
         src="/images/events-hero.jpg"
@@ -15,7 +16,7 @@ export default function EventHeroBanner() {
       />
       <div className="absolute inset-0 bg-black/40" />
       <div className="absolute inset-0 flex items-center">
-        <div className="container px-4 text-white space-y-4">
+        <div className="w-full px-8 md:px-12 text-white space-y-4">
           <h1 className="text-4xl md:text-5xl font-bold max-w-lg">
             {t.events.heroTitle}
           </h1>
@@ -27,6 +28,7 @@ export default function EventHeroBanner() {
           </Button>
         </div>
       </div>
-    </section>
+      </section>
+    </div>
   );
 }

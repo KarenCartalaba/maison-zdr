@@ -119,11 +119,32 @@
 @layer base {
   * {
     @apply border-border outline-ring/50;
-    }
+  }
   body {
     @apply bg-background text-foreground;
-    }
+  }
   html {
     @apply font-sans;
+  }
+}
+
+/* Global content width: widen the default `container` utility app-wide.
+   Skips any container carrying an explicit max-w-* class (e.g. narrow
+   article columns), so those keep their readability width. */
+@layer utilities {
+  .container:not([class*="max-w-"]) {
+    margin-inline: auto;
+    max-width: 90rem;
+    padding-inline: 1rem;
+  }
+  @media (width >= 40rem) {
+    .container:not([class*="max-w-"]) {
+      padding-inline: 1.5rem;
     }
+  }
+  @media (width >= 64rem) {
+    .container:not([class*="max-w-"]) {
+      padding-inline: 2rem;
+    }
+  }
 }

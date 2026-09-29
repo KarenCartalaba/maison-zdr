@@ -42,7 +42,9 @@ export default function EventDetailContent({ eventId, initialEvent }: EventDetai
   if (loading) {
     return (
       <div>
-        <Skeleton className="h-[300px] md:h-[400px] w-full" />
+        <div className="container px-4 pt-6 md:pt-8">
+          <Skeleton className="h-[300px] md:h-[400px] w-full rounded-2xl" />
+        </div>
         <div className="container px-4 py-12">
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
             <div className="lg:col-span-2 space-y-8">
