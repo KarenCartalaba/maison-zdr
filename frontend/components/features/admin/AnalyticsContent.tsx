@@ -2,8 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Download, TrendingUp, Users, Calendar, Star, Inbox } from "lucide-react";
+import { TrendingUp, Users, Calendar, Star, Inbox } from "lucide-react";
 import {
   ChartContainer,
   ChartTooltip,
@@ -160,40 +159,6 @@ export default function AnalyticsContent({ initialData = null }: AnalyticsConten
     setLoading(false);
   }, [initialData]);
 
-  const handleExportReport = () => {
-    if (!data) return;
-    const lines: string[] = [];
-    lines.push(t.adminAnalytics.csvReportTitle);
-    lines.push(`${t.adminAnalytics.csvGenerated},${new Date().toISOString().split("T")[0]}`);
-    lines.push("");
-    lines.push(t.adminAnalytics.csvOverview);
-    lines.push(`${t.adminAnalytics.csvMetric},${t.adminAnalytics.csvValue}`);
-    lines.push(`${t.adminAnalytics.csvTotalEvents},${data.totalEvents}`);
-    lines.push(`${t.adminAnalytics.csvTotalRegistrations},${data.totalRegistrations}`);
-    lines.push(`${t.adminAnalytics.csvTotalUsers},${data.totalUsers}`);
-    lines.push(`${t.adminAnalytics.csvTotalReviews},${data.totalReviews}`);
-    lines.push(`${t.adminAnalytics.csvAvgRating},${data.avgRating.toFixed(1)}`);
-    lines.push("");
-    if (data.eventPerformance && data.eventPerformance.length > 0) {
-      lines.push(t.adminAnalytics.csvEventPerf);
-      lines.push(`${t.adminAnalytics.csvEvent},${t.adminAnalytics.csvEventRegistrations},${t.adminAnalytics.csvMaxParticipants},${t.adminAnalytics.csvFillRate},${t.adminAnalytics.csvAvgRatingLabel},${t.adminAnalytics.csvReviews}`);
-      data.eventPerformance.forEach((e) => {
-        lines.push(
-          `"${e.title.replace(/"/g, '""')}",${e.registrations},${e.maxParticipants},${Math.round(e.fillRate)}%,${e.avgRating.toFixed(1)},${e.reviewCount}`
-        );
-      });
-    }
-    const csvContent = lines.join("\n");
-    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement("a");
-    const dateStr = new Date().toISOString().split("T")[0];
-    link.href = url;
-    link.download = `analytics-report-${dateStr}.csv`;
-    link.click();
-    URL.revokeObjectURL(url);
-  };
-
   useEffect(() => {
     if (initialData) {
       setLoading(false);
@@ -234,10 +199,6 @@ export default function AnalyticsContent({ initialData = null }: AnalyticsConten
             {t.adminAnalytics.subtitle}
           </p>
         </div>
-        <Button variant="outline" onClick={handleExportReport}>
-          <Download className="h-4 w-4 mr-2" />
-          {t.adminAnalytics.exportReport}
-        </Button>
       </div>
 
       {/* KPI Cards */}

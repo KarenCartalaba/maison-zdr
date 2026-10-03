@@ -11,11 +11,12 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Field, FieldError, FieldGroup, FieldLabel } from "@/components/ui/field";
-import { User, Mail, Shield, Loader2, Camera } from "lucide-react";
+import { User, Mail, Shield, Loader2, Camera, Eye, EyeOff } from "lucide-react";
 import { useLanguage } from "@/context/LanguageContext";
 import { formatDate } from "@/lib/format-date";
 import { toast } from "sonner";
 import { isValidImageFile } from "@/lib/utils";
+import { downscaleImage } from "@/lib/image";
 
 const profileSchema = z.object({
   firstName: z.string().min(1, "First name is required").max(100, "First name must be at most 100 characters"),
@@ -26,9 +27,33 @@ const profileSchema = z.object({
 
 type ProfileValues = z.infer<typeof profileSchema>;
 
+// Same shape as SettingsTab's passwordSchema so client validation matches the
+// backend changePasswordSchema (no server-side rejection after client passes).
+const passwordSchema = z.object({
+  currentPassword: z.string().min(1, "Current password is required"),
+  newPassword: z
+    .string()
+    .min(8, "Password must be at least 8 characters")
+    .regex(/[A-Z]/, "Must contain one uppercase letter")
+    .regex(/[a-z]/, "Must contain one lowercase letter")
+    .regex(/[0-9]/, "Must contain one number")
+    .regex(/[\W_]/, "Must contain one special character"),
+  confirmPassword: z.string().min(1, "Please confirm your new password"),
+}).refine((data) => data.newPassword === data.confirmPassword, {
+  message: "Passwords do not match",
+  path: ["confirmPassword"],
+});
+
+type PasswordValues = z.infer<typeof passwordSchema>;
+
 export default function ProfileContent() {
   const { user, updateUser } = useAuth();
   const [isSaving, setIsSaving] = useState(false);
+  const [showPasswordForm, setShowPasswordForm] = useState(false);
+  const [isChangingPassword, setIsChangingPassword] = useState(false);
+  const [showCurrentPassword, setShowCurrentPassword] = useState(false);
+  const [showNewPassword, setShowNewPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [imageBase64, setImageBase64] = useState<string | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -45,7 +70,40 @@ export default function ProfileContent() {
     mode: "onBlur",
   });
 
-  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const passwordForm = useForm<PasswordValues>({
+    resolver: zodResolver(passwordSchema),
+    defaultValues: {
+      currentPassword: "",
+      newPassword: "",
+      confirmPassword: "",
+    },
+    mode: "onBlur",
+  });
+
+  const handleChangePassword = async (data: PasswordValues) => {
+    setIsChangingPassword(true);
+    try {
+      await authService.changePassword(data.currentPassword, data.newPassword);
+      toast.success(t.profile.passwordChangedSuccessfully);
+      passwordForm.reset();
+      setShowPasswordForm(false);
+    } catch (error: any) {
+      if (error.errors) {
+        error.errors.forEach((err: { path: string; message: string }) => {
+          const fieldName = err.path.replace("body.", "") as keyof PasswordValues;
+          if (fieldName in passwordForm.getValues()) {
+            passwordForm.setError(fieldName, { type: "server", message: err.message });
+          }
+        });
+      } else {
+        toast.error(error.message || "Failed to change password");
+      }
+    } finally {
+      setIsChangingPassword(false);
+    }
+  };
+
+  const handleImageChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
@@ -59,13 +117,15 @@ export default function ProfileContent() {
       return;
     }
 
-    const reader = new FileReader();
-    reader.onload = () => {
-      const result = reader.result as string;
-      setImageBase64(result);
-      setPreviewUrl(result);
-    };
-    reader.readAsDataURL(file);
+    try {
+      // Downscale client-side (<1MB) so the save rides the same-origin /api
+      // proxy with first-party cookies (no absolute-URL bypass → no 401).
+      const downscaled = await downscaleImage(file);
+      setImageBase64(downscaled);
+      setPreviewUrl(downscaled);
+    } catch {
+      toast.error(t.adminProfile.updateError);
+    }
   };
 
   const handleSave = async (data: ProfileValues) => {
@@ -230,8 +290,140 @@ export default function ProfileContent() {
                   <p className="text-xs text-muted-foreground">{t.adminProfile.passwordChanged}</p>
                 </div>
               </div>
-              <Button variant="outline" size="sm">{t.adminProfile.changePassword}</Button>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() => setShowPasswordForm((v) => !v)}
+              >
+                {t.adminProfile.changePassword}
+              </Button>
             </div>
+            {showPasswordForm && (
+              <form
+                onSubmit={passwordForm.handleSubmit(handleChangePassword)}
+                className="rounded-lg border p-4 space-y-4"
+                noValidate
+              >
+                <FieldGroup>
+                  <Controller
+                    name="currentPassword"
+                    control={passwordForm.control}
+                    render={({ field, fieldState }) => (
+                      <Field data-invalid={fieldState.invalid}>
+                        <FieldLabel htmlFor="admin-currentPassword">{t.profile.currentPassword}</FieldLabel>
+                        <div className="relative">
+                          <Input
+                            {...field}
+                            id="admin-currentPassword"
+                            type={showCurrentPassword ? "text" : "password"}
+                            placeholder="••••••••"
+                            aria-invalid={fieldState.invalid}
+                            className="pr-10"
+                          />
+                          <button
+                            type="button"
+                            onClick={() => setShowCurrentPassword((v) => !v)}
+                            aria-label={showCurrentPassword ? "Hide password" : "Show password"}
+                            aria-pressed={showCurrentPassword}
+                            className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                          >
+                            {showCurrentPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                          </button>
+                        </div>
+                        {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
+                      </Field>
+                    )}
+                  />
+                  <Controller
+                    name="newPassword"
+                    control={passwordForm.control}
+                    render={({ field, fieldState }) => (
+                      <Field data-invalid={fieldState.invalid}>
+                        <FieldLabel htmlFor="admin-newPassword">{t.profile.newPassword}</FieldLabel>
+                        <div className="relative">
+                          <Input
+                            {...field}
+                            id="admin-newPassword"
+                            type={showNewPassword ? "text" : "password"}
+                            placeholder="••••••••"
+                            aria-invalid={fieldState.invalid}
+                            className="pr-10"
+                          />
+                          <button
+                            type="button"
+                            onClick={() => setShowNewPassword((v) => !v)}
+                            aria-label={showNewPassword ? "Hide password" : "Show password"}
+                            aria-pressed={showNewPassword}
+                            className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                          >
+                            {showNewPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                          </button>
+                        </div>
+                        {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
+                      </Field>
+                    )}
+                  />
+                  <Controller
+                    name="confirmPassword"
+                    control={passwordForm.control}
+                    render={({ field, fieldState }) => (
+                      <Field data-invalid={fieldState.invalid}>
+                        <FieldLabel htmlFor="admin-confirmPassword">{t.profile.confirmPassword}</FieldLabel>
+                        <div className="relative">
+                          <Input
+                            {...field}
+                            id="admin-confirmPassword"
+                            type={showConfirmPassword ? "text" : "password"}
+                            placeholder="••••••••"
+                            aria-invalid={fieldState.invalid}
+                            className="pr-10"
+                          />
+                          <button
+                            type="button"
+                            onClick={() => setShowConfirmPassword((v) => !v)}
+                            aria-label={showConfirmPassword ? "Hide password" : "Show password"}
+                            aria-pressed={showConfirmPassword}
+                            className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                          >
+                            {showConfirmPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                          </button>
+                        </div>
+                        {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
+                      </Field>
+                    )}
+                  />
+                </FieldGroup>
+                <div className="flex gap-3">
+                  <Button
+                    type="submit"
+                    size="sm"
+                    className="bg-[#1a5c2a] hover:bg-[#144a22]"
+                    disabled={isChangingPassword}
+                  >
+                    {isChangingPassword ? (
+                      <>
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                        {t.profile.changing}
+                      </>
+                    ) : (
+                      t.profile.updatePassword
+                    )}
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => {
+                      passwordForm.reset();
+                      setShowPasswordForm(false);
+                    }}
+                  >
+                    {t.profile.back}
+                  </Button>
+                </div>
+              </form>
+            )}
             <div className="flex items-center justify-between py-3 border-b">
               <div className="flex items-center gap-3">
                 <Mail className="h-5 w-5 text-muted-foreground" />

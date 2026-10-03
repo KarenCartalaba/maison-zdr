@@ -4,6 +4,8 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { Star } from "lucide-react";
 import { eventService } from "@/services/event.service";
+import { authService } from "@/services/auth.service";
+import { useAuth } from "@/context/AuthContext";
 import ReviewCard from "./ReviewCard";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useLanguage } from "@/context/LanguageContext";
@@ -25,10 +27,12 @@ export default function ReviewSection({
   totalReviews: propTotalReviews = 0,
 }: ReviewSectionProps) {
   const { t, dateLocale } = useLanguage();
+  const { isAuthenticated } = useAuth();
   const [reviews, setReviews] = useState<any[]>([]);
   const [avgRating, setAvgRating] = useState(propAvgRating);
   const [totalReviews, setTotalReviews] = useState(propTotalReviews);
   const [loading, setLoading] = useState(!!eventId);
+  const [alreadyReviewed, setAlreadyReviewed] = useState(false);
 
   useEffect(() => {
     if (!eventId) return;
@@ -45,11 +49,38 @@ export default function ReviewSection({
       .finally(() => setLoading(false));
   }, [eventId]);
 
+  // The write CTA must not be offered to users who already reviewed this event
+  // (the backend rejects duplicates with 409).
+  useEffect(() => {
+    if (!eventId || !isAuthenticated) {
+      setAlreadyReviewed(false);
+      return;
+    }
+    let cancelled = false;
+    authService
+      .getMyReviews()
+      .then((res) => {
+        if (cancelled) return;
+        const mine = res.data?.reviews ?? [];
+        setAlreadyReviewed(
+          mine.some(
+            (r: any) => r.event?.id === eventId || r.eventId === eventId
+          )
+        );
+      })
+      .catch(() => {});
+    return () => {
+      cancelled = true;
+    };
+  }, [eventId, isAuthenticated]);
+
   const canReview =
     (eventDate ? new Date(eventDate) < new Date() : false) ||
     allowReviewsNow === true;
 
-  const reviewCta = canReview ? (
+  const reviewCta = alreadyReviewed ? (
+    <p className="text-sm text-muted-foreground">{t.events.alreadyReviewed}</p>
+  ) : canReview ? (
     <Link
       href={eventId ? `/profile?tab=reviews&event=${eventId}` : "/profile"}
       className="inline-flex items-center justify-center rounded-md bg-[#1a5c2a] px-4 py-2 text-sm font-medium text-white hover:bg-[#144a22]"

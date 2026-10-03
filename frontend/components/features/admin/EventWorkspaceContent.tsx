@@ -868,6 +868,8 @@ type EventSettingsValues = z.infer<typeof eventSettingsSchema>;
 
 function SettingsTab({ event, t, dateLocale, onUpdated }: { event: Event; t: any; dateLocale: string; onUpdated: (event: Event) => void }) {
   const [isUpdating, setIsUpdating] = useState(false);
+  // Cancelling only makes sense before the event takes place.
+  const hasEnded = new Date(event.eventDate) < new Date();
 
   const form = useForm<EventSettingsValues>({
     resolver: zodResolver(eventSettingsSchema),
@@ -979,16 +981,22 @@ function SettingsTab({ event, t, dateLocale, onUpdated }: { event: Event; t: any
               control={form.control}
               render={({ field, fieldState }) => (
                 <Field data-invalid={fieldState.invalid}>
-                  <label className="flex items-center gap-2 cursor-pointer">
+                  <label className={`flex items-center gap-2 ${hasEnded && !field.value ? "cursor-not-allowed opacity-60" : "cursor-pointer"}`}>
                     <input
                       type="checkbox"
                       checked={field.value}
                       onChange={field.onChange}
+                      disabled={hasEnded && !field.value}
                       className="rounded"
                       aria-invalid={fieldState.invalid}
                     />
                     <span className="text-sm">{t.adminWorkspace.settingsMarkCancelled}</span>
                   </label>
+                  {hasEnded && !event.isCancelled && (
+                    <p className="text-xs text-muted-foreground">
+                      {t.adminWorkspace.settingsCancelEnded}
+                    </p>
+                  )}
                   {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
                 </Field>
               )}

@@ -33,6 +33,9 @@ export const authLimiter = rateLimit({
 export const loginLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
   limit: 10,
+  // Successful logins don't count against the budget — otherwise legitimate
+  // users burn the 10/15min window and get 429s that look like bad creds.
+  skipSuccessfulRequests: true,
   standardHeaders: "draft-7",
   legacyHeaders: false,
   message: { code: 429, status: "error", message: "Too many login attempts. Please try again later." },

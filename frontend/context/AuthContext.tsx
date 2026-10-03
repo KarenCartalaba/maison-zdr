@@ -136,6 +136,18 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       const authError: any = new Error(message);
       authError.message = message;
       authError.errors = serverErrors;
+      // Preserve the HTTP status: callers (e.g. LoginForm's 429 cooldown)
+      // only receive this thrown error, not the raw axios error.
+      authError.status = error.response?.status;
+      // Rate-limit window left, in seconds (express-rate-limit's Retry-After
+      // on 429). Same-origin /api proxy ⇒ not a CORS-restricted header, so
+      // callers can wait out the real window instead of guessing.
+      if (authError.status === 429) {
+        const retryAfter = Number(error.response?.headers?.["retry-after"]);
+        if (Number.isFinite(retryAfter) && retryAfter > 0) {
+          authError.retryAfter = Math.ceil(retryAfter);
+        }
+      }
       throw authError;
     }
   };
@@ -164,6 +176,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       const message = error.response?.data?.message || error.message || "Google login failed";
       const authError: any = new Error(message);
       authError.message = message;
+      authError.status = error.response?.status;
       throw authError;
     }
   };
@@ -185,6 +198,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       const authError: any = new Error(message);
       authError.message = message;
       authError.errors = serverErrors;
+      authError.status = error.response?.status;
       throw authError;
     }
   };

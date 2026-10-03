@@ -1,6 +1,7 @@
 import { AdminRepository } from "@/repositories/admin.repository";
 import { AuthRepository } from "@/repositories/auth.repository";
 import { cacheInvalidatePattern } from "@/lib/redis";
+import { invalidateUserCache } from "@/services/auth/get-me-service";
 
 const adminRepo = new AdminRepository();
 const authRepo = new AuthRepository();
@@ -12,6 +13,9 @@ export async function VerifyUserService(id: string) {
 
     const updated = await adminRepo.verifyUser(id);
     await cacheInvalidatePattern("admin:*");
+    // /me is cached per-user (user:{id}, 10 min) — clear it too, else /me
+    // keeps serving the stale emailVerified:null.
+    await invalidateUserCache(id);
     return { code: 200, status: "success", message: "User verified successfully", data: { user: { id: updated.id, name: updated.name, email: updated.email, emailVerified: updated.emailVerified } } };
   } catch (error) {
     console.error("VerifyUserService error", error);

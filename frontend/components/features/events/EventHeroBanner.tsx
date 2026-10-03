@@ -1,7 +1,9 @@
 "use client";
 
+import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { useLanguage } from "@/context/LanguageContext";
+import { EVENTS_LIST_ANCHOR } from "@/constants";
 
 export default function EventHeroBanner() {
   const { t } = useLanguage();
@@ -23,9 +25,11 @@ export default function EventHeroBanner() {
           <p className="text-lg text-white/90 max-w-md">
             {t.events.heroSubtitle}
           </p>
-          <Button className="bg-white text-foreground hover:bg-white/90 rounded-full px-8">
-            {t.events.viewEvents}
-          </Button>
+          <Link href={`#${EVENTS_LIST_ANCHOR}`}>
+            <Button className="bg-white text-foreground hover:bg-white/90 rounded-full px-8">
+              {t.events.viewEvents}
+            </Button>
+          </Link>
         </div>
       </div>
       </section>

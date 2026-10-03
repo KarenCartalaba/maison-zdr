@@ -33,9 +33,18 @@ export default async function Page() {
   } catch {}
 
   const now = new Date();
-  const ongoing = events.filter(
-    (e) => !e.isCancelled && new Date(e.eventDate) <= now && new Date(e.deadline) >= now
-  );
+  // "Ongoing" = the event's day has started and is still today. The registration
+  // deadline must NOT gate this section: a closed deadline only stops new
+  // sign-ups, it does not mean the event is no longer running.
+  const isSameCalendarDay = (a: Date, b: Date) =>
+    a.getFullYear() === b.getFullYear() &&
+    a.getMonth() === b.getMonth() &&
+    a.getDate() === b.getDate();
+  const ongoing = events.filter((e) => {
+    if (e.isCancelled) return false;
+    const eventDate = new Date(e.eventDate);
+    return eventDate <= now && isSameCalendarDay(eventDate, now);
+  });
   const upcoming = events.filter(
     (e) => !e.isCancelled && new Date(e.eventDate) > now
   );

@@ -1,4 +1,5 @@
-import axiosInstance, { BACKEND_URL } from "@/services/axios";
+import axiosInstance from "@/services/axios";
+import { downscaleDataUrl } from "@/lib/image";
 import type { ApiResponse } from "@/types";
 
 export interface UploadResult {
@@ -11,13 +12,18 @@ export interface UploadResult {
 
 export const galleryService = {
   upload: async (data: { imageBase64: string; folder?: string }) => {
+    // Same-origin /api proxy so the httpOnly session cookie (host-only on the
+    // frontend domain) is actually sent — hitting the backend URL directly
+    // dropped it and every admin event-image upload came back
+    // 401 "Authentication required".
+    //
+    // Large multi-MB originals used to be the reason for that bypass; they are
+    // now downscaled client-side (<1MB, see lib/image.ts) so the proxy body
+    // stays small. Small payloads are forwarded untouched.
+    const imageBase64 = await downscaleDataUrl(data.imageBase64);
     const response = await axiosInstance.post<ApiResponse<UploadResult>>(
-      // NOTE: large base64 payload (often multi-MB with ~33% base64 bloat).
-      // Bypasses the same-origin /api rewrite proxy, which can choke on big
-      // bodies (proxy buffering / request-size limits) — hits the backend
-      // directly instead. Small calls (e.g. delete below) stay on the proxy.
-      `${BACKEND_URL}/api/gallery/v1/upload`,
-      data
+      "/api/gallery/v1/upload",
+      { ...data, imageBase64 }
     );
     return response.data;
   },

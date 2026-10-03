@@ -115,10 +115,21 @@ export default function LoginForm() {
     try {
       await login(data);
     } catch (error: any) {
-      const status = error.response?.status;
+      // AuthContext throws a plain Error carrying .status (not .response),
+      // so check both shapes here.
+      const status = error.status ?? error.response?.status;
       if (status === 429) {
-        startCooldown(30);
-        toast.error(t.auth.rateLimited.replace("{seconds}", "30"));
+        // Wait out the server's actual window (Retry-After, up to the 15 min
+        // limiter window). The old fixed 30s cooldown expired long before the
+        // limiter reset, so the next attempt 429'd again and looked like a
+        // credentials failure.
+        const retryAfter = Number(error.retryAfter);
+        const seconds = Math.min(
+          Math.max(Number.isFinite(retryAfter) && retryAfter > 0 ? Math.ceil(retryAfter) : 30, 5),
+          15 * 60
+        );
+        startCooldown(seconds);
+        toast.error(t.auth.rateLimited.replace("{seconds}", String(seconds)));
       } else if (error.errors?.length) {
         error.errors.forEach((err: { path: string; message: string }) => {
           const fieldName = err.path.replace("body.", "") as keyof LoginFormValues;

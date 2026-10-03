@@ -39,7 +39,9 @@ export async function ResendEmailVerificationService(email: string) {
 
     await authRepo.createToken({ type: "EMAIL_VERIFY", token, expiresAt, userId: user.id });
 
-    const emailVerificationURL = `${process.env.BACKEND_URL}/api/auth/v1/verify-email?token=${encodeURIComponent(token)}`;
+    // Same verification page as the signup email (frontend route renders the
+    // result UX); the raw backend API URL would show unstyled JSON instead.
+    const emailVerificationURL = `${process.env.FRONTEND_URL}/verify-email?token=${encodeURIComponent(token)}`;
 
     const html = renderTemplate("verify-email.html", {
       name: user.name ?? "there",

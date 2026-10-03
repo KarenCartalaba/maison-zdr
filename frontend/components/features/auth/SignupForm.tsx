@@ -10,7 +10,7 @@ import { useLanguage } from "@/context/LanguageContext";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Field, FieldError, FieldGroup, FieldLabel } from "@/components/ui/field";
-import { Loader2 } from "lucide-react";
+import { Eye, EyeOff, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 
 const signupFormSchema = z.object({
@@ -35,6 +35,8 @@ export default function SignupForm() {
   const { signup } = useAuth();
   const { t } = useLanguage();
   const [isLoading, setIsLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
   const form = useForm<SignupFormValues>({
     resolver: zodResolver(signupFormSchema),
@@ -122,14 +124,26 @@ export default function SignupForm() {
               render={({ field, fieldState }) => (
                 <Field data-invalid={fieldState.invalid}>
                   <FieldLabel htmlFor="signup-password">{t.auth.passwordLabel}</FieldLabel>
-                  <Input
-                    {...field}
-                    id="signup-password"
-                    type="password"
-                    placeholder={t.auth.passwordPlaceholder}
-                    autoComplete="new-password"
-                    aria-invalid={fieldState.invalid}
-                  />
+                  <div className="relative">
+                    <Input
+                      {...field}
+                      id="signup-password"
+                      type={showPassword ? "text" : "password"}
+                      placeholder={t.auth.passwordPlaceholder}
+                      autoComplete="new-password"
+                      aria-invalid={fieldState.invalid}
+                      className="pr-10"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowPassword((v) => !v)}
+                      aria-label={showPassword ? "Hide password" : "Show password"}
+                      aria-pressed={showPassword}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                    >
+                      {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                    </button>
+                  </div>
                   {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
                 </Field>
               )}
@@ -141,14 +155,26 @@ export default function SignupForm() {
               render={({ field, fieldState }) => (
                 <Field data-invalid={fieldState.invalid}>
                   <FieldLabel htmlFor="signup-confirm">{t.auth.confirmPasswordLabel}</FieldLabel>
-                  <Input
-                    {...field}
-                    id="signup-confirm"
-                    type="password"
-                    placeholder={t.auth.confirmPasswordPlaceholder}
-                    autoComplete="new-password"
-                    aria-invalid={fieldState.invalid}
-                  />
+                  <div className="relative">
+                    <Input
+                      {...field}
+                      id="signup-confirm"
+                      type={showConfirmPassword ? "text" : "password"}
+                      placeholder={t.auth.confirmPasswordPlaceholder}
+                      autoComplete="new-password"
+                      aria-invalid={fieldState.invalid}
+                      className="pr-10"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowConfirmPassword((v) => !v)}
+                      aria-label={showConfirmPassword ? "Hide password" : "Show password"}
+                      aria-pressed={showConfirmPassword}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                    >
+                      {showConfirmPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                    </button>
+                  </div>
                   {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
                 </Field>
               )}

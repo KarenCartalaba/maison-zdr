@@ -8,6 +8,12 @@ export async function ChangePasswordService(userId: string, currentPassword: str
     const user = await authRepo.findUserById(userId);
     if (!user) return { code: 404, status: "error", message: "User not found" };
 
+    // Google-only accounts have no password; verifyPassword would throw on
+    // null (and previously failed typecheck: string | null vs string).
+    if (!user.password) {
+      return { code: 400, status: "error", message: "No password set on this account. Use Google sign-in or reset your password." };
+    }
+
     const isMatch = verifyPassword(currentPassword, user.password);
     if (!isMatch) return { code: 400, status: "error", message: "Current password is incorrect" };
 

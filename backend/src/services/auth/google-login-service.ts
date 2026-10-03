@@ -82,6 +82,7 @@ export async function GoogleLoginService(idToken: string) {
           email: user.email,
           name: user.name,
           role: user.role,
+          emailVerified: user.emailVerified,
           profilePic: user.profilePic,
         },
       },

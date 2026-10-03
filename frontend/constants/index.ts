@@ -1,3 +1,6 @@
+// In-page anchor for the events listing block on /events (used by the hero CTA).
+export const EVENTS_LIST_ANCHOR = "event-listing";
+
 export const ROUTES = {
   HOME: "/",
   ADMIN: "/admin",

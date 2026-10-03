@@ -13,18 +13,44 @@ import type { News } from "@/types";
 
 interface NewsDetailContentProps {
   initialNews: News | null;
+  newsId?: string;
 }
 
-export default function NewsDetailContent({ initialNews }: NewsDetailContentProps) {
+export default function NewsDetailContent({ initialNews, newsId }: NewsDetailContentProps) {
   const { t, dateLocale } = useLanguage();
   const [news, setNews] = useState<News | null>(initialNews);
   const [loading, setLoading] = useState(!initialNews);
 
-  // Always reflect the latest server data (e.g. null after a delete → "News Not Found")
+  // Reflect the latest server data, and retry once on the client when the
+  // server-side fetch returned nothing (404 or a transient API failure) so a
+  // brief backend hiccup does not permanently render the "not found" state.
   useEffect(() => {
     setNews(initialNews);
-    setLoading(false);
-  }, [initialNews]);
+    if (initialNews) {
+      setLoading(false);
+      return;
+    }
+    if (!newsId) {
+      setLoading(false);
+      return;
+    }
+    let cancelled = false;
+    setLoading(true);
+    newsService
+      .getById(newsId)
+      .then((res) => {
+        if (!cancelled) setNews(res.data?.news ?? null);
+      })
+      .catch(() => {
+        if (!cancelled) setNews(null);
+      })
+      .finally(() => {
+        if (!cancelled) setLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [initialNews, newsId]);
 
   if (loading) {
     return (

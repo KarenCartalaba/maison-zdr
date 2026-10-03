@@ -1,7 +1,6 @@
 "use client";
 
 import Link from "next/link";
-import { useAuth } from "@/context/AuthContext";
 import { useLanguage } from "@/context/LanguageContext";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -14,7 +13,6 @@ interface EventCardProps {
 }
 
 export default function EventCard({ event }: EventCardProps) {
-  const { isAuthenticated, isVerified } = useAuth();
   const { t, dateLocale } = useLanguage();
   const registrationCount = event._count?.registrations || 0;
   const capacityPercentage = (registrationCount / event.maxParticipants) * 100;
@@ -37,15 +35,13 @@ export default function EventCard({ event }: EventCardProps) {
 
   const statusBadge = getStatusBadge();
 
-  const getButtonState = () => {
-    if (event.isCancelled) return { text: t.events.eventCancelled, disabled: true };
-    if (isDeadlinePassed) return { text: t.events.registrationClosed, disabled: true };
-    if (!isAuthenticated) return { text: t.events.viewDetails, disabled: false };
-    if (!isVerified) return { text: t.events.viewDetails, disabled: false };
-    return { text: t.events.viewDetails, disabled: false };
-  };
-
-  const buttonState = getButtonState();
+  // The card always links to the event detail page, so the CTA label stays
+  // "View Details". Registration state is surfaced separately below it.
+  const registrationNote = (() => {
+    if (event.isCancelled) return t.events.eventCancelled;
+    if (isDeadlinePassed) return t.events.registrationClosed;
+    return null;
+  })();
 
   return (
     <Link
@@ -101,8 +97,13 @@ export default function EventCard({ event }: EventCardProps) {
           </div>
         </div>
         <div className="inline-flex w-full items-center justify-center gap-2 whitespace-nowrap rounded-md bg-[#1a5c2a] px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-[#144a22]">
-          {buttonState.text}
+          {t.events.viewDetails}
         </div>
+        {registrationNote && (
+          <p className="text-center text-xs font-medium text-muted-foreground">
+            {registrationNote}
+          </p>
+        )}
       </CardContent>
     </Card>
     </Link>

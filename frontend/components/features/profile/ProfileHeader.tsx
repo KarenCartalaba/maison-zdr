@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { authService } from "@/services/auth.service";
 import { isValidImageFile } from "@/lib/utils";
+import { downscaleImage } from "@/lib/image";
 
 interface ProfileHeaderProps {
   onEditProfile?: () => void;
@@ -40,23 +41,17 @@ export default function ProfileHeader({ onEditProfile, eventsAttended = 0 }: Pro
 
     setUploading(true);
     try {
-      const reader = new FileReader();
-      reader.onload = async () => {
-        try {
-          const response = await authService.updateProfile({ imageBase64: reader.result as string });
-          if (response.code === 200 && response.data?.user) {
-            updateUser(response.data.user);
-          }
-          toast.success(t.profile.profilePictureUpdated);
-        } catch {
-          toast.error(t.profile.failedUpdatePicture);
-        } finally {
-          setUploading(false);
-        }
-      };
-      reader.readAsDataURL(file);
+      // Downscale client-side (<1MB) so the upload can ride the same-origin
+      // /api proxy with first-party cookies (no absolute-URL bypass → no 401).
+      const imageBase64 = await downscaleImage(file);
+      const response = await authService.updateProfile({ imageBase64 });
+      if (response.code === 200 && response.data?.user) {
+        updateUser(response.data.user);
+      }
+      toast.success(t.profile.profilePictureUpdated);
     } catch {
-      toast.error(t.profile.failedReadFile);
+      toast.error(t.profile.failedUpdatePicture);
+    } finally {
       setUploading(false);
     }
   };

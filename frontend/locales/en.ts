@@ -123,6 +123,7 @@ export const en = {
 
   // ── Public visitor + auth surfaces ──────────────────────────────
   home: {
+    emptyEvents: "No events to show right now.",
     hero: {
       badge: "Zone de Rassemblement",
       title: "Register Now and Experience the Ultimate Bar Vibe",
@@ -257,6 +258,7 @@ export const en = {
     alreadyRegistered: "Already Registered",
     registerEvent: "Register Event",
     writeReview: "Write a Review",
+    alreadyReviewed: "You have already reviewed this event.",
     reviewsOpenAfter: "Reviews open after the event.",
     reviews: "Reviews",
     noReviewsYet:
@@ -597,7 +599,6 @@ export const en = {
   adminRegs: {
     title: "Registrations",
     subtitle: "Manage all event registrations",
-    exportCsv: "Export CSV",
     searchPlaceholder: "Search registrations...",
     allEvents: "All Events",
     colReference: "REFERENCE",
@@ -620,14 +621,6 @@ export const en = {
     updateError: "Failed to update status",
     emptyTitle: "No registrations found",
     emptyDesc: "There are no registrations matching your criteria.",
-    csvHeaders: {
-      reference: "Reference",
-      guest: "Guest",
-      email: "Email",
-      event: "Event",
-      date: "Date",
-      status: "Status",
-    },
     yes: "Yes",
     no: "No",
   },
@@ -733,7 +726,6 @@ export const en = {
   adminAnalytics: {
     title: "Analytics",
     subtitle: "Event performance and insights",
-    exportReport: "Export Report",
     statRegistrations: "Total Registrations",
     statUsers: "Total Users",
     statAvgRating: "Avg. Rating",
@@ -752,23 +744,6 @@ export const en = {
     emptyDesc: "Analytics will appear once you have events and registrations.",
     noTrendData: "No trend data available",
     noPerfData: "No performance data available",
-    csvReportTitle: "Analytics Report",
-    csvGenerated: "Generated",
-    csvOverview: "Overview",
-    csvMetric: "Metric",
-    csvValue: "Value",
-    csvTotalEvents: "Total Events",
-    csvTotalRegistrations: "Total Registrations",
-    csvTotalUsers: "Total Users",
-    csvTotalReviews: "Total Reviews",
-    csvAvgRating: "Average Rating",
-    csvEventPerf: "Event Performance",
-    csvEvent: "Event",
-    csvEventRegistrations: "Registrations",
-    csvMaxParticipants: "Max Participants",
-    csvFillRate: "Fill Rate",
-    csvAvgRatingLabel: "Avg Rating",
-    csvReviews: "Reviews",
   },
 
   adminWorkspace: {
@@ -842,6 +817,7 @@ export const en = {
     settingsLabelLocation: "Location",
     settingsLabelMaxParticipants: "Max Participants",
     settingsMarkCancelled: "Mark as cancelled",
+    settingsCancelEnded: "An event can no longer be cancelled once it has ended.",
     settingsAllowReviews: "Allow reviews now",
     settingsAllowReviewsDesc: "Lets customers submit reviews before the event date has passed.",
     settingsSave: "Save Changes",
@@ -918,6 +894,8 @@ export const en = {
     contactEmail: "Contact Email",
     defaultTimezone: "Default Timezone",
     saveChanges: "Save Changes",
+    saveSuccess: "Settings saved successfully",
+    saveError: "Failed to save settings",
     notifications: "Notifications",
     notifRegistrationTitle: "New registration alerts",
     notifRegistrationDesc: "Get notified when someone registers",
@@ -928,18 +906,10 @@ export const en = {
     notifReviewTitle: "New review alerts",
     notifReviewDesc: "Get notified when a review is submitted",
     security: "Security",
-    twoFactor: "Two-Factor Authentication",
-    twoFactorDesc: "Add an extra layer of security",
-    twoFactorNotEnabled: "Not Enabled",
     sessionTimeout: "Session Timeout",
     sessionTimeoutDesc: "Auto-logout after inactivity",
     loginNotifications: "Login Notifications",
     loginNotificationsDesc: "Alert on new device login",
-    appearance: "Appearance",
-    primaryColor: "Primary Color",
-    logo: "Logo",
-    uploadLogo: "Upload New Logo",
-    footerText: "Footer Text",
   },
 
   adminProfile: {

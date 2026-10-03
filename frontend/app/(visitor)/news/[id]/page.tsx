@@ -15,5 +15,5 @@ export default async function NewsDetailPage({
     news = res.data?.news ?? null;
   } catch {}
 
-  return <NewsDetailContent initialNews={news} />;
+  return <NewsDetailContent initialNews={news} newsId={id} />;
 }

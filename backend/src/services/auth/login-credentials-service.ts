@@ -23,6 +23,13 @@ export async function LoginCredentialsService(email: string, password: string) {
       return { code: 400, status: "error", message: GENERIC_FAILURE };
     }
 
+    // Parity with Google login: a suspended account is rejected explicitly.
+    // Placed after credential + verification checks so enumeration behavior
+    // is unchanged (only reachable with the correct password).
+    if (user.suspended) {
+      return { code: 403, status: "error", message: "Account has been suspended" };
+    }
+
     const accessToken = signAccessToken(user.id, user.role, TokenExpiry.ACCESS_TOKEN_EXPIRES);
     const refreshToken = signRefreshToken(user.id, user.role, TokenExpiry.REFRESH_TOKEN_EXPIRES);
 
@@ -49,6 +56,7 @@ export async function LoginCredentialsService(email: string, password: string) {
           email: user.email,
           name: user.name,
           role: user.role,
+          emailVerified: user.emailVerified,
           profilePic: user.profilePic,
         },
       },

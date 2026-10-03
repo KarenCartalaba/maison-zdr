@@ -125,6 +125,7 @@ export const fr: AdminDict = {
 
   // ── Public visitor + auth surfaces ──────────────────────────────
   home: {
+    emptyEvents: "Aucun événement à afficher pour le moment.",
     hero: {
       badge: "Zone de Rassemblement",
       title: "Inscrivez-vous et vivez l'ambiance ultime du bar",
@@ -259,6 +260,7 @@ export const fr: AdminDict = {
     alreadyRegistered: "Déjà inscrit",
     registerEvent: "S'inscrire à l'événement",
     writeReview: "Écrire un avis",
+    alreadyReviewed: "Vous avez déjà publié un avis pour cet événement.",
     reviewsOpenAfter: "Les avis s'ouvrent après l'événement.",
     reviews: "Avis",
     noReviewsYet:
@@ -610,7 +612,6 @@ export const fr: AdminDict = {
   adminRegs: {
     title: "Inscriptions",
     subtitle: "Gérer toutes les inscriptions aux événements",
-    exportCsv: "Exporter CSV",
     searchPlaceholder: "Rechercher des inscriptions...",
     allEvents: "Tous les événements",
     colReference: "RÉFÉRENCE",
@@ -633,14 +634,6 @@ export const fr: AdminDict = {
     updateError: "Échec de la mise à jour du statut",
     emptyTitle: "Aucune inscription trouvée",
     emptyDesc: "Aucune inscription ne correspond à vos critères.",
-    csvHeaders: {
-      reference: "Référence",
-      guest: "Invité",
-      email: "E-mail",
-      event: "Événement",
-      date: "Date",
-      status: "Statut",
-    },
     yes: "Oui",
     no: "Non",
   },
@@ -746,7 +739,6 @@ export const fr: AdminDict = {
   adminAnalytics: {
     title: "Analyses",
     subtitle: "Performance des événements et insights",
-    exportReport: "Exporter le rapport",
     statRegistrations: "Inscriptions totales",
     statUsers: "Utilisateurs totaux",
     statAvgRating: "Note moy.",
@@ -765,23 +757,6 @@ export const fr: AdminDict = {
     emptyDesc: "Les analyses apparaîtront une fois que vous aurez des événements et des inscriptions.",
     noTrendData: "Aucune donnée de tendance disponible",
     noPerfData: "Aucune donnée de performance disponible",
-    csvReportTitle: "Rapport d'analyses",
-    csvGenerated: "Généré le",
-    csvOverview: "Aperçu",
-    csvMetric: "Indicateur",
-    csvValue: "Valeur",
-    csvTotalEvents: "Événements totaux",
-    csvTotalRegistrations: "Inscriptions totales",
-    csvTotalUsers: "Utilisateurs totaux",
-    csvTotalReviews: "Avis totaux",
-    csvAvgRating: "Note moyenne",
-    csvEventPerf: "Performance des événements",
-    csvEvent: "Événement",
-    csvEventRegistrations: "Inscriptions",
-    csvMaxParticipants: "Participants max",
-    csvFillRate: "Taux de remplissage",
-    csvAvgRatingLabel: "Note moy.",
-    csvReviews: "Avis",
   },
 
   adminWorkspace: {
@@ -855,6 +830,7 @@ export const fr: AdminDict = {
     settingsLabelLocation: "Lieu",
     settingsLabelMaxParticipants: "Participants max",
     settingsMarkCancelled: "Marquer comme annulé",
+    settingsCancelEnded: "Un événement ne peut plus être annulé une fois terminé.",
     settingsAllowReviews: "Autoriser les avis maintenant",
     settingsAllowReviewsDesc: "Permet aux clients de soumettre des avis avant la date de l'événement.",
     settingsSave: "Enregistrer les modifications",
@@ -931,6 +907,8 @@ export const fr: AdminDict = {
     contactEmail: "E-mail de contact",
     defaultTimezone: "Fuseau horaire par défaut",
     saveChanges: "Enregistrer les modifications",
+    saveSuccess: "Paramètres enregistrés avec succès",
+    saveError: "Échec de l'enregistrement des paramètres",
     notifications: "Notifications",
     notifRegistrationTitle: "Alertes d'inscription",
     notifRegistrationDesc: "Être notifié lorsqu'une personne s'inscrit",
@@ -941,18 +919,10 @@ export const fr: AdminDict = {
     notifReviewTitle: "Alertes de nouvel avis",
     notifReviewDesc: "Être notifié lorsqu'un avis est soumis",
     security: "Sécurité",
-    twoFactor: "Authentification à deux facteurs",
-    twoFactorDesc: "Ajouter une couche de sécurité supplémentaire",
-    twoFactorNotEnabled: "Non activé",
     sessionTimeout: "Délai d'expiration de session",
     sessionTimeoutDesc: "Déconnexion automatique après inactivité",
     loginNotifications: "Notifications de connexion",
     loginNotificationsDesc: "Alerte lors d'une connexion depuis un nouvel appareil",
-    appearance: "Apparence",
-    primaryColor: "Couleur principale",
-    logo: "Logo",
-    uploadLogo: "Téléverser un nouveau logo",
-    footerText: "Texte du pied de page",
   },
 
   adminProfile: {

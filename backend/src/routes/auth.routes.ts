@@ -15,7 +15,7 @@ router.post("/v1/google-login", authLimiter, authController.googleLogin);
 router.get("/v1/verify-email", validateSchema(verifyEmailSchema), authController.verifyEmail);
 router.post("/v1/resend-email-verification", authLimiter, validateSchema(resendVerificationSchema), authController.resendEmailVerification);
 router.post("/v1/refresh-token", authLimiter, validateSchema(refreshTokenSchema), authController.refresh);
-router.post("/v1/logout", authLimiter, authController.logout);
+router.post("/v1/logout", authMiddleware.execute, authLimiter, authController.logout);
 router.get("/v1/me", authMiddleware.execute, authController.me);
 router.post("/v1/forgot-password", authLimiter, validateSchema(forgotPasswordSchema), authController.forgotPassword);
 router.post("/v1/reset-password", authLimiter, validateSchema(resetPasswordSchema), authController.resetPassword);

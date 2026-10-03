@@ -29,7 +29,24 @@ export class AuthRepository {
     expiresAt: Date;
     userId: string;
   }) => {
-    return prisma.token.create({ data });
+    // Refresh JWTs are signed from {sub, role, type} + iat/exp (second
+    // granularity), so two logins — or a login racing a concurrent refresh —
+    // within the same second produce a byte-identical token string. A plain
+    // create() then hits the `Token_token_key` unique constraint (P2002) and
+    // surfaces as 500 "Unable to login account" / a failed refresh for
+    // perfectly valid credentials. Upsert turns that duplicate into a
+    // re-activation of the same session (fresh row for the same token value).
+    return prisma.token.upsert({
+      where: { token: data.token },
+      update: {
+        type: data.type,
+        userId: data.userId,
+        expiresAt: data.expiresAt,
+        consumedAt: null,
+        revokedAt: null,
+      },
+      create: data,
+    });
   };
 
   public findToken = async (token: string, type: "REFRESH" | "EMAIL_VERIFY" | "PASSWORD_RESET") => {
@@ -61,8 +78,19 @@ export class AuthRepository {
     return prisma.token.update({ where: { id }, data: { revokedAt: new Date() } });
   };
 
+  /**
+   * Revoke every refresh token (session) belonging to a user.
+   *
+   * Scoped to `type: "REFRESH"` on purpose: logout must end *sessions*, not
+   * unrelated flows. Revoking all token types used to kill outstanding
+   * PASSWORD_RESET links ("Reset token has been revoked" after a logout) and
+   * EMAIL_VERIFY tokens issued before the user signed out.
+   */
   public revokeAllUserTokens = async (userId: string) => {
-    return prisma.token.updateMany({ where: { userId }, data: { revokedAt: new Date() } });
+    return prisma.token.updateMany({
+      where: { userId, type: "REFRESH" },
+      data: { revokedAt: new Date() },
+    });
   };
 
   public updateUserPassword = async (id: string, hashedPassword: string) => {

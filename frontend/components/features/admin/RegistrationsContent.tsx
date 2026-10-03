@@ -18,7 +18,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { DataTable, type DataTableColumn } from "@/components/ui/data-table";
 import { DataTableColumnHeader } from "@/components/ui/data-table-column-header";
-import { ClipboardList, Download, Search, MoreHorizontal, Loader2 } from "lucide-react";
+import { ClipboardList, Search, MoreHorizontal, Loader2 } from "lucide-react";
 import { adminService } from "@/services/admin.service";
 import { useLanguage } from "@/context/LanguageContext";
 import { formatDate } from "@/lib/format-date";
@@ -113,29 +113,6 @@ export default function RegistrationsContent() {
   const [eventFilter, setEventFilter] = useState("ALL");
   const searchTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const { t, dateLocale } = useLanguage();
-
-  const handleExportCsv = () => {
-    const headers = [t.adminRegs.csvHeaders.reference, t.adminRegs.csvHeaders.guest, t.adminRegs.csvHeaders.email, t.adminRegs.csvHeaders.event, t.adminRegs.csvHeaders.date, t.adminRegs.csvHeaders.status];
-    const rows = registrations.map((reg) => [
-      reg.id,
-      reg.user.name,
-      reg.user.email,
-      reg.event.title,
-      formatDate(reg.event.eventDate, dateLocale),
-      reg.status,
-    ]);
-    const csvContent = [headers, ...rows]
-      .map((row) => row.map((cell) => `"${String(cell).replace(/"/g, '""')}"`).join(","))
-      .join("\n");
-    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement("a");
-    const dateStr = new Date().toISOString().split("T")[0];
-    link.href = url;
-    link.download = `registrations-${dateStr}.csv`;
-    link.click();
-    URL.revokeObjectURL(url);
-  };
 
   const fetchData = async (status?: string, searchTerm?: string, isInitial = false) => {
     try {
@@ -328,10 +305,6 @@ export default function RegistrationsContent() {
             {t.adminRegs.subtitle}
           </p>
         </div>
-        <Button variant="outline" onClick={handleExportCsv}>
-          <Download className="h-4 w-4 mr-2" />
-          {t.adminRegs.exportCsv}
-        </Button>
       </div>
 
       {/* Filters */}

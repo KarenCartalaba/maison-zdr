@@ -32,8 +32,10 @@ export default function Footer() {
           <div>
             <h3 className="font-semibold mb-4">{t.footer.legal}</h3>
             <ul className="space-y-2 text-sm text-white/80">
-              <li><Link href="/privacy" className="hover:text-white">{t.footer.privacyPolicy}</Link></li>
-              <li><Link href="/terms" className="hover:text-white">{t.footer.termsConditions}</Link></li>
+              {/* No dedicated legal pages exist yet; point both entries at
+                  existing routes instead of dead /privacy and /terms URLs. */}
+              <li><Link href="/contact" className="hover:text-white">{t.footer.privacyPolicy}</Link></li>
+              <li><Link href="/events" className="hover:text-white">{t.footer.termsConditions}</Link></li>
             </ul>
           </div>
 
@@ -50,11 +52,12 @@ export default function Footer() {
         </div>
       </div>
 
+      {/* Divider */}
+      <div className="h-px w-full bg-white/20" aria-hidden="true" />
+
       {/* Copyright */}
-      <div className="border-t border-white/20">
-        <div className="container px-4 py-6 text-center text-sm text-white/60">
-          {t.footer.copyright}
-        </div>
+      <div className="container px-4 py-6 text-center text-sm text-white/60">
+        {t.footer.copyright}
       </div>
     </footer>
   );

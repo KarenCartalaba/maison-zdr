@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 import { getErrorMessage } from "@/lib/server-error";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -110,7 +110,7 @@ export default function CheckInsContent() {
     fetchCheckIn();
   }, [selectedEventId]);
 
-  const handleCheckIn = async (registrationId: string) => {
+  const handleCheckIn = useCallback(async (registrationId: string) => {
     try {
       setCheckInLoadingId(registrationId);
       await adminService.checkIn(registrationId);
@@ -128,9 +128,7 @@ export default function CheckInsContent() {
     } finally {
       setCheckInLoadingId(null);
     }
-  };
-
-  if (loadingEvents) return <LoadingSkeleton />;
+  }, [selectedEventId, t]);
 
   const selectedEvent = events.find((e) => e.id === selectedEventId);
 
@@ -210,7 +208,9 @@ export default function CheckInsContent() {
           </Button>
         ) : null,
     },
-  ], [t, dateLocale, checkInLoadingId]);
+  ], [t, dateLocale, checkInLoadingId, handleCheckIn]);
+
+  if (loadingEvents) return <LoadingSkeleton />;
 
   return (
     <div>

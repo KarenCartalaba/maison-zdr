@@ -9,6 +9,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Input } from "@/components/ui/input";
 import { Pagination } from "@/components/ui/pagination";
 import { Search } from "lucide-react";
+import { EVENTS_LIST_ANCHOR } from "@/constants";
 import { useLanguage } from "@/context/LanguageContext";
 import type { Event } from "@/types";
 
@@ -84,7 +85,7 @@ export default function EventsContent({ initialEvents = [] }: EventsContentProps
   return (
     <>
       <EventHeroBanner />
-      <div className="container px-4 py-12">
+      <div id={EVENTS_LIST_ANCHOR} className="container px-4 py-12 scroll-mt-24">
         <h1 className="text-3xl font-bold mb-6">{t.events.title}</h1>
         <div className="relative mb-6">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />

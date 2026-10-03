@@ -31,6 +31,15 @@ export async function UpdateEventService(data: {
     const updateData: any = { ...data };
     delete updateData.id;
 
+    // An event can only be cancelled while it has not started yet.
+    if (data.isCancelled === true && !existing.isCancelled && new Date(existing.eventDate as Date) < new Date()) {
+      return {
+        code: 400,
+        status: "error",
+        message: "An event can no longer be cancelled after it has ended",
+      };
+    }
+
     if (data.title) {
       updateData.slug = generateSlug(data.title);
     }

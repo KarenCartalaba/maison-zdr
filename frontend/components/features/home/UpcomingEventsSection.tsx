@@ -16,7 +16,6 @@ interface UpcomingEventsSectionProps {
 
 export default function UpcomingEventsSection({ events = [] }: UpcomingEventsSectionProps) {
   const { t, dateLocale } = useLanguage();
-  if (events.length === 0) return null;
 
   return (
     <section className="container px-4 py-12">
@@ -32,7 +31,15 @@ export default function UpcomingEventsSection({ events = [] }: UpcomingEventsSec
         </Link>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+      {events.length === 0 ? (
+        <div className="rounded-lg border border-dashed p-10 text-center">
+          <p className="text-muted-foreground mb-4">{t.home.emptyEvents}</p>
+          <Link href="/events" className="text-sm font-medium text-[#1a5c2a] hover:underline">
+            {t.home.upcoming.viewPage} &rarr;
+          </Link>
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         {events.slice(0, 3).map((event) => {
           const regCount = event._count?.registrations || 0;
           return (
@@ -80,7 +87,8 @@ export default function UpcomingEventsSection({ events = [] }: UpcomingEventsSec
             </Card>
           );
         })}
-      </div>
+        </div>
+      )}
     </section>
   );
 }

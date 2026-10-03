@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useAuth } from "@/context/AuthContext";
 import { useLanguage, type Locale } from "@/context/LanguageContext";
 import { Button } from "@/components/ui/button";
-import { Bell, LogOut, LayoutDashboard, Menu, X, MailWarning, User, Check } from "lucide-react";
+import { LogOut, LayoutDashboard, Menu, X, MailWarning, User, Check } from "lucide-react";
 import { useState } from "react";
 import Logo from "@/components/common/Logo";
 import {
@@ -99,11 +99,6 @@ export default function Navbar() {
                     </Button>
                   </Link>
                 )}
-
-                {/* Notification Bell */}
-                <Button variant="ghost" size="icon" className="relative">
-                  <Bell className="h-5 w-5" />
-                </Button>
 
                 {/* User Avatar */}
                 <Link href="/profile">

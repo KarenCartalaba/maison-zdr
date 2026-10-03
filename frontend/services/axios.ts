@@ -1,9 +1,7 @@
 import axios from "axios";
 
 /**
- * Absolute backend URL.
- *
- * The shared browser instance below uses a RELATIVE baseURL so traffic flows
+ * Shared browser axios instance uses a RELATIVE baseURL so traffic flows
  * through the same-origin /api rewrite proxy (see next.config.ts) — the
  * backend's Set-Cookie then lands as a first-party cookie, so incognito
  * third-party-cookie blocking no longer wipes the session.
@@ -11,14 +9,7 @@ import axios from "axios";
  * NOTE: lib/api.ts (server-side, runs on the Vercel server where there is no
  * browser cookie jar) must KEEP using the absolute backend URL — only this
  * browser instance is relative.
- *
- * BACKEND_URL is still exported for the large base64 uploads that bypass the
- * proxy (see gallery.service.ts upload, auth.service.ts updateProfile).
  */
-export const BACKEND_URL = (
-  process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:8000"
-).replace(/\/+$/, "");
-
 const axiosInstance = axios.create({
   // Relative baseURL => same-origin requests => Next.js rewrites proxy them
   // to the backend, keeping auth cookies first-party.

@@ -2,7 +2,7 @@
 
 import { useAuth } from "@/context/AuthContext";
 import { useLanguage, type Locale } from "@/context/LanguageContext";
-import { Bell, Search, Check, User } from "lucide-react";
+import { Search, Check, User } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -59,12 +59,6 @@ export default function AdminHeader() {
               ))}
             </DropdownMenuContent>
           </DropdownMenu>
-
-          {/* Notifications */}
-          <button className="relative p-2 rounded-full hover:bg-muted transition-colors">
-            <Bell className="h-5 w-5 text-muted-foreground" />
-            <span className="absolute top-1 right-1 h-2.5 w-2.5 rounded-full bg-[#1a5c2a] border-2 border-white" />
-          </button>
 
           {/* User Info */}
           <div className="flex items-center gap-3">

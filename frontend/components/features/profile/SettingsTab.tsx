@@ -10,7 +10,7 @@ import { authService } from "@/services/auth.service";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Field, FieldError, FieldGroup, FieldLabel } from "@/components/ui/field";
-import { Mail, Lock, ChevronRight, Loader2, AlertTriangle } from "lucide-react";
+import { Mail, Lock, ChevronRight, Loader2, AlertTriangle, Eye, EyeOff } from "lucide-react";
 import { toast } from "sonner";
 
 const profileSchema = z.object({
@@ -23,11 +23,16 @@ type ProfileValues = z.infer<typeof profileSchema>;
 
 const passwordSchema = z.object({
   currentPassword: z.string().min(1, "Current password is required"),
+  // Must match backend changePasswordSchema exactly (incl. lowercase and
+  // special character), so the request isn't rejected server-side after
+  // client validation passes.
   newPassword: z
     .string()
     .min(8, "Password must be at least 8 characters")
     .regex(/[A-Z]/, "Must contain one uppercase letter")
-    .regex(/[0-9]/, "Must contain one number"),
+    .regex(/[a-z]/, "Must contain one lowercase letter")
+    .regex(/[0-9]/, "Must contain one number")
+    .regex(/[\W_]/, "Must contain one special character"),
   confirmPassword: z.string().min(1, "Please confirm your new password"),
 }).refine((data) => data.newPassword === data.confirmPassword, {
   message: "Passwords do not match",
@@ -42,6 +47,9 @@ export default function SettingsTab() {
   const [isUpdating, setIsUpdating] = useState(false);
   const [isChangingPassword, setIsChangingPassword] = useState(false);
   const [showPasswordForm, setShowPasswordForm] = useState(false);
+  const [showCurrentPassword, setShowCurrentPassword] = useState(false);
+  const [showNewPassword, setShowNewPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
   const profileForm = useForm<ProfileValues>({
     resolver: zodResolver(profileSchema),
@@ -92,7 +100,7 @@ export default function SettingsTab() {
 
   const handleSendVerification = async () => {
     try {
-      await authService.forgotPassword(user?.email || "");
+      await authService.resendVerification(user?.email || "");
       toast.success(t.profile.verificationEmailSent);
     } catch (error: any) {
       toast.error(error.message || "Failed to send verification email");
@@ -223,22 +231,37 @@ export default function SettingsTab() {
             </button>
 
             {showPasswordForm && (
+              // NOTE: a <div>, not a nested <form> — nested forms are invalid
+              // HTML and the outer profile form would swallow the submit, so
+              // the password endpoint was never called. The button below
+              // submits via passwordForm.handleSubmit instead.
               <div className="mt-4 space-y-4 rounded-lg border p-4">
-                <form onSubmit={passwordForm.handleSubmit(handleChangePassword)} noValidate>
-                  <FieldGroup>
+                <FieldGroup>
                     <Controller
                       name="currentPassword"
                       control={passwordForm.control}
                       render={({ field, fieldState }) => (
                         <Field data-invalid={fieldState.invalid}>
                           <FieldLabel htmlFor="currentPassword">{t.profile.currentPassword}</FieldLabel>
-                          <Input
-                            {...field}
-                            id="currentPassword"
-                            type="password"
-                            placeholder="••••••••"
-                            aria-invalid={fieldState.invalid}
-                          />
+                          <div className="relative">
+                            <Input
+                              {...field}
+                              id="currentPassword"
+                              type={showCurrentPassword ? "text" : "password"}
+                              placeholder="••••••••"
+                              aria-invalid={fieldState.invalid}
+                              className="pr-10"
+                            />
+                            <button
+                              type="button"
+                              onClick={() => setShowCurrentPassword((v) => !v)}
+                              aria-label={showCurrentPassword ? "Hide password" : "Show password"}
+                              aria-pressed={showCurrentPassword}
+                              className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                            >
+                              {showCurrentPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                            </button>
+                          </div>
                           {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
                         </Field>
                       )}
@@ -249,13 +272,25 @@ export default function SettingsTab() {
                       render={({ field, fieldState }) => (
                         <Field data-invalid={fieldState.invalid}>
                           <FieldLabel htmlFor="newPassword">{t.profile.newPassword}</FieldLabel>
-                          <Input
-                            {...field}
-                            id="newPassword"
-                            type="password"
-                            placeholder="••••••••"
-                            aria-invalid={fieldState.invalid}
-                          />
+                          <div className="relative">
+                            <Input
+                              {...field}
+                              id="newPassword"
+                              type={showNewPassword ? "text" : "password"}
+                              placeholder="••••••••"
+                              aria-invalid={fieldState.invalid}
+                              className="pr-10"
+                            />
+                            <button
+                              type="button"
+                              onClick={() => setShowNewPassword((v) => !v)}
+                              aria-label={showNewPassword ? "Hide password" : "Show password"}
+                              aria-pressed={showNewPassword}
+                              className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                            >
+                              {showNewPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                            </button>
+                          </div>
                           {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
                         </Field>
                       )}
@@ -266,13 +301,25 @@ export default function SettingsTab() {
                       render={({ field, fieldState }) => (
                         <Field data-invalid={fieldState.invalid}>
                           <FieldLabel htmlFor="confirmPassword">{t.profile.confirmPassword}</FieldLabel>
-                          <Input
-                            {...field}
-                            id="confirmPassword"
-                            type="password"
-                            placeholder="••••••••"
-                            aria-invalid={fieldState.invalid}
-                          />
+                          <div className="relative">
+                            <Input
+                              {...field}
+                              id="confirmPassword"
+                              type={showConfirmPassword ? "text" : "password"}
+                              placeholder="••••••••"
+                              aria-invalid={fieldState.invalid}
+                              className="pr-10"
+                            />
+                            <button
+                              type="button"
+                              onClick={() => setShowConfirmPassword((v) => !v)}
+                              aria-label={showConfirmPassword ? "Hide password" : "Show password"}
+                              aria-pressed={showConfirmPassword}
+                              className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                            >
+                              {showConfirmPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                            </button>
+                          </div>
                           {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
                         </Field>
                       )}
@@ -280,7 +327,8 @@ export default function SettingsTab() {
                   </FieldGroup>
                   <div className="mt-4">
                     <Button
-                      type="submit"
+                      type="button"
+                      onClick={passwordForm.handleSubmit(handleChangePassword)}
                       variant="outline"
                       size="sm"
                       disabled={isChangingPassword}
@@ -295,7 +343,6 @@ export default function SettingsTab() {
                       )}
                     </Button>
                   </div>
-                </form>
               </div>
             )}
           </div>
