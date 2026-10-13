@@ -1,64 +1,80 @@
-# Email — Nodemailer
+# Email — Resend
 
 ## Provider
 
-**Gmail SMTP** (for testing/development): https://support.google.com/mail/answer/7126229
+**Resend** (HTTPS email API): https://resend.com
 
-For production, use a dedicated email service (SendGrid, Mailgun, AWS SES).
+Chosen over Gmail SMTP because Render's free tier blocks outbound SMTP ports
+(25, 465, 587). Resend works over plain HTTPS on every plan.
 
 ## Environment Variables
 
 ```env
-SMTP_HOST=smtp.gmail.com
-SMTP_PORT=587
-SMTP_USER="your-email@gmail.com"
-SMTP_PASSWORD="your-app-password"
-SMTP_FROM="your-email@gmail.com"
+RESEND_API_KEY="re_xxxxxxxxxxxx"
+EMAIL_FROM="notifications@yourdomain.com"
+EMAIL_TO="contact@yourdomain.com"
 ```
 
-> **Note**: Gmail requires an App Password (not your regular password).
-> Go to Google Account > Security > 2-Step Verification > App passwords.
+| Variable | Purpose |
+|----------|---------|
+| `RESEND_API_KEY` | Sending-only API key from https://resend.com/api-keys |
+| `EMAIL_FROM` | **Verified sending address** on your Resend domain. Verified at https://resend.com/domains |
+| `EMAIL_TO` | Inbox that **receives contact-form submissions** |
+
+> `EMAIL_FROM` and `EMAIL_TO` are deliberately separate. `EMAIL_FROM` is the
+> identity mail is sent *as* (Resend rejects any domain you have not verified);
+> `EMAIL_TO` is where contact submissions are *delivered*.
+
+Use a **bare address** for `EMAIL_FROM` — the display name is added
+automatically (`"Zone De Rassemblement" <notifications@yourdomain.com>`).
+A full `"Name <addr>"` value is also accepted; it is passed through untouched.
 
 ## Setup
 
-Uses `nodemailer` with a lazily-initialized transporter (see `src/lib/nodemailer.ts`):
+Uses `resend` with a lazily-initialized client (see `src/lib/email.ts`):
 
 ```typescript
-import nodemailer, { Transporter } from "nodemailer";
+import { Resend } from "resend";
+import { ENV } from "@/config/env";
 
-let transporter: Transporter | null = null;
+let resend: Resend | null = null;
 
-function buildTransporter(): Transporter {
-  if (!ENV.SMTP.HOST || !ENV.SMTP.PORT) {
-    throw new Error("SMTP_HOST and SMTP_PORT must be configured");
+function getResend(): Resend {
+  if (!ENV.EMAIL.RESEND_API_KEY) {
+    throw new Error("RESEND_API_KEY must be configured");
   }
-  if (!ENV.SMTP.USER || !ENV.SMTP.PASS) {
-    throw new Error("SMTP_USER and SMTP_PASSWORD must be configured");
+  if (!resend) {
+    resend = new Resend(ENV.EMAIL.RESEND_API_KEY);
   }
-  return nodemailer.createTransport({
-    host: ENV.SMTP.HOST,
-    port: ENV.SMTP.PORT,
-    secure: false,
-    auth: { user: ENV.SMTP.USER, pass: ENV.SMTP.PASS },
-  });
+  return resend;
 }
 
-function getTransporter(): Transporter {
-  if (!transporter) {
-    transporter = buildTransporter();
+function getFrom(): string {
+  if (!ENV.EMAIL.FROM || !ENV.APP_NAME) {
+    throw new Error("EMAIL_FROM / APP_NAME must be configured");
   }
-  return transporter;
+  // Already carries a display name — wrapping again would be malformed.
+  if (ENV.EMAIL.FROM.includes("<")) return ENV.EMAIL.FROM;
+  return `"${ENV.APP_NAME}" <${ENV.EMAIL.FROM}>`;
 }
 
-export const sendEmail = async ({ to, subject, html }) => {
-  await getTransporter().sendMail({
-    from: `"${ENV.APP_NAME}" <${ENV.SMTP.FROM}>`,
+export async function sendEmail({ to, subject, html, replyTo }: SendEmailParams) {
+  const { error } = await getResend().emails.send({
+    from: getFrom(),
     to,
     subject,
     html,
+    ...(replyTo ? { replyTo } : {}),
   });
-};
+  if (error) throw new Error(`Resend error: ${error.message}`);
+}
 ```
+
+`sendEmailWithTimeout` wraps `sendEmail` in a 30s `Promise.race` for emails
+that gate user action.
+
+Missing optional email vars are reported at boot by `src/config/env.ts`
+(`⚠️ Optional environment variables not set: RESEND_API_KEY, EMAIL_FROM, EMAIL_TO`).
 
 ## Email Types
 
@@ -69,6 +85,7 @@ export const sendEmail = async ({ to, subject, html }) => {
 | Event registration | Registration | `event-registration.html` | Fire-and-forget |
 | Event cancellation | Cancellation | `event-cancellation.html` | Fire-and-forget |
 | Event reminder | Cron job (hourly) | `event-reminder.html` | `await sendEmail` |
+| Contact form | Contact page | Inline HTML, escaped | Fire-and-forget, `replyTo` = submitter |
 
 All templates use a unified styled design: green header (`#1a5c2a`), card layout, CTA buttons, info callouts, and footer.
 
@@ -81,10 +98,26 @@ All templates use a unified styled design: green header (`#1a5c2a`), card layout
 | Registration confirmation | Fire-and-forget `sendEmail` | Nice-to-have — user can check My Registrations |
 | Cancellation | Fire-and-forget `sendEmail` | Nice-to-have |
 | Forgot password | Fire-and-forget `sendEmail` | Token already created |
-| Contact form | Fire-and-forget `sendEmail` | Message saved to DB |
+| Contact form | Fire-and-forget `sendEmail` | Message saved to `ContactMessage` first |
 | Event reminders | `await sendEmail` | Cron job — needs sent/failed tracking |
 
 **Key principle**: Critical emails that gate user action (signup, resend verification) must `await` with a timeout. Non-critical emails can fire-and-forget since the DB write already happened.
+
+## Contact Form Delivery
+
+`SendContactMessageService` (`src/services/contact/send-contact-message-service.ts`):
+
+1. Persists the submission to `ContactMessage` — **this is the source of truth**.
+2. Sends a notification to `EMAIL_TO` (falling back to `EMAIL_FROM`), with
+   `replyTo` set to the submitter so replying reaches them directly.
+3. Name/email/message are HTML-escaped before being embedded in the email.
+
+Delivery is best-effort: the request still returns success if email fails, since
+the message is already stored. Failures are logged server-side. If no recipient
+is configured, one warning is logged and no email is attempted.
+
+> There is no admin inbox UI — submissions are read from `ContactMessage` in the
+> database or from the notification email.
 
 ## Event Reminder Cron
 
@@ -110,10 +143,6 @@ Email-related pages:
 ## Package
 
 ```bash
-npm install nodemailer
-npm install -D @types/nodemailer
+npm install resend
 ```
 
-## Render Free Tier Limitation
-
-Render free tier blocks outbound SMTP ports (25, 465, 587) since September 2025. SMTP email works locally and on paid Render instances (or platforms without port blocking). If staying on Render free tier, the alternative is an HTTPS email API (e.g. Resend) — but the codebase itself uses Nodemailer, which is correct wherever SMTP is allowed.

@@ -13,6 +13,7 @@ export const en = {
     registrations: "Registrations",
     checkins: "Check-ins",
     reviews: "Reviews",
+    contactMessages: "Contact Messages",
     users: "Users",
     analytics: "Analytics",
     settings: "Settings",
@@ -669,6 +670,15 @@ export const en = {
     cancel: "Cancel",
     emptyTitle: "No reviews found",
     emptyDesc: "There are no reviews matching your criteria.",
+  },
+
+  adminContact: {
+    title: "Contact Messages",
+    subtitle: "Messages sent through the contact form",
+    searchPlaceholder: "Search name, email or message...",
+    emptyTitle: "No messages found",
+    emptyDesc: "There are no contact messages matching your criteria.",
+    loadError: "Failed to load messages",
   },
 
   adminUsers: {

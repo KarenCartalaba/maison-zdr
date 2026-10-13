@@ -8,6 +8,7 @@ export const ROUTES = {
   ADMIN_REGISTRATIONS: "/admin/registrations",
   ADMIN_CHECKINS: "/admin/check-ins",
   ADMIN_REVIEWS: "/admin/reviews",
+  ADMIN_CONTACT: "/admin/contact",
   ADMIN_NEWS: "/admin/news",
   ADMIN_USERS: "/admin/users",
   ADMIN_ANALYTICS: "/admin/analytics",
@@ -35,6 +36,7 @@ export const API_ENDPOINTS = {
   },
   CONTACT: {
     SEND: "/api/contact/v1/send",
+    ADMIN_LIST: "/api/contact/v1/admin/messages",
   },
   REVIEWS: {
     CREATE: "/api/reviews/v1/create",

@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 import { getErrorMessage } from "@/lib/server-error";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -58,19 +58,44 @@ function EmptyState({ message, hint }: { message: string; hint: string }) {
   );
 }
 
-export default function CheckInsContent() {
-  const [events, setEvents] = useState<CheckInEvent[]>([]);
-  const [selectedEventId, setSelectedEventId] = useState<string>("");
-  const [registrations, setRegistrations] = useState<AdminRegistration[]>([]);
-  const [checkedInCount, setCheckedInCount] = useState(0);
-  const [totalCount, setTotalCount] = useState(0);
-  const [loadingEvents, setLoadingEvents] = useState(true);
+interface CheckInsContentProps {
+  initialEvents?: CheckInEvent[] | null;
+  initialCheckIn?: {
+    event?: { id: string } | null;
+    checkedInCount: number;
+    totalCount: number;
+    registrations: AdminRegistration[];
+  } | null;
+}
+
+export default function CheckInsContent({
+  initialEvents = null,
+  initialCheckIn = null,
+}: CheckInsContentProps) {
+  const [events, setEvents] = useState<CheckInEvent[]>(initialEvents ?? []);
+  const [selectedEventId, setSelectedEventId] = useState<string>(initialEvents?.[0]?.id ?? "");
+  const [registrations, setRegistrations] = useState<AdminRegistration[]>(initialCheckIn?.registrations ?? []);
+  const [checkedInCount, setCheckedInCount] = useState(initialCheckIn?.checkedInCount ?? 0);
+  const [totalCount, setTotalCount] = useState(initialCheckIn?.totalCount ?? 0);
+  const [loadingEvents, setLoadingEvents] = useState(!initialEvents);
   const [loadingCheckIn, setLoadingCheckIn] = useState(false);
   const [checkInLoadingId, setCheckInLoadingId] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
+  // Server-rendered roster is for the auto-selected (first) event; consume it
+  // once so re-selecting that event after visiting another still fetches.
+  const initialCheckInRef = useRef(
+    initialEvents?.[0]?.id && initialCheckIn
+      ? { eventId: initialEvents[0].id, data: initialCheckIn }
+      : null
+  );
   const { t, dateLocale } = useLanguage();
 
   useEffect(() => {
+    // Skip the client fetch when the page already provided server-rendered data.
+    if (initialEvents) {
+      setLoadingEvents(false);
+      return;
+    }
     const fetchEvents = async () => {
       try {
         setLoadingEvents(true);
@@ -88,10 +113,16 @@ export default function CheckInsContent() {
       }
     };
     fetchEvents();
-  }, []);
+  }, [initialEvents]);
 
   useEffect(() => {
     if (!selectedEventId) return;
+    // Skip the client fetch when the server already provided this event's data.
+    if (initialCheckInRef.current?.eventId === selectedEventId) {
+      initialCheckInRef.current = null;
+      setLoadingCheckIn(false);
+      return;
+    }
     const fetchCheckIn = async () => {
       try {
         setLoadingCheckIn(true);

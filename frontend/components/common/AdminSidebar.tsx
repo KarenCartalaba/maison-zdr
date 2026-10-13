@@ -17,6 +17,7 @@ import {
   User,
   LogOut,
   Newspaper,
+  Mail,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -27,6 +28,7 @@ const allSidebarLinks = [
   { labelKey: "registrations", href: ROUTES.ADMIN_REGISTRATIONS, icon: ClipboardList, adminOnly: false },
   { labelKey: "checkins", href: ROUTES.ADMIN_CHECKINS, icon: QrCode, adminOnly: false },
   { labelKey: "reviews", href: ROUTES.ADMIN_REVIEWS, icon: Star, adminOnly: false },
+  { labelKey: "contactMessages", href: ROUTES.ADMIN_CONTACT, icon: Mail, adminOnly: true },
   { labelKey: "users", href: ROUTES.ADMIN_USERS, icon: Users, adminOnly: true },
   { labelKey: "analytics", href: ROUTES.ADMIN_ANALYTICS, icon: BarChart3, adminOnly: true },
   { labelKey: "settings", href: ROUTES.ADMIN_SETTINGS, icon: Settings, adminOnly: true },

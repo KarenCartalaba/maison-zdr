@@ -74,10 +74,18 @@ function EmptyState({ t }: { t: any }) {
   );
 }
 
-export default function ReviewsContent() {
-  const [reviews, setReviews] = useState<AdminReview[]>([]);
-  const [stats, setStats] = useState<ReviewStats | null>(null);
-  const [loading, setLoading] = useState(true);
+interface ReviewsContentProps {
+  initialReviews?: AdminReview[] | null;
+  initialStats?: ReviewStats | null;
+}
+
+export default function ReviewsContent({
+  initialReviews = null,
+  initialStats = null,
+}: ReviewsContentProps) {
+  const [reviews, setReviews] = useState<AdminReview[]>(initialReviews ?? []);
+  const [stats, setStats] = useState<ReviewStats | null>(initialStats);
+  const [loading, setLoading] = useState(!initialReviews);
   const [searching, setSearching] = useState(false);
   const [search, setSearch] = useState("");
   const [activeFilter, setActiveFilter] = useState("ALL");
@@ -111,11 +119,16 @@ export default function ReviewsContent() {
   };
 
   useEffect(() => {
+    // Skip the client fetch when the page already provided server-rendered data.
+    if (initialReviews) {
+      setLoading(false);
+      return;
+    }
     fetchData(activeFilter, search, true);
     return () => {
       if (searchTimer.current) clearTimeout(searchTimer.current);
     };
-  }, []);
+  }, [initialReviews]);
 
   const handleFilterChange = (filter: string) => {
     setActiveFilter(filter);

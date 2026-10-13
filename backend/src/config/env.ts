@@ -27,6 +27,7 @@ if (!parsed.success) {
 const optionalWarnings: string[] = [];
 if (!process.env.RESEND_API_KEY) optionalWarnings.push('RESEND_API_KEY');
 if (!process.env.EMAIL_FROM) optionalWarnings.push('EMAIL_FROM');
+if (!process.env.EMAIL_TO) optionalWarnings.push('EMAIL_TO');
 if (!process.env.CLOUDINARY_CLOUD_NAME) optionalWarnings.push('CLOUDINARY_CLOUD_NAME');
 if (!process.env.CLOUDINARY_API_KEY) optionalWarnings.push('CLOUDINARY_API_KEY');
 if (!process.env.CLOUDINARY_SECRET_KEY) optionalWarnings.push('CLOUDINARY_SECRET_KEY');
@@ -48,7 +49,10 @@ export const ENV = {
 
   EMAIL: {
     RESEND_API_KEY: process.env.RESEND_API_KEY,
+    /** Verified sending address on the Resend domain. Bare address or "Name <addr>". */
     FROM: process.env.EMAIL_FROM,
+    /** Inbox that receives contact-form submissions. */
+    TO: process.env.EMAIL_TO,
   },
 
   CLOUD_NAME: process.env.CLOUDINARY_CLOUD_NAME,

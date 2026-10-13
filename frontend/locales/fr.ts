@@ -15,6 +15,7 @@ export const fr: AdminDict = {
     registrations: "Inscriptions",
     checkins: "Pointage",
     reviews: "Avis",
+    contactMessages: "Messages de contact",
     users: "Utilisateurs",
     analytics: "Analyses",
     settings: "Paramètres",
@@ -682,6 +683,15 @@ export const fr: AdminDict = {
     cancel: "Annuler",
     emptyTitle: "Aucun avis trouvé",
     emptyDesc: "Aucun avis ne correspond à vos critères.",
+  },
+
+  adminContact: {
+    title: "Messages de contact",
+    subtitle: "Messages envoyés via le formulaire de contact",
+    searchPlaceholder: "Rechercher un nom, un e-mail ou un message...",
+    emptyTitle: "Aucun message trouvé",
+    emptyDesc: "Aucun message de contact ne correspond à vos critères.",
+    loadError: "Échec du chargement des messages",
   },
 
   adminUsers: {

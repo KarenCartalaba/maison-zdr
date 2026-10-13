@@ -28,11 +28,15 @@ const updateEventSchema = z.object({
 
 type UpdateEventInput = z.infer<typeof updateEventSchema>;
 
-export default function EditEventContent() {
+interface EditEventContentProps {
+  initialEvent?: Event | null;
+}
+
+export default function EditEventContent({ initialEvent = null }: EditEventContentProps) {
   const params = useParams();
   const router = useRouter();
-  const [event, setEvent] = useState<Event | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
+  const [event, setEvent] = useState<Event | null>(initialEvent);
+  const [isLoading, setIsLoading] = useState(!initialEvent);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [coverImage, setCoverImage] = useState<File | null>(null);
   const [coverPreview, setCoverPreview] = useState<string | null>(null);
@@ -48,25 +52,36 @@ export default function EditEventContent() {
     resolver: zodResolver(updateEventSchema),
   });
 
+  // Populate form state from an event (used for server-rendered initial data
+  // and for the client-side fetch fallback).
+  const applyEvent = (ev: Event) => {
+    setEvent(ev);
+    if (ev.gallery?.[0]) {
+      setCoverPreview(ev.gallery[0]);
+    }
+    reset({
+      title: ev.title,
+      description: ev.description,
+      location: ev.location,
+      eventDate: new Date(ev.eventDate).toISOString().slice(0, 16),
+      deadline: new Date(ev.deadline).toISOString().slice(0, 16),
+      minParticipants: ev.minParticipants,
+      maxParticipants: ev.maxParticipants,
+    });
+  };
+
   useEffect(() => {
+    // Skip the client fetch when the page already provided server-rendered data.
+    if (initialEvent) {
+      applyEvent(initialEvent);
+      setIsLoading(false);
+      return;
+    }
     const fetchEvent = async () => {
       try {
         const response = await eventService.getById(params.id as string);
         if (response.code === 200 && response.data) {
-          const ev = response.data.event;
-          setEvent(ev);
-          if (ev.gallery?.[0]) {
-            setCoverPreview(ev.gallery[0]);
-          }
-          reset({
-            title: ev.title,
-            description: ev.description,
-            location: ev.location,
-            eventDate: new Date(ev.eventDate).toISOString().slice(0, 16),
-            deadline: new Date(ev.deadline).toISOString().slice(0, 16),
-            minParticipants: ev.minParticipants,
-            maxParticipants: ev.maxParticipants,
-          });
+          applyEvent(response.data.event);
         }
       } catch (err) {
         console.error("Failed to fetch event:", err);
@@ -76,7 +91,7 @@ export default function EditEventContent() {
     };
 
     fetchEvent();
-  }, [params.id, reset]);
+  }, [params.id, reset, initialEvent]);
 
   const handleImageSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];

@@ -102,10 +102,18 @@ function EmptyState({ t }: { t: any }) {
   );
 }
 
-export default function RegistrationsContent() {
-  const [registrations, setRegistrations] = useState<AdminRegistration[]>([]);
-  const [stats, setStats] = useState<RegistrationStats | null>(null);
-  const [loading, setLoading] = useState(true);
+interface RegistrationsContentProps {
+  initialRegistrations?: AdminRegistration[] | null;
+  initialStats?: RegistrationStats | null;
+}
+
+export default function RegistrationsContent({
+  initialRegistrations = null,
+  initialStats = null,
+}: RegistrationsContentProps) {
+  const [registrations, setRegistrations] = useState<AdminRegistration[]>(initialRegistrations ?? []);
+  const [stats, setStats] = useState<RegistrationStats | null>(initialStats);
+  const [loading, setLoading] = useState(!initialRegistrations);
   const [searching, setSearching] = useState(false);
   const [search, setSearch] = useState("");
   const [activeFilter, setActiveFilter] = useState("ALL");
@@ -138,11 +146,16 @@ export default function RegistrationsContent() {
   };
 
   useEffect(() => {
+    // Skip the client fetch when the page already provided server-rendered data.
+    if (initialRegistrations) {
+      setLoading(false);
+      return;
+    }
     fetchData(activeFilter, search, true);
     return () => {
       if (searchTimer.current) clearTimeout(searchTimer.current);
     };
-  }, []);
+  }, [initialRegistrations]);
 
   const handleFilterChange = (filter: string) => {
     setActiveFilter(filter);

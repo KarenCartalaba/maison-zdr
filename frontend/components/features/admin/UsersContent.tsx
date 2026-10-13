@@ -81,10 +81,18 @@ function EmptyState({ t }: { t: any }) {
   );
 }
 
-export default function UsersContent() {
-  const [users, setUsers] = useState<AdminUser[]>([]);
-  const [stats, setStats] = useState<UserStats | null>(null);
-  const [loading, setLoading] = useState(true);
+interface UsersContentProps {
+  initialUsers?: AdminUser[] | null;
+  initialStats?: UserStats | null;
+}
+
+export default function UsersContent({
+  initialUsers = null,
+  initialStats = null,
+}: UsersContentProps) {
+  const [users, setUsers] = useState<AdminUser[]>(initialUsers ?? []);
+  const [stats, setStats] = useState<UserStats | null>(initialStats);
+  const [loading, setLoading] = useState(!initialUsers);
   const [isSearching, setIsSearching] = useState(false);
   const [search, setSearch] = useState("");
   const [activeFilter, setActiveFilter] = useState("ALL");
@@ -125,8 +133,13 @@ export default function UsersContent() {
   };
 
   useEffect(() => {
+    // Skip the client fetch when the page already provided server-rendered data.
+    if (initialUsers) {
+      setLoading(false);
+      return;
+    }
     fetchData(activeFilter, search, true);
-  }, []);
+  }, [initialUsers]);
 
   const handleFilterChange = (filter: string) => {
     setActiveFilter(filter);
