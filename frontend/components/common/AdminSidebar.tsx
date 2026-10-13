@@ -44,11 +44,33 @@ export default function AdminSidebar() {
     (link) => isAdmin || !link.adminOnly
   );
 
+  // Role label for the signed-in staff member — derived from the actual role
+  // (never assumed), so a Moderator is never labelled as management/admin.
+  const userRole = user?.role?.toUpperCase();
+  const roleLabel =
+    userRole === "MODERATOR"
+      ? t.sidebar.moderator
+      : userRole === "ADMIN"
+        ? t.sidebar.generalManager
+        : userRole
+          ? t.adminUsers.colUser
+          : "";
+
   return (
-    <aside className="w-64 bg-[#1a5c2a] text-white flex flex-col shrink-0">
+    // Sticky (not fixed): the aside keeps its 256px column in the flex flow, so
+    // main content is never overlapped/hidden behind it. `self-start` cancels the
+    // flex stretch that would make the aside as tall as the (very long) content
+    // column — without it sticky has no room to slide. `h-dvh` caps it at one
+    // viewport; the nav scrolls internally on short viewports so the logo and the
+    // profile/logout footer stay reachable. Scrolling container stays the window
+    // (no overflow is set on any ancestor), so only the main column moves.
+    <aside className="sticky top-0 z-30 h-dvh w-64 shrink-0 self-start overflow-hidden bg-[#1a5c2a] text-white flex flex-col">
       {/* Logo */}
-      <div className="p-6">
-        <Link href={ROUTES.HOME} className="flex items-center gap-3">
+      <div className="p-6 shrink-0">
+        {/* Stay inside the admin panel. There is no /moderator route: both
+            login (AuthContext) and the GUEST guard land ADMIN and MODERATOR
+            on /admin, so that is the staff home for either role. */}
+        <Link href={ROUTES.ADMIN} className="flex items-center gap-3">
           <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-white/20 text-white font-bold text-lg">
             M
           </div>
@@ -59,8 +81,8 @@ export default function AdminSidebar() {
         </Link>
       </div>
 
-      {/* Navigation */}
-      <nav className="flex-1 px-3 space-y-1">
+      {/* Navigation — scrolls inside the sidebar when the viewport is short */}
+      <nav className="flex-1 min-h-0 overflow-y-auto px-3 space-y-1">
         {sidebarLinks.map((link) => {
           const isActive = pathname === link.href || (link.href !== ROUTES.ADMIN && pathname.startsWith(link.href));
           return (
@@ -82,7 +104,7 @@ export default function AdminSidebar() {
       </nav>
 
       {/* User Profile + Logout */}
-      <div className="p-4 border-t border-white/20">
+      <div className="p-4 border-t border-white/20 shrink-0">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3 min-w-0">
             <div className="h-9 w-9 rounded-full bg-white/20 overflow-hidden shrink-0 flex items-center justify-center">
@@ -98,7 +120,7 @@ export default function AdminSidebar() {
             </div>
             <div className="min-w-0">
               <p className="text-sm font-medium truncate">{user?.name || "Admin"}</p>
-              <p className="text-xs text-white/60">{user?.role === "ADMIN" ? t.sidebar.generalManager : t.sidebar.moderator}</p>
+              <p className="text-xs text-white/60">{roleLabel}</p>
             </div>
           </div>
           <button

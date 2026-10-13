@@ -122,6 +122,11 @@ const templates: Record<string, (data: TemplateData) => string> = {
             <td style="padding: 6px 0; color: #777777; font-size: 14px; vertical-align: top;">Location</td>
             <td style="padding: 6px 0; color: #333333; font-size: 14px; font-weight: 500;">${data.eventLocation}</td>
           </tr>
+          ${data.referenceNumber ? `
+          <tr>
+            <td style="padding: 6px 0; color: #777777; font-size: 14px; vertical-align: top;">Reference</td>
+            <td style="padding: 6px 0; color: #1a5c2a; font-size: 14px; font-weight: 700;">${data.referenceNumber}</td>
+          </tr>` : ""}
           ${data.hasPlusOne === "true" ? `
           <tr>
             <td style="padding: 6px 0; color: #777777; font-size: 14px; vertical-align: top;">Guest</td>
@@ -136,7 +141,9 @@ const templates: Record<string, (data: TemplateData) => string> = {
 
       <div style="background-color: #f0f7f2; border-left: 4px solid #1a5c2a; padding: 14px 18px; margin-bottom: 25px; border-radius: 0 4px 4px 0;">
         <p style="color: #1a5c2a; font-size: 14px; margin: 0; line-height: 1.5;">
-          Please arrive a few minutes early for a smooth check-in experience. You can view your registration details in your profile.
+          ${data.referenceNumber
+            ? `Please arrive a few minutes early and give your reference number <strong>${data.referenceNumber}</strong> at the door for a quick check-in. You can view your registration details in your profile.`
+            : "Please arrive a few minutes early for a smooth check-in experience. You can view your registration details in your profile."}
         </p>
       </div>
 
@@ -158,11 +165,23 @@ const templates: Record<string, (data: TemplateData) => string> = {
       </p>
 
       <div style="background-color: #f8f8f8; border: 1px solid #e0e0e0; border-radius: 6px; padding: 24px; margin-bottom: 25px;">
-        <h2 style="color: #555555; font-size: 18px; margin: 0; padding-bottom: 12px; border-bottom: 2px solid #eeeeee;">${data.eventName}</h2>
+        <h2 style="color: #555555; font-size: 18px; margin: 0; padding-bottom: 12px; border-bottom: 1px solid #eeeeee;">${data.eventName}</h2>
+        <table style="width: 100%; border-collapse: collapse;">
+          ${data.eventDate ? `
+          <tr>
+            <td style="padding: 6px 0; color: #777777; font-size: 14px; width: 120px; vertical-align: top;">Date</td>
+            <td style="padding: 6px 0; color: #333333; font-size: 14px; font-weight: 500;">${data.eventDate}</td>
+          </tr>` : ""}
+          ${data.referenceNumber ? `
+          <tr>
+            <td style="padding: 6px 0; color: #777777; font-size: 14px; vertical-align: top;">Reference</td>
+            <td style="padding: 6px 0; color: #555555; font-size: 14px; font-weight: 700; text-decoration: line-through;">${data.referenceNumber}</td>
+          </tr>` : ""}
+        </table>
       </div>
 
       <p style="color: #555555; font-size: 15px; line-height: 1.6; margin: 0 0 10px;">
-        If this was a mistake, you can register again from the events page.
+        Your seat has been released. If this was a mistake, you can register again from the events page as long as the registration deadline has not passed.
       </p>
       <p style="color: #555555; font-size: 15px; margin: 0;">
         — The Maison ZDR Team

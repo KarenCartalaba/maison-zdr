@@ -1,5 +1,6 @@
 import { NewsRepository } from "@/repositories/news.repository";
 import { cacheInvalidate, cacheInvalidatePattern } from "@/lib/redis";
+import { dispatchNewsPublishedNotification } from "@/services/news/news-email-notification";
 
 const newsRepo = new NewsRepository();
 
@@ -28,6 +29,14 @@ export async function UpdateNewsService(data: {
     // Invalidate this news + list cache
     await cacheInvalidate(NEWS_BY_ID(data.id));
     await cacheInvalidatePattern("news:*");
+
+    // Edits do NOT re-notify. The model carries an explicit publish flag, so
+    // the only update worth mailing is a draft flipping to published
+    // (false → true) — i.e. the article is going live for the first time.
+    // Fire-and-forget, same as create.
+    if (existing.isPublished === false && news.isPublished === true) {
+      dispatchNewsPublishedNotification(news);
+    }
 
     return {
       code: 200,

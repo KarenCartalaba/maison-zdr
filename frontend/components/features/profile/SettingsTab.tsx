@@ -14,8 +14,7 @@ import { Mail, Lock, ChevronRight, Loader2, AlertTriangle, Eye, EyeOff } from "l
 import { toast } from "sonner";
 
 const profileSchema = z.object({
-  firstName: z.string().min(1, "First name is required").max(100, "First name must be at most 100 characters"),
-  lastName: z.string().min(1, "Last name is required").max(100, "Last name must be at most 100 characters"),
+  name: z.string().min(1, "Full name is required").max(100, "Full name must be at most 100 characters"),
   email: z.string().email("Invalid email"),
 });
 
@@ -54,8 +53,7 @@ export default function SettingsTab() {
   const profileForm = useForm<ProfileValues>({
     resolver: zodResolver(profileSchema),
     defaultValues: {
-      firstName: user?.name?.split(" ")[0] || "",
-      lastName: user?.name?.split(" ").slice(1).join(" ") || "",
+      name: user?.name || "",
       email: user?.email || "",
     },
     mode: "onBlur",
@@ -75,7 +73,7 @@ export default function SettingsTab() {
     setIsUpdating(true);
     try {
       const response = await authService.updateProfile({
-        name: `${data.firstName} ${data.lastName}`,
+        name: data.name,
         email: data.email,
       });
       if (response.code === 200 && response.data?.user) {
@@ -142,31 +140,18 @@ export default function SettingsTab() {
       <div className="rounded-lg border p-6">
         <form onSubmit={profileForm.handleSubmit(handleSaveChanges)} className="space-y-6" noValidate>
           <FieldGroup>
-            {/* Name fields */}
-            <div className="grid grid-cols-2 gap-4">
-              <Controller
-                name="firstName"
-                control={profileForm.control}
-                render={({ field, fieldState }) => (
-                  <Field data-invalid={fieldState.invalid}>
-                    <FieldLabel htmlFor="settings-firstName">{t.profile.firstName}</FieldLabel>
-                     <Input {...field} id="settings-firstName" maxLength={100} aria-invalid={fieldState.invalid} />
-                    {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
-                  </Field>
-                )}
-              />
-              <Controller
-                name="lastName"
-                control={profileForm.control}
-                render={({ field, fieldState }) => (
-                  <Field data-invalid={fieldState.invalid}>
-                    <FieldLabel htmlFor="settings-lastName">{t.profile.lastName}</FieldLabel>
-                     <Input {...field} id="settings-lastName" maxLength={100} aria-invalid={fieldState.invalid} />
-                    {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
-                  </Field>
-                )}
-              />
-            </div>
+            {/* Full name */}
+            <Controller
+              name="name"
+              control={profileForm.control}
+              render={({ field, fieldState }) => (
+                <Field data-invalid={fieldState.invalid}>
+                  <FieldLabel htmlFor="settings-name">{t.profile.name}</FieldLabel>
+                   <Input {...field} id="settings-name" maxLength={100} aria-invalid={fieldState.invalid} />
+                  {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
+                </Field>
+              )}
+            />
 
             {/* Email */}
             <Controller

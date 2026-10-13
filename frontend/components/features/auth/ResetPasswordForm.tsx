@@ -10,7 +10,7 @@ import { authService } from "@/services/auth.service";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Field, FieldError, FieldGroup, FieldLabel } from "@/components/ui/field";
-import { Loader2, CheckCircle2, XCircle, ArrowLeft } from "lucide-react";
+import { Loader2, CheckCircle2, XCircle, ArrowLeft, Eye, EyeOff } from "lucide-react";
 import { toast } from "sonner";
 import { useLanguage } from "@/context/LanguageContext";
 
@@ -37,6 +37,8 @@ export default function ResetPasswordForm() {
   const token = searchParams.get("token");
   const { t } = useLanguage();
   const [isLoading, setIsLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [status, setStatus] = useState<"validating" | "form" | "success" | "error">(
     token ? "validating" : "error"
   );
@@ -154,14 +156,26 @@ export default function ResetPasswordForm() {
             render={({ field, fieldState }) => (
               <Field data-invalid={fieldState.invalid}>
                 <FieldLabel htmlFor="reset-password">{t.auth.newPasswordLabel}</FieldLabel>
-                <Input
-                  {...field}
-                  id="reset-password"
-                  type="password"
-                  placeholder={"••••••••"}
-                  autoComplete="new-password"
-                  aria-invalid={fieldState.invalid}
-                />
+                <div className="relative">
+                  <Input
+                    {...field}
+                    id="reset-password"
+                    type={showPassword ? "text" : "password"}
+                    placeholder={"••••••••"}
+                    autoComplete="new-password"
+                    aria-invalid={fieldState.invalid}
+                    className="pr-10"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword((v) => !v)}
+                    aria-label={showPassword ? "Hide password" : "Show password"}
+                    aria-pressed={showPassword}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                  >
+                    {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                  </button>
+                </div>
                 {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
               </Field>
             )}
@@ -172,14 +186,26 @@ export default function ResetPasswordForm() {
             render={({ field, fieldState }) => (
               <Field data-invalid={fieldState.invalid}>
                 <FieldLabel htmlFor="reset-confirmPassword">{t.auth.confirmPasswordLabel}</FieldLabel>
-                <Input
-                  {...field}
-                  id="reset-confirmPassword"
-                  type="password"
-                  placeholder={"••••••••"}
-                  autoComplete="new-password"
-                  aria-invalid={fieldState.invalid}
-                />
+                <div className="relative">
+                  <Input
+                    {...field}
+                    id="reset-confirmPassword"
+                    type={showConfirmPassword ? "text" : "password"}
+                    placeholder={"••••••••"}
+                    autoComplete="new-password"
+                    aria-invalid={fieldState.invalid}
+                    className="pr-10"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowConfirmPassword((v) => !v)}
+                    aria-label={showConfirmPassword ? "Hide password" : "Show password"}
+                    aria-pressed={showConfirmPassword}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                  >
+                    {showConfirmPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                  </button>
+                </div>
                 {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
               </Field>
             )}

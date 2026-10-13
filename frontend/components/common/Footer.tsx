@@ -12,7 +12,7 @@ export default function Footer() {
         <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
           {/* Brand */}
           <div className="space-y-4">
-            <Logo className="[&_div]:text-white [&_span]:text-white" />
+            <Logo onDark />
             <p className="text-sm text-white/80">
               {t.footer.description}
             </p>
@@ -22,7 +22,20 @@ export default function Footer() {
           <div>
             <h3 className="font-semibold mb-4">{t.footer.navigations}</h3>
             <ul className="space-y-2 text-sm text-white/80">
-              <li><Link href="/" className="hover:text-white">{t.footer.home}</Link></li>
+              <li>
+                <Link
+                  href="/"
+                  className="hover:text-white"
+                  onClick={(e) => {
+                    // Force a full reload so Home always refreshes the page,
+                    // even when already on the homepage (Next Link would no-op).
+                    e.preventDefault();
+                    window.location.assign("/");
+                  }}
+                >
+                  {t.footer.home}
+                </Link>
+              </li>
               <li><Link href="/events" className="hover:text-white">{t.footer.events}</Link></li>
               <li><Link href="/contact" className="hover:text-white">{t.footer.contacts}</Link></li>
             </ul>
@@ -32,10 +45,8 @@ export default function Footer() {
           <div>
             <h3 className="font-semibold mb-4">{t.footer.legal}</h3>
             <ul className="space-y-2 text-sm text-white/80">
-              {/* No dedicated legal pages exist yet; point both entries at
-                  existing routes instead of dead /privacy and /terms URLs. */}
-              <li><Link href="/contact" className="hover:text-white">{t.footer.privacyPolicy}</Link></li>
-              <li><Link href="/events" className="hover:text-white">{t.footer.termsConditions}</Link></li>
+              <li><Link href="/privacy" className="hover:text-white">{t.footer.privacyPolicy}</Link></li>
+              <li><Link href="/terms" className="hover:text-white">{t.footer.termsConditions}</Link></li>
             </ul>
           </div>
 

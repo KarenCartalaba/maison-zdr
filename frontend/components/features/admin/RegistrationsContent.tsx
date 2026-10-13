@@ -189,7 +189,10 @@ export default function RegistrationsContent({
       header: t.adminRegs.colReference,
       cell: ({ row }) => (
         <span className="font-mono font-medium">
-          {row.original.referenceNumber || row.original.id.substring(0, 8)}
+          {/* Same derivation as the check-in roster / admin dashboard: the
+              server-issued reference number, else a deterministic id code. */}
+          {row.original.referenceNumber ||
+            `MZ-${row.original.id.slice(0, 6).toUpperCase()}`}
         </span>
       ),
     },

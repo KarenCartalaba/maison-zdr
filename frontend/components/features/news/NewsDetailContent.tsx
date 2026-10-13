@@ -6,9 +6,10 @@ import { newsService } from "@/services/news.service";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import { ArrowLeft, Calendar, User, Newspaper } from "lucide-react";
+import { ArrowLeft, Calendar, Newspaper, Quote } from "lucide-react";
 import { useLanguage } from "@/context/LanguageContext";
 import { formatDate } from "@/lib/format-date";
+import { AuthorAvatar } from "@/components/features/news/author-avatar";
 import type { News } from "@/types";
 
 interface NewsDetailContentProps {
@@ -54,54 +55,65 @@ export default function NewsDetailContent({ initialNews, newsId }: NewsDetailCon
 
   if (loading) {
     return (
-      <div className="container px-4 py-12 max-w-4xl mx-auto">
-        <Skeleton className="h-8 w-1/3 mb-4" />
-        <Skeleton className="h-12 w-full mb-6" />
-        <Skeleton className="h-64 w-full mb-6" />
-        <Skeleton className="h-4 w-full mb-2" />
-        <Skeleton className="h-4 w-full mb-2" />
-        <Skeleton className="h-4 w-3/4" />
+      <div className="container max-w-4xl mx-auto px-4 py-12">
+        <Skeleton className="h-9 w-32 rounded-full" />
+        <Skeleton className="mt-8 h-6 w-28" />
+        <Skeleton className="mt-4 h-12 w-4/5" />
+        <Skeleton className="mt-6 h-6 w-64" />
+        <Skeleton className="mt-10 aspect-[16/9] w-full rounded-2xl" />
+        <Skeleton className="mt-8 h-24 w-full rounded-2xl" />
+        <Skeleton className="mt-8 h-4 w-full" />
+        <Skeleton className="mt-3 h-4 w-full" />
+        <Skeleton className="mt-3 h-4 w-3/4" />
       </div>
     );
   }
 
   if (!news) {
     return (
-      <div className="container px-4 py-12 max-w-4xl mx-auto text-center">
-        <Newspaper className="h-16 w-16 mx-auto mb-4 text-muted-foreground" />
-        <h1 className="text-3xl font-bold mb-4">{t.news.newsNotFound}</h1>
-        <p className="text-muted-foreground mb-6">
-          {t.news.newsNotFoundDesc}
-        </p>
-        <Link href="/news">
-          <Button className="bg-[#1a5c2a] hover:bg-[#144a22]">
-            <ArrowLeft className="h-4 w-4 mr-2" />
-            {t.news.backToNews}
-          </Button>
-        </Link>
+      <div className="container max-w-4xl mx-auto px-4 py-16">
+        <div className="rounded-2xl border border-dashed border-border bg-card/60 px-6 py-20 text-center">
+          <div className="mx-auto mb-5 flex h-16 w-16 items-center justify-center rounded-2xl bg-[#1a5c2a]/10 ring-1 ring-[#1a5c2a]/15">
+            <Newspaper className="h-8 w-8 text-[#1a5c2a]" />
+          </div>
+          <h1 className="text-3xl font-bold tracking-tight">{t.news.newsNotFound}</h1>
+          <p className="mx-auto mt-3 max-w-md text-muted-foreground">
+            {t.news.newsNotFoundDesc}
+          </p>
+          <Link href="/news" className="mt-8 inline-block">
+            <Button className="bg-[#1a5c2a] hover:bg-[#144a22]">
+              <ArrowLeft className="h-4 w-4 mr-2" />
+              {t.news.backToNews}
+            </Button>
+          </Link>
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="container px-4 py-12 max-w-4xl mx-auto">
-      {/* Back Link */}
-      <Link
-        href="/news"
-        className="inline-flex items-center text-sm text-muted-foreground hover:text-foreground mb-6"
-      >
-        <ArrowLeft className="h-4 w-4 mr-2" />
-        {t.news.backToNews}
-      </Link>
+    <>
+      {/* Article header band */}
+      <section className="relative overflow-hidden border-b border-border bg-gradient-to-b from-[#f2f8f4] to-transparent">
+        <div
+          aria-hidden="true"
+          className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_15%_0%,rgba(26,92,42,0.12),transparent_55%)]"
+        />
+        <div className="container relative max-w-4xl mx-auto px-4 pt-8 pb-9 md:pt-12">
+          <Link
+            href="/news"
+            className="inline-flex items-center rounded-full border border-border bg-card px-3 py-1.5 text-sm text-muted-foreground shadow-sm transition-colors hover:border-[#1a5c2a]/40 hover:text-[#1a5c2a]"
+          >
+            <ArrowLeft className="h-4 w-4 mr-2" />
+            {t.news.backToNews}
+          </Link>
 
-      {/* Header */}
-      <div className="mb-8">
-        <Badge className="mb-4 bg-[#1a5c2a] hover:bg-[#144a22]">{t.news.badge}</Badge>
-        <h1 className="text-4xl font-bold mb-4">{news.title}</h1>
-        <div className="flex items-center gap-6 text-sm text-muted-foreground">
-          <div className="flex items-center gap-2">
-            <Calendar className="h-4 w-4" />
-            <span>
+          <div className="mt-7 flex flex-wrap items-center gap-3">
+            <Badge className="bg-[#1a5c2a] text-white shadow-sm hover:bg-[#144a22]">
+              {t.news.badge}
+            </Badge>
+            <span className="inline-flex items-center gap-1.5 text-sm text-muted-foreground">
+              <Calendar className="h-4 w-4" />
               {formatDate(news.createdAt, dateLocale, {
                 year: "numeric",
                 month: "long",
@@ -109,43 +121,68 @@ export default function NewsDetailContent({ initialNews, newsId }: NewsDetailCon
               })}
             </span>
           </div>
+
+          <h1 className="mt-4 max-w-3xl text-3xl font-bold leading-[1.1] tracking-tight md:text-5xl">
+            {news.title}
+          </h1>
+
           {news.author && (
-            <div className="flex items-center gap-2">
-              <User className="h-4 w-4" />
-              <span>{news.author.name}</span>
+            <div className="mt-6 flex items-center gap-3">
+              <AuthorAvatar name={news.author.name} className="h-9 w-9 text-sm" />
+              <div className="leading-tight">
+                <p className="text-sm font-semibold">{news.author.name}</p>
+                <p className="text-xs text-muted-foreground">{t.news.byAuthor}</p>
+              </div>
             </div>
           )}
         </div>
-      </div>
+      </section>
 
-      {/* Image */}
-      {news.imageUrl && (
-        <div className="relative h-96 rounded-lg overflow-hidden mb-8">
-          <img
-            src={news.imageUrl}
-            alt={news.title}
-            className="w-full h-full object-cover"
-          />
+      <div className="container max-w-4xl mx-auto px-4 py-10 md:py-12">
+        {/* Cover */}
+        {news.imageUrl && (
+          <div className="relative mb-10 aspect-[16/9] overflow-hidden rounded-2xl bg-muted shadow-lg ring-1 ring-foreground/10">
+            <img
+              src={news.imageUrl}
+              alt={news.title}
+              className="h-full w-full object-cover"
+            />
+          </div>
+        )}
+
+        {/* Summary callout */}
+        {news.summary && (
+          <aside className="mb-10 rounded-2xl border-l-4 border-[#1a5c2a] bg-[#f2f8f4] p-6 ring-1 ring-[#1a5c2a]/10">
+            <Quote className="mb-2 h-5 w-5 text-[#1a5c2a]/70" aria-hidden="true" />
+            <p className="text-lg leading-relaxed text-foreground/80">{news.summary}</p>
+          </aside>
+        )}
+
+        {/* Content */}
+        <article className="space-y-5 text-[17px] leading-relaxed text-foreground/90">
+          {news.content.split("\n").map((paragraph, index) =>
+            paragraph.trim() ? <p key={index}>{paragraph}</p> : null
+          )}
+        </article>
+
+        {/* Footer */}
+        <div className="mt-12 flex flex-wrap items-center justify-between gap-4 border-t border-border pt-8">
+          <span className="text-sm text-muted-foreground">
+            {formatDate(news.createdAt, dateLocale, {
+              weekday: "long",
+              year: "numeric",
+              month: "long",
+              day: "numeric",
+            })}
+          </span>
+          <Link href="/news">
+            <Button className="bg-[#1a5c2a] hover:bg-[#144a22]">
+              <ArrowLeft className="h-4 w-4 mr-2" />
+              {t.news.backToNews}
+            </Button>
+          </Link>
         </div>
-      )}
-
-      {/* Summary */}
-      {news.summary && (
-        <div className="bg-muted/50 rounded-lg p-6 mb-8">
-          <p className="text-lg text-muted-foreground italic">{news.summary}</p>
-        </div>
-      )}
-
-      {/* Content */}
-      <div className="prose prose-lg max-w-none">
-        {news.content.split("\n").map((paragraph, index) => (
-          paragraph.trim() && (
-            <p key={index} className="mb-4 text-foreground/90 leading-relaxed">
-              {paragraph}
-            </p>
-          )
-        ))}
       </div>
-    </div>
+    </>
   );
 }

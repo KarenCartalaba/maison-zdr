@@ -59,6 +59,19 @@ export default function ProfileContent() {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { t, dateLocale } = useLanguage();
 
+  // Actual role of the signed-in staff member. (The badge used to be the
+  // hardcoded `adminProfile.administrator`, so moderators were shown as
+  // "Administrator" — both roles are now derived from `user.role`.)
+  const userRole = user?.role?.toUpperCase();
+  const roleLabel =
+    userRole === "ADMIN"
+      ? t.adminProfile.administrator
+      : userRole === "MODERATOR"
+        ? t.sidebar.moderator
+        : userRole
+          ? t.adminUsers.colUser
+          : "";
+
   const form = useForm<ProfileValues>({
     resolver: zodResolver(profileSchema),
     defaultValues: {
@@ -198,7 +211,7 @@ export default function ProfileContent() {
               </button>
               <h2 className="text-lg font-bold">{user?.name || "Aurel Baz"}</h2>
               <p className="text-sm text-muted-foreground">{user?.email || "aurel@maisonzdr.com"}</p>
-              <Badge className="mt-2 bg-[#1a5c2a]">{t.adminProfile.administrator}</Badge>
+              <Badge className="mt-2 bg-[#1a5c2a]">{roleLabel}</Badge>
               {user?.createdAt && (
                 <p className="text-xs text-muted-foreground mt-4">
                   {t.adminProfile.joinedDate} {formatDate(user.createdAt, dateLocale)}

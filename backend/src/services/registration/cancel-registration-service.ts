@@ -40,6 +40,9 @@ export async function CancelRegistrationService(userId: string, eventId: string)
       const html = renderTemplate("event-cancellation.html", {
         userName: user.name ?? "there",
         eventName: event.title,
+        eventDate: new Date(event.eventDate).toUTCString(),
+        eventLocation: event.location,
+        referenceNumber: registration.referenceNumber ?? "",
       });
 
       sendEmail({

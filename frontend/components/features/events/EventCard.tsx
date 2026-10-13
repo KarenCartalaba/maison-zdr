@@ -6,6 +6,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Calendar, MapPin } from "lucide-react";
 import { formatDate } from "@/lib/format-date";
+import { getEventPhase } from "@/components/features/events/event-status";
 import type { Event } from "@/types";
 
 interface EventCardProps {
@@ -21,16 +22,16 @@ export default function EventCard({ event }: EventCardProps) {
   const getStatusBadge = (): { label: string; className: string } => {
     if (event.isCancelled) return { label: t.events.cancelled, className: "bg-red-600 hover:bg-red-700" };
 
-    const now = new Date();
-    const eventDate = new Date(event.eventDate);
-
-    // Compare date portions only (ignore time)
-    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-    const eventDay = new Date(eventDate.getFullYear(), eventDate.getMonth(), eventDate.getDate());
-
-    if (eventDay < today) return { label: t.events.completed, className: "bg-gray-600 hover:bg-gray-700" };
-    if (eventDay.getTime() === today.getTime()) return { label: t.events.ongoing, className: "bg-[#1a5c2a] hover:bg-[#144a22]" };
-    return { label: t.events.upcoming, className: "bg-[#1a5c2a] hover:bg-[#144a22]" };
+    // Shared classification (see components/features/events/event-status.ts):
+    // event day < today → Completed, event day = today → Ongoing, else Upcoming.
+    switch (getEventPhase(event.eventDate)) {
+      case "completed":
+        return { label: t.events.completed, className: "bg-gray-600 hover:bg-gray-700" };
+      case "ongoing":
+        return { label: t.events.ongoing, className: "bg-[#1a5c2a] hover:bg-[#144a22]" };
+      default:
+        return { label: t.events.upcoming, className: "bg-[#1a5c2a] hover:bg-[#144a22]" };
+    }
   };
 
   const statusBadge = getStatusBadge();

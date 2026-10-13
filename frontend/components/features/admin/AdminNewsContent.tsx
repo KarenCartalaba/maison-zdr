@@ -1,14 +1,17 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 import { useConfirm } from "@/components/ui/confirm-dialog";
 import { newsService, CreateNewsData } from "@/services/news.service";
+import { galleryService } from "@/services/gallery.service";
+import { downscaleImage } from "@/lib/image";
+import { isValidImageFile } from "@/lib/utils";
 import { getErrorMessage, getFieldErrors } from "@/lib/server-error";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Plus, Pencil, Trash2, Loader2, X, Save } from "lucide-react";
+import { Plus, Pencil, Trash2, Loader2, X, Save, ImagePlus } from "lucide-react";
 import { DataTable, type DataTableColumn } from "@/components/ui/data-table";
 import { DataTableColumnHeader } from "@/components/ui/data-table-column-header";
 import { useLanguage } from "@/context/LanguageContext";
@@ -43,6 +46,15 @@ export default function AdminNewsContent({ initialNews = [] }: AdminNewsContentP
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
   const { confirm, dialog } = useConfirm();
 
+  // Image upload state. `imageDataUrl` holds the (downscaled) local file that
+  // still needs uploading; `imagePreview` shows either that local file or the
+  // article's existing remote URL. `formData.imageUrl` stays the stored URL.
+  const [imageDataUrl, setImageDataUrl] = useState<string | null>(null);
+  const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const [isUploading, setIsUploading] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const MAX_IMAGE_BYTES = 5 * 1024 * 1024;
+
   const updateField = (field: keyof CreateNewsData, value: string | boolean) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
     setFieldErrors((prev) => {
@@ -51,6 +63,65 @@ export default function AdminNewsContent({ initialNews = [] }: AdminNewsContentP
       delete next[field];
       return next;
     });
+  };
+
+  const clearImage = () => {
+    setImageDataUrl(null);
+    setImagePreview(null);
+    updateField("imageUrl", "");
+    if (fileInputRef.current) fileInputRef.current.value = "";
+  };
+
+  const handleImageSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    // Reset so picking the same file again still fires a change event.
+    e.target.value = "";
+    if (!file) return;
+    if (file.size > MAX_IMAGE_BYTES) {
+      toast.error(t.adminNews.imageTooLarge);
+      return;
+    }
+    if (!isValidImageFile(file)) {
+      toast.error(t.adminNews.invalidFormat);
+      return;
+    }
+    try {
+      // Shared downscale helper: multi-MB camera originals become a <1MB
+      // data URL, so both the preview and the /api proxy payload stay small.
+      const dataUrl = await downscaleImage(file);
+      setImageDataUrl(dataUrl);
+      setImagePreview(dataUrl);
+      setFieldErrors((prev) => {
+        if (!("imageUrl" in prev)) return prev;
+        const next = { ...prev };
+        delete next.imageUrl;
+        return next;
+      });
+    } catch {
+      toast.error(t.adminNews.uploadError);
+    }
+  };
+
+  /**
+   * Uploads a freshly picked file (only at submit time, so cancelling the form
+   * never leaves an orphan image) and returns the URL to store on the article.
+   * Returns the untouched `formData.imageUrl` when nothing new was picked.
+   */
+  const resolveImageUrl = async (): Promise<string> => {
+    if (!imageDataUrl) return formData.imageUrl ?? "";
+    setIsUploading(true);
+    try {
+      // Same-origin relative /api path via the shared axios instance; the
+      // gallery service downscales again (no-op for our already-small payload).
+      const response = await galleryService.upload({
+        imageBase64: imageDataUrl,
+        folder: "news",
+      });
+      if (!response.data?.url) throw new Error("Upload returned no URL");
+      return response.data.url;
+    } finally {
+      setIsUploading(false);
+    }
   };
 
   useEffect(() => {
@@ -72,6 +143,9 @@ export default function AdminNewsContent({ initialNews = [] }: AdminNewsContentP
       isPublished: true,
     });
     setFieldErrors({});
+    setImageDataUrl(null);
+    setImagePreview(null);
+    if (fileInputRef.current) fileInputRef.current.value = "";
     setIsCreating(false);
     setEditingId(null);
   };
@@ -79,8 +153,15 @@ export default function AdminNewsContent({ initialNews = [] }: AdminNewsContentP
   const handleCreate = async () => {
     if (!formData.title || !formData.content) return;
     setFieldErrors({});
+    let imageUrl = formData.imageUrl ?? "";
     try {
-      const response = await newsService.create(formData);
+      imageUrl = await resolveImageUrl();
+    } catch (err) {
+      toast.error(getErrorMessage(err, t.adminNews.uploadError));
+      return;
+    }
+    try {
+      const response = await newsService.create({ ...formData, imageUrl });
       if (response.code === 201 && response.data) {
         setNews([response.data.news, ...news]);
         resetForm();
@@ -105,13 +186,25 @@ export default function AdminNewsContent({ initialNews = [] }: AdminNewsContentP
       imageUrl: item.imageUrl || "",
       isPublished: item.isPublished,
     });
+    // Show the stored image as-is; a newly picked file replaces it on submit.
+    setImagePreview(item.imageUrl || null);
+    setImageDataUrl(null);
+    if (fileInputRef.current) fileInputRef.current.value = "";
+    setFieldErrors({});
   };
 
   const handleUpdate = async () => {
     if (!editingId || !formData.title || !formData.content) return;
     setFieldErrors({});
+    let imageUrl = formData.imageUrl ?? "";
     try {
-      const response = await newsService.update({ id: editingId, ...formData });
+      imageUrl = await resolveImageUrl();
+    } catch (err) {
+      toast.error(getErrorMessage(err, t.adminNews.uploadError));
+      return;
+    }
+    try {
+      const response = await newsService.update({ id: editingId, ...formData, imageUrl });
       if (response.code === 200 && response.data) {
         setNews(news.map((n) => (n.id === editingId ? response.data!.news : n)));
         resetForm();
@@ -250,6 +343,10 @@ export default function AdminNewsContent({ initialNews = [] }: AdminNewsContentP
                 imageUrl: "",
                 isPublished: true,
               });
+              setImageDataUrl(null);
+              setImagePreview(null);
+              setFieldErrors({});
+              if (fileInputRef.current) fileInputRef.current.value = "";
             }}
           >
             <Plus className="h-4 w-4 mr-2" />
@@ -313,17 +410,70 @@ export default function AdminNewsContent({ initialNews = [] }: AdminNewsContentP
                 )}
               </div>
               <div>
-                <label className="text-sm font-medium mb-1 block">{t.adminNews.labelImageUrl}</label>
+                <label className="text-sm font-medium mb-1 block">
+                  {t.adminNews.labelImage}
+                </label>
+                <div
+                  role="button"
+                  tabIndex={0}
+                  aria-label={t.adminNews.labelImage}
+                  className="relative flex min-h-[168px] cursor-pointer items-center justify-center overflow-hidden rounded-xl border-2 border-dashed border-border bg-muted/30 px-4 transition-colors hover:border-[#1a5c2a] hover:bg-[#1a5c2a]/5 focus:outline-none focus:ring-2 focus:ring-[#1a5c2a]"
+                  onClick={() => fileInputRef.current?.click()}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" || e.key === " ") {
+                      e.preventDefault();
+                      fileInputRef.current?.click();
+                    }
+                  }}
+                >
+                  {imagePreview ? (
+                    <>
+                      <img
+                        src={imagePreview}
+                        alt={t.adminNews.labelImage}
+                        className="max-h-56 w-full rounded-lg object-contain"
+                      />
+                      <span className="absolute bottom-2 right-2 inline-flex items-center gap-1 rounded-md bg-black/65 px-2 py-1 text-xs font-medium text-white">
+                        <ImagePlus className="h-3.5 w-3.5" />
+                        {t.adminNews.changeImage}
+                      </span>
+                    </>
+                  ) : (
+                    <div className="px-4 py-8 text-center">
+                      <ImagePlus className="mx-auto mb-2 h-9 w-9 text-muted-foreground" />
+                      <p className="text-sm font-medium">{t.adminNews.uploadHint}</p>
+                      <p className="mt-1 text-xs text-muted-foreground">
+                        {t.adminNews.uploadFormats}
+                      </p>
+                    </div>
+                  )}
+                </div>
                 <input
-                  type="url"
-                  value={formData.imageUrl}
-                  onChange={(e) => updateField("imageUrl", e.target.value)}
-                  placeholder={t.adminNews.placeholderImageUrl}
-                  className="w-full px-3 py-2 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#1a5c2a]"
+                  ref={fileInputRef}
+                  type="file"
+                  accept="image/jpeg,image/png,image/webp,image/gif"
+                  className="hidden"
+                  onChange={handleImageSelect}
                 />
-                {fieldErrors.imageUrl && (
-                  <p className="text-sm text-red-600 mt-1">{fieldErrors.imageUrl}</p>
-                )}
+                <div className="mt-2 flex items-center justify-between gap-3">
+                  {imagePreview ? (
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      className="h-8 text-red-600 hover:text-red-700"
+                      onClick={clearImage}
+                    >
+                      <Trash2 className="mr-1.5 h-3.5 w-3.5" />
+                      {t.adminNews.removeImage}
+                    </Button>
+                  ) : (
+                    <span />
+                  )}
+                  {fieldErrors.imageUrl && (
+                    <p className="text-sm text-red-600">{fieldErrors.imageUrl}</p>
+                  )}
+                </div>
               </div>
               <div className="flex items-center gap-2">
                 <input
@@ -340,12 +490,17 @@ export default function AdminNewsContent({ initialNews = [] }: AdminNewsContentP
               <div className="flex items-center gap-2">
                 <Button
                   className="bg-[#1a5c2a] hover:bg-[#144a22]"
+                  disabled={isUploading}
                   onClick={editingId ? handleUpdate : handleCreate}
                 >
-                  <Save className="h-4 w-4 mr-2" />
+                  {isUploading ? (
+                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  ) : (
+                    <Save className="h-4 w-4 mr-2" />
+                  )}
                   {editingId ? t.adminNews.btnUpdate : t.adminNews.btnCreate}
                 </Button>
-                <Button variant="outline" onClick={resetForm}>
+                <Button variant="outline" onClick={resetForm} disabled={isUploading}>
                   {t.adminNews.btnCancel}
                 </Button>
               </div>

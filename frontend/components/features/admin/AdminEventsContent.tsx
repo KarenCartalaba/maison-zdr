@@ -15,6 +15,7 @@ import { DataTable, type DataTableColumn } from "@/components/ui/data-table";
 import { DataTableColumnHeader } from "@/components/ui/data-table-column-header";
 import { useLanguage } from "@/context/LanguageContext";
 import { formatDate } from "@/lib/format-date";
+import { getEventPhase } from "@/components/features/events/event-status";
 import type { Event } from "@/types";
 
 interface AdminEventsContentProps {
@@ -31,17 +32,19 @@ export default function AdminEventsContent({ initialEvents = [] }: AdminEventsCo
 
   const now = new Date();
 
+  // Tabs use the SAME classification rule as the public event cards
+  // (components/features/events/event-status.ts), so an event that is
+  // "Ongoing" for users can never land in the admin "Past" bucket.
   const filteredEvents = events.filter((event) => {
-    const eventDate = new Date(event.eventDate);
-    const deadline = new Date(event.deadline);
+    const phase = getEventPhase(event.eventDate, now);
 
     switch (activeTab) {
       case "ongoing":
-        return !event.isCancelled && eventDate <= now && deadline >= now;
+        return !event.isCancelled && phase === "ongoing";
       case "upcoming":
-        return !event.isCancelled && eventDate > now;
+        return !event.isCancelled && phase === "upcoming";
       case "past":
-        return !event.isCancelled && eventDate < now;
+        return !event.isCancelled && phase === "completed";
       case "cancelled":
         return event.isCancelled;
       default:

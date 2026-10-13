@@ -175,7 +175,7 @@ export default function Navbar() {
                     <Button variant="ghost" className="w-full justify-start">{t.nav.profile}</Button>
                   </Link>
                   {isVerified && (
-                    <Link href="/my-registrations" onClick={() => setIsMobileMenuOpen(false)}>
+                    <Link href="/profile?tab=events" onClick={() => setIsMobileMenuOpen(false)}>
                       <Button variant="ghost" className="w-full justify-start">{t.nav.myRegistrations}</Button>
                     </Link>
                   )}

@@ -12,7 +12,23 @@ import { DataTableColumnHeader } from "@/components/ui/data-table-column-header"
 import { QrCode, Search, CheckCircle2, User, CalendarDays } from "lucide-react";
 import { adminService } from "@/services/admin.service";
 import { useLanguage } from "@/context/LanguageContext";
+import { cn } from "@/lib/utils";
+import { formatDate } from "@/lib/format-date";
 import type { AdminRegistration, CheckInEvent } from "@/types";
+
+/**
+ * Registration/reference code shown for a guest in the check-in roster.
+ * The check-in API returns the full registration row, so the server-issued
+ * `referenceNumber` (e.g. ZDR-B12-411122) is shown whenever it exists. Rows
+ * created before reference numbers were persisted fall back to a deterministic
+ * id-based code — the same `MZ-XXXXXX` derivation the admin dashboard uses.
+ */
+function registrationCode(registration: AdminRegistration): string {
+  return (
+    registration.referenceNumber ||
+    `MZ-${registration.id.slice(0, 6).toUpperCase()}`
+  );
+}
 
 function LoadingSkeleton() {
   return (
@@ -163,13 +179,29 @@ export default function CheckInsContent({
 
   const selectedEvent = events.find((e) => e.id === selectedEventId);
 
-  const filteredRegistrations = registrations.filter(
-    (reg) =>
-      reg.user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      reg.user.email.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const filteredRegistrations = registrations.filter((reg) => {
+    const term = searchTerm.trim().toLowerCase();
+    if (!term) return true;
+    return (
+      reg.user.name.toLowerCase().includes(term) ||
+      reg.user.email.toLowerCase().includes(term) ||
+      registrationCode(reg).toLowerCase().includes(term)
+    );
+  });
 
   const checkInColumns: DataTableColumn[] = useMemo(() => [
+    {
+      id: "reference",
+      accessorFn: (row) => registrationCode(row),
+      header: ({ column }) => (
+        <DataTableColumnHeader column={column} title={t.adminRegs.colReference} />
+      ),
+      cell: ({ row }) => (
+        <span className="font-mono font-medium text-xs">
+          {registrationCode(row.original)}
+        </span>
+      ),
+    },
     {
       id: "guest",
       accessorFn: (row) => row.user.name,
@@ -258,27 +290,51 @@ export default function CheckInsContent({
         </Button>
       </div>
 
-      {/* Event Selector */}
+      {/* Per-event selector — grid of event cards; picking one loads that
+          event's roster (stats, search and table below are all scoped to it). */}
       {events.length > 0 && (
-        <div className="flex gap-2 mb-6 overflow-x-auto pb-2">
-          {events.map((event) => (
-            <Button
-              key={event.id}
-              variant={selectedEventId === event.id ? "default" : "outline"}
-              size="sm"
-              onClick={() => setSelectedEventId(event.id)}
-              className={
-                selectedEventId === event.id
-                  ? "bg-[#1a5c2a] hover:bg-[#144a22] whitespace-nowrap"
-                  : "whitespace-nowrap"
-              }
-            >
-              {event.title}
-              <span className="ml-1 text-xs opacity-70">
-                ({event._count.registrations})
-              </span>
-            </Button>
-          ))}
+        <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-3 mb-6">
+          {events.map((event) => {
+            const isSelected = selectedEventId === event.id;
+            return (
+              <button
+                key={event.id}
+                type="button"
+                aria-pressed={isSelected}
+                onClick={() => setSelectedEventId(event.id)}
+                className={cn(
+                  "rounded-lg border p-4 text-left transition-colors",
+                  isSelected
+                    ? "border-[#1a5c2a] bg-[#1a5c2a] text-white"
+                    : "border-border bg-card hover:border-[#1a5c2a]"
+                )}
+              >
+                <div className="flex items-start justify-between gap-2">
+                  <span
+                    className={cn(
+                      "flex items-center gap-1.5 text-xs",
+                      isSelected ? "text-white/70" : "text-muted-foreground"
+                    )}
+                  >
+                    <CalendarDays className="h-3.5 w-3.5" />
+                    {formatDate(event.eventDate, dateLocale)}
+                  </span>
+                  {isSelected && <CheckCircle2 className="h-4 w-4 shrink-0" />}
+                </div>
+                <p className="mt-2 text-sm font-medium">
+                  {event.title}
+                  <span
+                    className={cn(
+                      "ml-1 text-xs font-normal",
+                      isSelected ? "text-white/70" : "text-muted-foreground"
+                    )}
+                  >
+                    ({event._count.registrations})
+                  </span>
+                </p>
+              </button>
+            );
+          })}
         </div>
       )}
 

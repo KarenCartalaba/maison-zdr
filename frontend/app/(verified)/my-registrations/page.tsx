@@ -1,12 +1,10 @@
-import { serverFetchAuth } from "@/lib/api";
-import MyRegistrationsContent from "@/components/features/my-registrations/MyRegistrationsContent";
+import { redirect } from "next/navigation";
 
-export default async function MyRegistrationsPage() {
-  let registrations: any[] = [];
-  try {
-    const res = await serverFetchAuth<{ data: { registrations: any[] } }>("/api/registrations/v1/mine");
-    registrations = res.data?.registrations ?? [];
-  } catch {}
-
-  return <MyRegistrationsContent initialRegistrations={registrations} />;
+/**
+ * "My Registrations" no longer has a dedicated page: it now lives in
+ * Profile → My Events (same registrations data, single place to manage them).
+ * Old links / bookmarks are redirected instead of landing on a dead route.
+ */
+export default function MyRegistrationsPage() {
+  redirect("/profile?tab=events");
 }

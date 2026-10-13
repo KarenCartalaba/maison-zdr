@@ -7,6 +7,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { eventService } from "@/services/event.service";
 import { galleryService } from "@/services/gallery.service";
+import { DEFAULT_EVENT_LOCATION } from "@/components/features/admin/CreateEventContent";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
@@ -62,7 +63,9 @@ export default function EditEventContent({ initialEvent = null }: EditEventConte
     reset({
       title: ev.title,
       description: ev.description,
-      location: ev.location,
+      // Fall back to the bar's venue if the stored value is empty, so the form
+      // never starts blank (no event location should ever be an empty string).
+      location: ev.location || DEFAULT_EVENT_LOCATION,
       eventDate: new Date(ev.eventDate).toISOString().slice(0, 16),
       deadline: new Date(ev.deadline).toISOString().slice(0, 16),
       minParticipants: ev.minParticipants,
@@ -165,7 +168,7 @@ export default function EditEventContent({ initialEvent = null }: EditEventConte
   }
 
   return (
-    <div className="max-w-2xl">
+    <div className="w-full">
       <div className="mb-8">
         <h1 className="text-3xl font-bold">{t.adminEventsForm.editTitle}</h1>
         <p className="text-muted-foreground mt-2">{t.adminEventsForm.editSubtitle}</p>
@@ -281,7 +284,7 @@ export default function EditEventContent({ initialEvent = null }: EditEventConte
             </div>
 
             <div className="flex gap-4 pt-4">
-              <Button type="submit" disabled={isSubmitting}>
+              <Button type="submit" disabled={isSubmitting} className="bg-[#1a5c2a] hover:bg-[#144a22]">
                 {isSubmitting ? (
                   <>
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />

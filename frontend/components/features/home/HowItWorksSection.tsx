@@ -10,7 +10,7 @@ export default function HowItWorksSection() {
   const steps = t.home.howItWorks.steps;
 
   return (
-    <section className="container px-4 py-16">
+    <section id="how-it-works" className="container px-4 py-16 scroll-mt-20">
       <div className="text-center mb-12">
         <h2 className="text-3xl font-bold">{t.home.howItWorks.title}</h2>
         <p className="text-muted-foreground mt-2">

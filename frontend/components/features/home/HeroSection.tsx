@@ -6,6 +6,12 @@ import { useLanguage } from "@/context/LanguageContext";
 
 export default function HeroSection() {
   const { t } = useLanguage();
+
+  const scrollToHowItWorks = () => {
+    const el = document.getElementById("how-it-works");
+    if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
+  };
+
   return (
     <section className="container px-4 py-12 md:py-20">
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
@@ -26,11 +32,14 @@ export default function HeroSection() {
                 {t.home.hero.browseEvents}
               </Button>
             </Link>
-            <Link href="/about">
-              <Button variant="outline" className="rounded-full px-8">
-                {t.home.hero.learnMore}
-              </Button>
-            </Link>
+            <Button
+              type="button"
+              variant="outline"
+              className="rounded-full px-8"
+              onClick={scrollToHowItWorks}
+            >
+              {t.home.hero.learnMore}
+            </Button>
           </div>
         </div>
 

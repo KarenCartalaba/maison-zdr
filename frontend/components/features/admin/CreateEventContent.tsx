@@ -28,6 +28,13 @@ const createEventSchema = z.object({
 
 type CreateEventInput = z.infer<typeof createEventSchema>;
 
+/**
+ * Canonical venue of the bar (same address the contact page and footer show).
+ * Used as the starting value for every admin event form that opens empty, so a
+ * new event defaults to the bar's location instead of an empty field.
+ */
+export const DEFAULT_EVENT_LOCATION = "9 Rue du Commerce, 35140 Saint-Hilaire-des-Landes, France";
+
 export default function CreateEventContent() {
   const [isLoading, setIsLoading] = useState(false);
   const [coverImage, setCoverImage] = useState<File | null>(null);
@@ -43,6 +50,7 @@ export default function CreateEventContent() {
   } = useForm<CreateEventInput>({
     resolver: zodResolver(createEventSchema),
     defaultValues: {
+      location: DEFAULT_EVENT_LOCATION,
       minParticipants: 0,
       maxParticipants: 100,
       eventType: "SOCIAL" as const,
@@ -104,7 +112,7 @@ export default function CreateEventContent() {
   };
 
   return (
-    <div className="max-w-2xl">
+    <div className="w-full">
       <div className="mb-8">
         <h1 className="text-3xl font-bold">{t.adminEventsForm.createTitle}</h1>
         <p className="text-muted-foreground mt-2">{t.adminEventsForm.createSubtitle}</p>
@@ -249,7 +257,7 @@ export default function CreateEventContent() {
             </div>
 
             <div className="flex gap-4 pt-4">
-              <Button type="submit" disabled={isLoading}>
+              <Button type="submit" disabled={isLoading} className="bg-[#1a5c2a] hover:bg-[#144a22]">
                 {isLoading ? (
                   <>
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />

@@ -15,7 +15,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
 import { Field, FieldError, FieldGroup, FieldLabel } from "@/components/ui/field";
-import { ArrowLeft, Check, User, Users, ClipboardCheck, Trash2, Loader2 } from "lucide-react";
+import { ArrowLeft, Check, User, Users, ClipboardCheck, Trash2, Loader2, Calendar, MapPin } from "lucide-react";
 import EventImage from "@/components/ui/event-image";
 import Link from "next/link";
 
@@ -215,7 +215,7 @@ export default function RegistrationWizardContent({ initialEvent = null }: { ini
               <Link href={`/events/${eventId}`} className="flex-1">
                 <Button variant="outline" className="w-full">{t.registration.backToEvent}</Button>
               </Link>
-              <Link href="/my-registrations" className="flex-1">
+              <Link href="/profile?tab=events" className="flex-1">
                 <Button className="w-full bg-[#1a5c2a] hover:bg-[#144a22]">{t.registration.myRegistrations}</Button>
               </Link>
             </div>
@@ -236,8 +236,8 @@ export default function RegistrationWizardContent({ initialEvent = null }: { ini
       <p className="text-muted-foreground mb-8">{t.registration.confirmDetails}</p>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        {/* Main Form */}
-        <div className="lg:col-span-2">
+        {/* Main Form — renders after the Event Summary on mobile, first on desktop */}
+        <div className="lg:col-span-2 order-2 lg:order-1">
           <Card>
             <CardContent className="p-8">
               {/* Step Indicator */}
@@ -491,8 +491,8 @@ export default function RegistrationWizardContent({ initialEvent = null }: { ini
           </Card>
         </div>
 
-        {/* Summary Sidebar */}
-        <div className="lg:col-span-1">
+        {/* Summary Sidebar — first on mobile so the Event Summary leads the page */}
+        <div className="lg:col-span-1 order-1 lg:order-2">
           <div className="sticky top-24">
             <Card className="border shadow-md overflow-hidden">
               <EventImage src={eventData?.gallery?.[0]} title={eventData?.title} className="aspect-video" />
@@ -503,11 +503,11 @@ export default function RegistrationWizardContent({ initialEvent = null }: { ini
                 </div>
                 <div className="space-y-2 text-sm">
                   <div className="flex items-start gap-2">
-                    <span className="text-muted-foreground">📅</span>
+                    <Calendar className="h-4 w-4 shrink-0 text-muted-foreground" />
                     <span>{eventData ? `${new Date(eventData.eventDate).toLocaleDateString(dateLocale, { weekday: "long", month: "long", day: "numeric" })} ${new Date(eventData.eventDate).toLocaleTimeString(dateLocale, { hour: "numeric", minute: "2-digit" })}` : t.registration.loading}</span>
                   </div>
                   <div className="flex items-start gap-2">
-                    <span className="text-muted-foreground">📍</span>
+                    <MapPin className="h-4 w-4 shrink-0 text-muted-foreground" />
                     <span>{eventData?.location || t.registration.loading}</span>
                   </div>
                 </div>

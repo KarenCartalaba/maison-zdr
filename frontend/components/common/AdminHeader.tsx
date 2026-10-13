@@ -20,6 +20,19 @@ export default function AdminHeader() {
   const { locale, setLocale, t } = useLanguage();
   const active = LOCALES.find((l) => l.value === locale) ?? LOCALES[0];
 
+  // Role under the name — must mirror the signed-in user's actual role.
+  // (Previously this was the hardcoded `header.administrator`, which labelled
+  // every moderator as an administrator.)
+  const userRole = user?.role?.toUpperCase();
+  const roleLabel =
+    userRole === "ADMIN"
+      ? t.header.administrator
+      : userRole === "MODERATOR"
+        ? t.sidebar.moderator
+        : userRole
+          ? t.adminUsers.colUser
+          : "";
+
   return (
     <header className="sticky top-0 z-40 border-b bg-white px-8 py-3">
       <div className="flex items-center justify-between">
@@ -64,7 +77,7 @@ export default function AdminHeader() {
           <div className="flex items-center gap-3">
             <div className="text-right">
               <p className="text-sm font-bold uppercase tracking-wide">{user?.name || "AUREL BAZ"}</p>
-              <p className="text-xs text-muted-foreground uppercase">{t.header.administrator}</p>
+              <p className="text-xs text-muted-foreground uppercase">{roleLabel}</p>
             </div>
             <div className="h-10 w-10 rounded-full bg-muted overflow-hidden flex items-center justify-center">
               {user?.profilePic ? (

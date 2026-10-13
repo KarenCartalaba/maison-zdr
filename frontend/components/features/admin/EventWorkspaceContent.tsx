@@ -18,9 +18,11 @@ import { Field, FieldError, FieldGroup, FieldLabel } from "@/components/ui/field
 import {
   ArrowLeft, Loader2, Pencil, Trash2, Calendar, MapPin, Users, Clock,
   Search, Star, MessageSquare, Inbox, Upload, CheckCircle2, ImagePlus,
+  Download, Printer,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { isValidImageFile } from "@/lib/utils";
+import { DEFAULT_EVENT_LOCATION } from "@/components/features/admin/CreateEventContent";
 import { eventService } from "@/services/event.service";
 import { adminService } from "@/services/admin.service";
 import { galleryService } from "@/services/gallery.service";
@@ -88,8 +90,8 @@ export default function EventWorkspaceContent() {
 
   return (
     <div>
-      {/* Header */}
-      <div className="flex items-center gap-4 mb-6">
+      {/* Header (hidden when printing the participants master list) */}
+      <div className="flex items-center gap-4 mb-6 print:hidden">
         <Link href="/admin/events" className="text-muted-foreground hover:text-foreground">
           <ArrowLeft className="h-5 w-5" />
         </Link>
@@ -114,8 +116,8 @@ export default function EventWorkspaceContent() {
         </div>
       </div>
 
-      {/* Tabs */}
-      <div className="flex gap-0 border-b mb-6">
+      {/* Tabs (hidden when printing the participants master list) */}
+      <div className="flex gap-0 border-b mb-6 print:hidden">
         {tabs.map((tab) => (
           <button
             key={tab.id}
@@ -135,7 +137,7 @@ export default function EventWorkspaceContent() {
       {/* Tab Content */}
       <div>
         {activeTab === "overview" && <OverviewTab event={event} t={t} dateLocale={dateLocale} />}
-        {activeTab === "participants" && <ParticipantsTab eventId={eventId} t={t} dateLocale={dateLocale} />}
+        {activeTab === "participants" && <ParticipantsTab eventId={eventId} event={event} t={t} dateLocale={dateLocale} />}
         {activeTab === "reviews" && <ReviewsTab eventId={eventId} t={t} dateLocale={dateLocale} />}
         {activeTab === "highlights" && <HighlightsTab event={event} t={t} dateLocale={dateLocale} />}
         {activeTab === "settings" && <SettingsTab event={event} t={t} dateLocale={dateLocale} onUpdated={(updated) => { setEvent(updated); setActiveTab("overview"); }} />}
@@ -228,7 +230,7 @@ function OverviewTab({ event, t, dateLocale }: { event: Event; t: any; dateLocal
 
 // ==================== Participants Tab ====================
 
-function ParticipantsTab({ eventId, t, dateLocale }: { eventId: string; t: any; dateLocale: string }) {
+function ParticipantsTab({ eventId, event, t, dateLocale }: { eventId: string; event: Event; t: any; dateLocale: string }) {
   const [participants, setParticipants] = useState<AdminRegistration[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [search, setSearch] = useState("");
@@ -286,6 +288,52 @@ function ParticipantsTab({ eventId, t, dateLocale }: { eventId: string; t: any; 
     const email = p.user?.email?.toLowerCase() || "";
     return name.includes(q) || email.includes(q);
   });
+
+  // ===== Per-event CSV export (this event's registrations only) =====
+  const guestSummary = (p: AdminRegistration): string => {
+    const names = (p.guestNames?.length ? p.guestNames : p.guestName ? [p.guestName] : []).filter(
+      Boolean
+    ) as string[];
+    return names.length > 0 ? `${names.length} — ${names.join(", ")}` : "";
+  };
+
+  const csvCell = (value: string | number | null | undefined) =>
+    `"${String(value ?? "").replace(/"/g, '""')}"`;
+
+  const handleExportCsv = () => {
+    const header = [
+      t.adminWorkspace.participantsColFullName,
+      t.adminWorkspace.participantsColEmail,
+      t.adminWorkspace.participantsReference,
+      t.adminWorkspace.participantsStatus,
+      t.adminWorkspace.participantsCheckin,
+      t.adminWorkspace.participantsColRegistered,
+      t.adminWorkspace.participantsColGuests,
+    ];
+    const rows = filtered.map((p) => [
+      p.user?.name ?? "",
+      p.user?.email ?? "",
+      p.referenceNumber ?? "",
+      p.status,
+      p.checkedIn ? t.adminRegs.yes : t.adminRegs.no,
+      formatDate(p.createdAt, dateLocale, { month: "short", day: "numeric", year: "numeric" }),
+      guestSummary(p),
+    ]);
+    const csv = "\uFEFF" + [header, ...rows].map((row) => row.map(csvCell).join(",")).join("\r\n");
+    const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    const slug = (event.title || "event")
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, "-")
+      .replace(/^-+|-+$/g, "");
+    link.href = url;
+    link.download = `registrations-${slug || "event"}-${new Date().toISOString().slice(0, 10)}.csv`;
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    URL.revokeObjectURL(url);
+  };
 
   const totalRegistered = participants.length;
   const confirmed = participants.filter((p) => p.status === "CONFIRMED").length;
@@ -407,7 +455,8 @@ function ParticipantsTab({ eventId, t, dateLocale }: { eventId: string; t: any; 
   return (
     <div className="space-y-6">
       {dialog}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+      {/* Screen-only UI — hidden when the master list is printed */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 print:hidden">
         <Card>
           <CardContent className="p-4 text-center">
             <p className="text-2xl font-bold">{totalRegistered.toLocaleString(dateLocale)}</p>
@@ -434,17 +483,41 @@ function ParticipantsTab({ eventId, t, dateLocale }: { eventId: string; t: any; 
         </Card>
       </div>
 
-      <div className="flex items-center gap-2 border rounded-lg px-3 py-2 max-w-sm">
-        <Search className="h-4 w-4 text-muted-foreground" />
-        <Input
-          placeholder={t.adminWorkspace.participantsSearch}
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          className="border-0 bg-transparent outline-none w-full"
-        />
+      <div className="flex flex-wrap items-center justify-between gap-3 print:hidden">
+        <div className="flex items-center gap-2 border rounded-lg px-3 py-2 max-w-sm">
+          <Search className="h-4 w-4 text-muted-foreground" />
+          <Input
+            placeholder={t.adminWorkspace.participantsSearch}
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            className="border-0 bg-transparent outline-none w-full"
+          />
+        </div>
+        <div className="flex items-center gap-2">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={handleExportCsv}
+            disabled={filtered.length === 0}
+            title={t.adminWorkspace.participantsExportCsv}
+          >
+            <Download className="h-4 w-4 mr-2" />
+            {t.adminWorkspace.participantsExportCsv}
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => window.print()}
+            disabled={filtered.length === 0}
+            title={t.adminWorkspace.participantsPrint}
+          >
+            <Printer className="h-4 w-4 mr-2" />
+            {t.adminWorkspace.participantsPrint}
+          </Button>
+        </div>
       </div>
 
-      <Card>
+      <Card className="print:hidden">
         <CardHeader>
           <CardTitle className="text-base">{t.adminWorkspace.participantsTableTitle}</CardTitle>
         </CardHeader>
@@ -467,6 +540,74 @@ function ParticipantsTab({ eventId, t, dateLocale }: { eventId: string; t: any; 
           </div>
         </CardContent>
       </Card>
+
+      {/* Printable master list — staff check participants in by hand */}
+      <div data-print-root className="hidden print:block text-black">
+        <div className="border-b-[3px] border-[#1a5c2a] pb-2 mb-4">
+          <h1 className="text-xl font-bold m-0">{event.title}</h1>
+          <p className="text-xs text-neutral-600 m-0 mt-1">
+            {t.adminWorkspace.participantsTableTitle} —{" "}
+            {formatDate(event.eventDate, dateLocale, {
+              weekday: "long",
+              year: "numeric",
+              month: "long",
+              day: "numeric",
+            })}
+          </p>
+        </div>
+        <table className="w-full border-collapse text-xs">
+          <thead>
+            <tr>
+              <th className="border border-neutral-400 bg-neutral-100 px-2 py-1 text-left font-semibold">#</th>
+              <th className="border border-neutral-400 bg-neutral-100 px-2 py-1 text-left font-semibold">
+                {t.adminWorkspace.participantsColFullName}
+              </th>
+              <th className="border border-neutral-400 bg-neutral-100 px-2 py-1 text-left font-semibold">
+                {t.adminWorkspace.participantsColEmail}
+              </th>
+              <th className="border border-neutral-400 bg-neutral-100 px-2 py-1 text-left font-semibold">
+                {t.adminWorkspace.participantsReference}
+              </th>
+              <th className="border border-neutral-400 bg-neutral-100 px-2 py-1 text-left font-semibold">
+                {t.adminWorkspace.participantsStatus}
+              </th>
+              <th className="border border-neutral-400 bg-neutral-100 px-2 py-1 text-left font-semibold">
+                {t.adminWorkspace.participantsCheckin}
+              </th>
+            </tr>
+          </thead>
+          <tbody>
+            {filtered.map((p, index) => (
+              <tr key={p.id}>
+                <td className="border border-neutral-400 px-2 py-1 align-top">{index + 1}</td>
+                <td className="border border-neutral-400 px-2 py-1 align-top">{p.user?.name || ""}</td>
+                <td className="border border-neutral-400 px-2 py-1 align-top">{p.user?.email || ""}</td>
+                <td className="border border-neutral-400 px-2 py-1 align-top">{p.referenceNumber || "—"}</td>
+                <td className="border border-neutral-400 px-2 py-1 align-top">{p.status}</td>
+                {/* Empty cell = write-in box for the door staff */}
+                <td className="border border-neutral-400 px-2 py-1 align-top h-7">
+                  {p.checkedIn ? t.adminRegs.yes : ""}
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+
+      {/* Print stylesheet: only the master list is printed (app chrome + list UI stay off paper) */}
+      <style>{`
+        @media print {
+          body * { visibility: hidden !important; }
+          [data-print-root], [data-print-root] * { visibility: visible !important; }
+          [data-print-root] {
+            position: absolute !important;
+            top: 0 !important;
+            left: 0 !important;
+            width: 100% !important;
+          }
+          @page { margin: 12mm; }
+        }
+      `}</style>
     </div>
   );
 }
@@ -876,7 +1017,7 @@ function SettingsTab({ event, t, dateLocale, onUpdated }: { event: Event; t: any
     defaultValues: {
       title: event.title,
       description: event.description,
-      location: event.location,
+      location: event.location || DEFAULT_EVENT_LOCATION,
       maxParticipants: event.maxParticipants,
       isCancelled: event.isCancelled,
       allowReviewsNow: event.allowReviewsNow ?? false,
@@ -924,7 +1065,7 @@ function SettingsTab({ event, t, dateLocale, onUpdated }: { event: Event; t: any
         <CardTitle className="text-base">{t.adminWorkspace.settingsTitle}</CardTitle>
       </CardHeader>
       <CardContent>
-        <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4 max-w-xl" noValidate>
+        <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4 w-full" noValidate>
           <FieldGroup>
             <Controller
               name="title"
