@@ -1,6 +1,8 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { Input } from "@/components/ui/input";
+import { Search } from "lucide-react";
 import Link from "next/link";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -16,6 +18,7 @@ import {
   Plus,
   BarChart3,
   TrendingUp,
+  Loader2,
 } from "lucide-react";
 import {
   ChartContainer,
@@ -230,9 +233,11 @@ export default function DashboardContent({
   const [loading, setLoading] = useState(
     !initialStats
   );
-  const { t, dateLocale } = useLanguage();
+const { t, dateLocale } = useLanguage();
+  const [searchTerm, setSearchTerm] = useState("");
+  const searchTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  // Localized chart configs + table columns (rebuilt on locale switch)
+// Localized chart configs + table columns (rebuilt on locale switch)
   const registrationChartConfig = useMemo(() => ({
     registrations: { label: t.dashboard.registrations, color: "#1a5c2a" },
   } satisfies ChartConfig), [t]);
@@ -379,6 +384,25 @@ export default function DashboardContent({
 
       {/* Venue Operations Live Feed */}
       <h2 className="text-lg font-semibold mb-4">{t.dashboard.liveFeed}</h2>
+
+      {/* Search */}
+      <div className="flex items-center gap-2 border rounded-lg px-3 py-2 mb-4 max-w-sm">
+        <Search className="h-4 w-4 text-muted-foreground" />
+        <Input
+          placeholder={t.adminRegs.searchPlaceholder}
+          value={searchTerm}
+          onChange={(e) => {
+            setSearchTerm(e.target.value);
+            if (searchTimer.current) clearTimeout(searchTimer.current);
+            searchTimer.current = setTimeout(() => {
+              // Debounced search - send to admin service to filter data
+              // TODO: implement adminService search filter when available
+            }, 400);
+          }}
+          className="border-0 bg-transparent outline-none w-full shadow-none focus-visible:ring-0"
+        />
+        {searchTimer.current && <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />}
+      </div>
 
       {/* Stat Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">

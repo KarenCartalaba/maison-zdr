@@ -1,11 +1,13 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 import { getErrorMessage } from "@/lib/server-error";
 import { useConfirm } from "@/components/ui/confirm-dialog";
 import Link from "next/link";
 import { eventService } from "@/services/event.service";
+import { Input } from "@/components/ui/input";
+import { Search } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -29,6 +31,8 @@ export default function AdminEventsContent({ initialEvents = [] }: AdminEventsCo
   const { confirm, dialog } = useConfirm();
   const [activeTab, setActiveTab] = useState<"all" | "ongoing" | "upcoming" | "past" | "cancelled">("all");
   const { t, dateLocale } = useLanguage();
+  const [searchTerm, setSearchTerm] = useState("");
+  const searchTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const now = new Date();
 
@@ -37,18 +41,19 @@ export default function AdminEventsContent({ initialEvents = [] }: AdminEventsCo
   // "Ongoing" for users can never land in the admin "Past" bucket.
   const filteredEvents = events.filter((event) => {
     const phase = getEventPhase(event.eventDate, now);
+    const matchesSearch = event.title.toLowerCase().includes(searchTerm.toLowerCase());
 
     switch (activeTab) {
       case "ongoing":
-        return !event.isCancelled && phase === "ongoing";
+        return !event.isCancelled && phase === "ongoing" && matchesSearch;
       case "upcoming":
-        return !event.isCancelled && phase === "upcoming";
+        return !event.isCancelled && phase === "upcoming" && matchesSearch;
       case "past":
-        return !event.isCancelled && phase === "completed";
+        return !event.isCancelled && phase === "completed" && matchesSearch;
       case "cancelled":
-        return event.isCancelled;
+        return event.isCancelled && matchesSearch;
       default:
-        return true;
+        return matchesSearch;
     }
   });
 
@@ -216,6 +221,24 @@ export default function AdminEventsContent({ initialEvents = [] }: AdminEventsCo
           <h1 className="text-2xl font-bold">{t.adminEvents.title}</h1>
           <p className="text-sm text-muted-foreground">{t.adminEvents.subtitle}</p>
         </div>
+        {/* Search */}
+        <div className="flex items-center gap-2 border rounded-lg px-3 py-2 mb-4 max-w-sm">
+          <Search className="h-4 w-4 text-muted-foreground" />
+          <Input
+            placeholder={t.adminEvents.searchPlaceholder}
+            value={searchTerm}
+            onChange={(e) => {
+              setSearchTerm(e.target.value);
+              if (searchTimer.current) clearTimeout(searchTimer.current);
+              searchTimer.current = setTimeout(() => {
+                // Debounced search - filter events by title
+              }, 400);
+            }}
+            className="border-0 bg-transparent outline-none w-full shadow-none focus-visible:ring-0"
+          />
+          {searchTimer.current && <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />}
+        </div>
+
         <div className="flex items-center gap-3">
           {/* View Toggle */}
           <div className="flex items-center border rounded-lg overflow-hidden">

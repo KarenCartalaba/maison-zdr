@@ -524,6 +524,7 @@ export const en = {
   adminEvents: {
     title: "Events Overview",
     subtitle: "Full event calendar and attendance",
+    searchPlaceholder: "Search events...",
     createNew: "CREATE NEW EVENT",
     noEvents: "No events found. Create your first event!",
     tabAll: "ALL EVENTS",

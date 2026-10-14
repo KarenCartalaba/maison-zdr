@@ -537,6 +537,7 @@ export const fr: AdminDict = {
   adminEvents: {
     title: "Aperçu des événements",
     subtitle: "Calendrier complet des événements et participations",
+    searchPlaceholder: "Rechercher des événements...",
     createNew: "CRÉER UN ÉVÉNEMENT",
     noEvents: "Aucun événement trouvé. Créez votre premier événement !",
     tabAll: "TOUS LES ÉVÉNEMENTS",

@@ -34,6 +34,8 @@ export default function AdminNewsContent({ initialNews = [] }: AdminNewsContentP
   const [isCreating, setIsCreating] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const { t, dateLocale } = useLanguage();
+  const [searchTerm, setSearchTerm] = useState("");
+  const searchTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Form state
   const [formData, setFormData] = useState<CreateNewsData>({
