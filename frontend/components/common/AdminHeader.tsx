@@ -36,16 +36,7 @@ export default function AdminHeader() {
   return (
     <header className="sticky top-0 z-40 border-b bg-white px-8 py-3">
       <div className="flex items-center justify-between">
-        {/* Search Bar */}
-        <div className="flex items-center gap-2 rounded-lg border bg-muted/50 px-4 py-2 w-80">
-          <Search className="h-4 w-4 text-muted-foreground" />
-          <input
-            type="text"
-            placeholder={t.header.searchPlaceholder}
-            className="bg-transparent text-sm outline-none placeholder:text-muted-foreground w-full"
-          />
-        </div>
-
+        
         {/* Right Side */}
         <div className="flex items-center gap-4">
           {/* Language Selector (per-browser only — stored in localStorage) */}
