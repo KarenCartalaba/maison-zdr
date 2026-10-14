@@ -8,6 +8,11 @@ export default function Footer() {
   const { t } = useLanguage();
   return (
     <footer className="bg-[#1a5c2a] text-white">
+      {/* Top divider band — a light strip between the page content and the
+          footer. Needed because the homepage About section directly above is
+          the SAME green, so an internal-only divider would be invisible. */}
+      <div className="h-1.5 w-full bg-white/90" aria-hidden="true" />
+
       <div className="container px-4 py-12">
         <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
           {/* Brand */}
@@ -63,8 +68,8 @@ export default function Footer() {
         </div>
       </div>
 
-      {/* Divider */}
-      <div className="h-px w-full bg-white/20" aria-hidden="true" />
+      {/* Divider above the copyright */}
+      <div className="h-px w-full bg-white/50" aria-hidden="true" />
 
       {/* Copyright */}
       <div className="container px-4 py-6 text-center text-sm text-white/60">

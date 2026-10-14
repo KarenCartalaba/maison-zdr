@@ -49,9 +49,19 @@ export const adminService = {
     const response = await axiosInstance.get<
       ApiResponse<{
         event: any;
-        checkedInCount: number;
-        totalCount: number;
         registrations: AdminRegistration[];
+        /**
+         * Guest-headcount stats from the backend's computeCheckInStats:
+         * registrant + plus-ones, CANCELLED rows excluded.
+         */
+        expectedGuests: number;
+        checkedInGuests: number;
+        expectedRegistrations: number;
+        checkedInRegistrations: number;
+        cancelledRegistrations: number;
+        /** Back-compat aliases: == expectedGuests / checkedInGuests. */
+        totalCount: number;
+        checkedInCount: number;
       }>
     >(API_ENDPOINTS.ADMIN.CHECKIN_EVENT(eventId));
     return response.data;
@@ -93,10 +103,23 @@ export const adminService = {
     return response.data;
   },
 
-  updateReviewStatus: async (id: string, status: string) => {
+  /**
+   * Update a review's moderation status.
+   *
+   * `removalReason` is only sent when the caller provides it:
+   *  - omitted  → backend leaves any stored reason untouched (and APPROVED
+   *    always clears it server-side);
+   *  - ""       → backend clears the stored reason;
+   *  - text     → backend stores it (max 500 chars, zod-enforced).
+   */
+  updateReviewStatus: async (
+    id: string,
+    status: string,
+    removalReason?: string
+  ) => {
     const response = await axiosInstance.put<ApiResponse>(
       API_ENDPOINTS.ADMIN.REVIEW_STATUS(id),
-      { status }
+      removalReason !== undefined ? { status, removalReason } : { status }
     );
     return response.data;
   },

@@ -4,6 +4,7 @@ import { useState } from "react";
 import { Controller, useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
+import { requiredEmailSchema } from "@/lib/email-validation";
 import { contactService } from "@/services/contact.service";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -15,7 +16,7 @@ import { useLanguage } from "@/context/LanguageContext";
 
 const contactSchema = z.object({
   name: z.string().min(2, "Name must be at least 2 characters").max(100, "Name must be at most 100 characters"),
-  email: z.string().min(1, "Email is required").email("Invalid email address"),
+  email: requiredEmailSchema,
   message: z.string().min(10, "Message must be at least 10 characters").max(1000, "Message must be at most 1000 characters"),
 });
 

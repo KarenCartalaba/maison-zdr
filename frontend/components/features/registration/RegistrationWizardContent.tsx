@@ -7,6 +7,7 @@ import { useRouter, useParams } from "next/navigation";
 import { Controller, useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
+import { requiredEmailSchema } from "@/lib/email-validation";
 import { useAuth } from "@/context/AuthContext";
 import { useLanguage } from "@/context/LanguageContext";
 import { registrationService } from "@/services/registration.service";
@@ -22,7 +23,7 @@ import Link from "next/link";
 const step1Schema = z.object({
   firstName: z.string().min(1, "First name is required").max(100, "First name must be at most 100 characters"),
   lastName: z.string().min(1, "Last name is required").max(100, "Last name must be at most 100 characters"),
-  email: z.string().min(1, "Email is required").email("Invalid email address"),
+  email: requiredEmailSchema,
 });
 
 type Step1Values = z.infer<typeof step1Schema>;

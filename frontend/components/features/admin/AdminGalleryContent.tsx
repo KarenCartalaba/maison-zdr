@@ -42,7 +42,7 @@ export default function AdminGalleryContent() {
 
   const fetchEvents = async () => {
     try {
-      const response = await eventService.getAll();
+      const response = await eventService.getAllForAdmin();
       if (response.code === 200 && response.data) {
         const eventsWithGallery = response.data.events.filter(
           (e) => e.gallery && e.gallery.length > 0

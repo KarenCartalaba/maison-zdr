@@ -9,7 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { DataTable, type DataTableColumn } from "@/components/ui/data-table";
 import { DataTableColumnHeader } from "@/components/ui/data-table-column-header";
-import { QrCode, Search, CheckCircle2, User, CalendarDays } from "lucide-react";
+import { Search, CheckCircle2, User, CalendarDays } from "lucide-react";
 import { adminService } from "@/services/admin.service";
 import { useLanguage } from "@/context/LanguageContext";
 import { cn } from "@/lib/utils";
@@ -74,13 +74,167 @@ function EmptyState({ message, hint }: { message: string; hint: string }) {
   );
 }
 
+/**
+ * Searchable event picker (combobox) replacing the old card grid: type to
+ * filter by title, pick a row to scope the desk to that event, and close with
+ * Escape or an outside click. Exposes combobox/listbox ARIA attributes so the
+ * filtered options are announced correctly.
+ */
+function EventPicker({
+  events,
+  selectedEventId,
+  onSelect,
+  dateLocale,
+  searchPlaceholder,
+  noResultsLabel,
+}: {
+  events: CheckInEvent[];
+  selectedEventId: string;
+  onSelect: (id: string) => void;
+  dateLocale: string;
+  searchPlaceholder: string;
+  noResultsLabel: string;
+}) {
+  const [open, setOpen] = useState(false);
+  const [query, setQuery] = useState("");
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  const selectedEvent = events.find((e) => e.id === selectedEventId);
+
+  // While closed the input mirrors the selected title; while open it shows the
+  // raw query, so filtering never hides which event is currently active.
+  const inputValue = open ? query : selectedEvent?.title ?? "";
+
+  const filtered = events.filter((event) =>
+    event.title.toLowerCase().includes(query.trim().toLowerCase())
+  );
+
+  const close = () => {
+    setOpen(false);
+    setQuery("");
+  };
+
+  useEffect(() => {
+    if (!open) return;
+    const handleOutsideClick = (event: MouseEvent) => {
+      if (!containerRef.current?.contains(event.target as Node)) {
+        setOpen(false);
+        setQuery("");
+      }
+    };
+    document.addEventListener("mousedown", handleOutsideClick);
+    return () => document.removeEventListener("mousedown", handleOutsideClick);
+  }, [open]);
+
+  return (
+    <div ref={containerRef} className="relative mb-6 max-w-md">
+      <div className="flex items-center gap-2 rounded-lg border bg-card px-3 py-2">
+        <Search className="h-4 w-4 shrink-0 text-muted-foreground" />
+        <Input
+          role="combobox"
+          aria-expanded={open}
+          aria-controls="checkin-event-listbox"
+          aria-autocomplete="list"
+          aria-label={searchPlaceholder}
+          placeholder={searchPlaceholder}
+          value={inputValue}
+          onFocus={() => setOpen(true)}
+          onChange={(e) => {
+            setQuery(e.target.value);
+            setOpen(true);
+          }}
+          onKeyDown={(e) => {
+            if (e.key === "Escape") close();
+            if (e.key === "Enter") {
+              e.preventDefault();
+              if (filtered.length > 0) {
+                onSelect(filtered[0].id);
+                close();
+              }
+            }
+          }}
+          className="w-full border-0 bg-transparent shadow-none outline-none focus-visible:ring-0"
+        />
+      </div>
+
+      {open && (
+        <ul
+          id="checkin-event-listbox"
+          role="listbox"
+          aria-label={searchPlaceholder}
+          className="absolute z-20 mt-1 max-h-64 w-full overflow-auto rounded-lg border bg-popover p-1 shadow-md"
+        >
+          {filtered.length === 0 ? (
+            <li
+              role="presentation"
+              className="px-3 py-2 text-sm text-muted-foreground"
+            >
+              {noResultsLabel}
+            </li>
+          ) : (
+            filtered.map((event) => {
+              const isSelected = event.id === selectedEventId;
+              return (
+                <li key={event.id} role="option" aria-selected={isSelected}>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      onSelect(event.id);
+                      close();
+                    }}
+                    className={cn(
+                      "flex w-full items-center justify-between gap-3 rounded-md px-3 py-2 text-left transition-colors",
+                      isSelected ? "bg-[#1a5c2a] text-white" : "hover:bg-muted"
+                    )}
+                  >
+                    <span className="min-w-0">
+                      <span
+                        className={cn(
+                          "flex items-center gap-1.5 text-xs",
+                          isSelected ? "text-white/70" : "text-muted-foreground"
+                        )}
+                      >
+                        <CalendarDays className="h-3.5 w-3.5" />
+                        {formatDate(event.eventDate, dateLocale)}
+                      </span>
+                      <span className="block truncate text-sm font-medium">
+                        {event.title}
+                        <span
+                          className={cn(
+                            "ml-1 text-xs font-normal",
+                            isSelected ? "text-white/70" : "text-muted-foreground"
+                          )}
+                        >
+                          ({event._count.registrations})
+                        </span>
+                      </span>
+                    </span>
+                    {isSelected && <CheckCircle2 className="h-4 w-4 shrink-0" />}
+                  </button>
+                </li>
+              );
+            })
+          )}
+        </ul>
+      )}
+    </div>
+  );
+}
+
 interface CheckInsContentProps {
   initialEvents?: CheckInEvent[] | null;
   initialCheckIn?: {
     event?: { id: string } | null;
-    checkedInCount: number;
-    totalCount: number;
     registrations: AdminRegistration[];
+    /** Guest-headcount stats: registrants + plus-ones, cancelled excluded. */
+    expectedGuests?: number;
+    checkedInGuests?: number;
+    expectedRegistrations?: number;
+    checkedInRegistrations?: number;
+    cancelledRegistrations?: number;
+    /** Back-compat aliases returned by the API (== the two fields above). */
+    totalCount?: number;
+    checkedInCount?: number;
   } | null;
 }
 
@@ -91,8 +245,13 @@ export default function CheckInsContent({
   const [events, setEvents] = useState<CheckInEvent[]>(initialEvents ?? []);
   const [selectedEventId, setSelectedEventId] = useState<string>(initialEvents?.[0]?.id ?? "");
   const [registrations, setRegistrations] = useState<AdminRegistration[]>(initialCheckIn?.registrations ?? []);
-  const [checkedInCount, setCheckedInCount] = useState(initialCheckIn?.checkedInCount ?? 0);
-  const [totalCount, setTotalCount] = useState(initialCheckIn?.totalCount ?? 0);
+  // Guest-headcount stats (registrant + plus-ones; CANCELLED rows excluded).
+  const [checkedInGuests, setCheckedInGuests] = useState(
+    initialCheckIn?.checkedInGuests ?? initialCheckIn?.checkedInCount ?? 0
+  );
+  const [expectedGuests, setExpectedGuests] = useState(
+    initialCheckIn?.expectedGuests ?? initialCheckIn?.totalCount ?? 0
+  );
   const [loadingEvents, setLoadingEvents] = useState(!initialEvents);
   const [loadingCheckIn, setLoadingCheckIn] = useState(false);
   const [checkInLoadingId, setCheckInLoadingId] = useState<string | null>(null);
@@ -131,6 +290,20 @@ export default function CheckInsContent({
     fetchEvents();
   }, [initialEvents]);
 
+  /** Reload the selected event's roster + stats (single source of truth). */
+  const refreshRoster = useCallback(async () => {
+    const response = await adminService.getEventCheckIn(selectedEventId);
+    if (response.data) {
+      setRegistrations(response.data.registrations);
+      setCheckedInGuests(
+        response.data.checkedInGuests ?? response.data.checkedInCount ?? 0
+      );
+      setExpectedGuests(
+        response.data.expectedGuests ?? response.data.totalCount ?? 0
+      );
+    }
+  }, [selectedEventId]);
+
   useEffect(() => {
     if (!selectedEventId) return;
     // Skip the client fetch when the server already provided this event's data.
@@ -142,12 +315,7 @@ export default function CheckInsContent({
     const fetchCheckIn = async () => {
       try {
         setLoadingCheckIn(true);
-        const response = await adminService.getEventCheckIn(selectedEventId);
-        if (response.data) {
-          setRegistrations(response.data.registrations);
-          setCheckedInCount(response.data.checkedInCount);
-          setTotalCount(response.data.totalCount);
-        }
+        await refreshRoster();
       } catch (error) {
         console.error("Failed to fetch check-in data:", error);
       } finally {
@@ -155,27 +323,29 @@ export default function CheckInsContent({
       }
     };
     fetchCheckIn();
-  }, [selectedEventId]);
+  }, [refreshRoster, selectedEventId]);
 
   const handleCheckIn = useCallback(async (registrationId: string) => {
+    setCheckInLoadingId(registrationId);
+    let succeeded = false;
     try {
-      setCheckInLoadingId(registrationId);
       await adminService.checkIn(registrationId);
-      const response = await adminService.getEventCheckIn(selectedEventId);
-      if (response.data) {
-        setRegistrations(response.data.registrations);
-        setCheckedInCount(response.data.checkedInCount);
-        setTotalCount(response.data.totalCount);
-        toast.success(t.adminCheckins.checkInSuccess);
-      } else {
-        toast.error(response.message || t.adminCheckins.checkInError);
-      }
+      succeeded = true;
     } catch (error) {
+      // Duplicate/cancelled rejections return the server's own message
+      // ("Already checked in", ...) — surface it verbatim, not the fallback.
       toast.error(getErrorMessage(error, t.adminCheckins.checkInError));
-    } finally {
-      setCheckInLoadingId(null);
     }
-  }, [selectedEventId, t]);
+    // Always refresh: a success updates counts + the row, and a duplicate
+    // rejection flips a stale "Pending" row to its real checked-in state.
+    try {
+      await refreshRoster();
+    } catch {
+      // Best-effort: keep the current roster if the refresh itself fails.
+    }
+    if (succeeded) toast.success(t.adminCheckins.checkInSuccess);
+    setCheckInLoadingId(null);
+  }, [refreshRoster, t]);
 
   const selectedEvent = events.find((e) => e.id === selectedEventId);
 
@@ -277,65 +447,25 @@ export default function CheckInsContent({
 
   return (
     <div>
-      <div className="flex items-center justify-between mb-6">
-        <div>
-          <h1 className="text-2xl font-bold">{t.adminCheckins.title}</h1>
-          <p className="text-sm text-muted-foreground">
-            {t.adminCheckins.subtitle}
-          </p>
-        </div>
-        <Button className="bg-[#1a5c2a] hover:bg-[#144a22]">
-          <QrCode className="h-4 w-4 mr-2" />
-          {t.adminCheckins.scanQr}
-        </Button>
+      <div className="mb-6">
+        <h1 className="text-2xl font-bold">{t.adminCheckins.title}</h1>
+        <p className="text-sm text-muted-foreground">
+          {t.adminCheckins.subtitle}
+        </p>
       </div>
 
-      {/* Per-event selector — grid of event cards; picking one loads that
-          event's roster (stats, search and table below are all scoped to it). */}
+      {/* Event picker — searchable combobox (replaces the old card grid);
+          picking an event loads that event's roster (stats, search and table
+          below are all scoped to it). */}
       {events.length > 0 && (
-        <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-3 mb-6">
-          {events.map((event) => {
-            const isSelected = selectedEventId === event.id;
-            return (
-              <button
-                key={event.id}
-                type="button"
-                aria-pressed={isSelected}
-                onClick={() => setSelectedEventId(event.id)}
-                className={cn(
-                  "rounded-lg border p-4 text-left transition-colors",
-                  isSelected
-                    ? "border-[#1a5c2a] bg-[#1a5c2a] text-white"
-                    : "border-border bg-card hover:border-[#1a5c2a]"
-                )}
-              >
-                <div className="flex items-start justify-between gap-2">
-                  <span
-                    className={cn(
-                      "flex items-center gap-1.5 text-xs",
-                      isSelected ? "text-white/70" : "text-muted-foreground"
-                    )}
-                  >
-                    <CalendarDays className="h-3.5 w-3.5" />
-                    {formatDate(event.eventDate, dateLocale)}
-                  </span>
-                  {isSelected && <CheckCircle2 className="h-4 w-4 shrink-0" />}
-                </div>
-                <p className="mt-2 text-sm font-medium">
-                  {event.title}
-                  <span
-                    className={cn(
-                      "ml-1 text-xs font-normal",
-                      isSelected ? "text-white/70" : "text-muted-foreground"
-                    )}
-                  >
-                    ({event._count.registrations})
-                  </span>
-                </p>
-              </button>
-            );
-          })}
-        </div>
+        <EventPicker
+          events={events}
+          selectedEventId={selectedEventId}
+          onSelect={setSelectedEventId}
+          dateLocale={dateLocale}
+          searchPlaceholder={t.adminCheckins.eventSearchPlaceholder}
+          noResultsLabel={t.adminCheckins.eventNoResults}
+        />
       )}
 
       {/* Stats */}
@@ -343,14 +473,14 @@ export default function CheckInsContent({
         <div className="grid grid-cols-3 gap-4 mb-6">
           <Card>
             <CardContent className="p-4 text-center">
-              <p className="text-2xl font-bold">{totalCount.toLocaleString(dateLocale)}</p>
+              <p className="text-2xl font-bold">{expectedGuests.toLocaleString(dateLocale)}</p>
               <p className="text-xs text-muted-foreground">{t.adminCheckins.expectedGuests}</p>
             </CardContent>
           </Card>
           <Card>
             <CardContent className="p-4 text-center">
               <p className="text-2xl font-bold text-[#1a5c2a]">
-                {checkedInCount.toLocaleString(dateLocale)}
+                {checkedInGuests.toLocaleString(dateLocale)}
               </p>
               <p className="text-xs text-muted-foreground">{t.adminCheckins.checkedInLabel}</p>
             </CardContent>
@@ -358,7 +488,7 @@ export default function CheckInsContent({
           <Card>
             <CardContent className="p-4 text-center">
               <p className="text-2xl font-bold text-muted-foreground">
-                {(totalCount - checkedInCount).toLocaleString(dateLocale)}
+                {(expectedGuests - checkedInGuests).toLocaleString(dateLocale)}
               </p>
               <p className="text-xs text-muted-foreground">{t.adminCheckins.pendingLabel}</p>
             </CardContent>

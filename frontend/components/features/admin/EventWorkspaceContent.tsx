@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState, useCallback } from "react";
 import { useConfirm } from "@/components/ui/confirm-dialog";
+import { useReasonDialog } from "@/components/ui/reason-dialog";
 import { useParams, useRouter } from "next/navigation";
 import { Controller, useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -620,6 +621,7 @@ function ReviewsTab({ eventId, t, dateLocale }: { eventId: string; t: any; dateL
   const [replyingId, setReplyingId] = useState<string | null>(null);
   const [replyText, setReplyText] = useState("");
   const [actionLoading, setActionLoading] = useState<string | null>(null);
+  const { promptReason, dialog: reasonDialog } = useReasonDialog();
 
   const fetchReviews = useCallback(async () => {
     try {
@@ -639,18 +641,34 @@ function ReviewsTab({ eventId, t, dateLocale }: { eventId: string; t: any; dateL
     fetchReviews();
   }, [fetchReviews]);
 
-  const handleStatusChange = async (id: string, status: string) => {
+  const handleStatusChange = async (
+    id: string,
+    status: string,
+    removalReason?: string
+  ) => {
     try {
       setActionLoading(id);
-      await adminService.updateReviewStatus(id, status);
+      await adminService.updateReviewStatus(id, status, removalReason);
       toast.success(`Review ${status.toLowerCase()}`);
       fetchReviews();
     } catch (err) {
       console.error("Failed to update review status:", err);
-      toast.error("Failed to update review");
+      toast.error(getErrorMessage(err, "Failed to update review"));
     } finally {
       setActionLoading(null);
     }
+  };
+
+  /** Reject flow: collect an optional removal reason, then reject. */
+  const promptReject = (id: string) => {
+    promptReason({
+      title: t.adminWorkspace.reviewsRejectTitle,
+      description: t.adminWorkspace.reviewsRejectDesc,
+      placeholder: t.adminWorkspace.reviewsRejectReasonPlaceholder,
+      confirmLabel: t.adminWorkspace.reviewsReject,
+      cancelLabel: t.adminWorkspace.reviewsCancel,
+      onConfirm: (reason) => handleStatusChange(id, "REJECTED", reason),
+    });
   };
 
   const handleReply = async (id: string) => {
@@ -754,6 +772,13 @@ function ReviewsTab({ eventId, t, dateLocale }: { eventId: string; t: any; dateL
                 </div>
               )}
 
+              {review.removalReason && (
+                <div className="mt-3 p-3 bg-muted rounded-lg">
+                  <p className="text-xs font-medium text-muted-foreground mb-1">{t.adminWorkspace.reviewsRemovalReasonLabel}</p>
+                  <p className="text-sm">{review.removalReason}</p>
+                </div>
+              )}
+
               <div className="flex gap-2 mt-4">
                 {review.status === "PENDING" && (
                   <>
@@ -770,7 +795,7 @@ function ReviewsTab({ eventId, t, dateLocale }: { eventId: string; t: any; dateL
                       variant="outline"
                       size="sm"
                       className="text-red-500 border-red-500"
-                      onClick={() => handleStatusChange(review.id, "REJECTED")}
+                      onClick={() => promptReject(review.id)}
                       disabled={actionLoading === review.id}
                     >
                       {t.adminWorkspace.reviewsReject}
@@ -822,6 +847,8 @@ function ReviewsTab({ eventId, t, dateLocale }: { eventId: string; t: any; dateL
           </Card>
         ))
       )}
+
+      {reasonDialog}
     </div>
   );
 }

@@ -136,6 +136,8 @@ export interface AdminReview {
   comment: string;
   status: "PENDING" | "APPROVED" | "REJECTED";
   reply?: string | null;
+  /** Why the review was removed — set when rejecting, cleared when approving. */
+  removalReason?: string | null;
   createdAt: string;
   user: { id: string; name: string; email: string };
   event: { id: string; title: string };
@@ -206,12 +208,4 @@ export interface News {
   };
   createdAt: string;
   updatedAt: string;
-}
-
-export interface ContactMessage {
-  id: string;
-  name: string;
-  email: string;
-  message: string;
-  createdAt: string;
 }

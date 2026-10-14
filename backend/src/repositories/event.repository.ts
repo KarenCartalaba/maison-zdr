@@ -23,8 +23,15 @@ export class EventRepository {
     });
   };
 
-  public findAllEvents = async () => {
+  /**
+   * List events (newest first).
+   * Pass `{ excludeCancelled: true }` for the PUBLIC catalogue so cancelled
+   * events never leak to visitors; admin/moderator callers omit it (or pass
+   * false) and keep seeing the full list including cancelled/past events.
+   */
+  public findAllEvents = async (options?: { excludeCancelled?: boolean }) => {
     return prisma.event.findMany({
+      where: options?.excludeCancelled ? { isCancelled: false } : undefined,
       include: {
         author: { select: { id: true, name: true, email: true } },
         _count: { select: { registrations: { where: { status: "CONFIRMED" } } } },

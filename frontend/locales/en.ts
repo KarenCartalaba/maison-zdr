@@ -13,7 +13,6 @@ export const en = {
     registrations: "Registrations",
     checkins: "Check-ins",
     reviews: "Reviews",
-    contactMessages: "Contact Messages",
     users: "Users",
     analytics: "Analytics",
     settings: "Settings",
@@ -637,8 +636,9 @@ export const en = {
 
   adminCheckins: {
     title: "Check-in Desk",
-    subtitle: "Scan QR code or manually check in participants",
-    scanQr: "Scan QR Code",
+    subtitle: "Select an event, then check in guests by name or reference",
+    eventSearchPlaceholder: "Search events...",
+    eventNoResults: "No events match your search",
     colGuest: "GUEST",
     colStatus: "STATUS",
     colCheckinTime: "CHECK-IN TIME",
@@ -671,6 +671,10 @@ export const en = {
     replyLabel: "Reply:",
     approve: "Approve",
     reject: "Reject",
+    rejectTitle: "Reject review",
+    rejectDesc: "Optionally record why this review is being removed. The reason is stored with the review and visible to admins.",
+    rejectReasonPlaceholder: "Reason for removal (optional)",
+    removalReasonLabel: "Removal reason",
     editReply: "Edit Reply",
     reply: "Reply",
     writeReply: "Write your reply...",
@@ -679,15 +683,6 @@ export const en = {
     cancel: "Cancel",
     emptyTitle: "No reviews found",
     emptyDesc: "There are no reviews matching your criteria.",
-  },
-
-  adminContact: {
-    title: "Contact Messages",
-    subtitle: "Messages sent through the contact form",
-    searchPlaceholder: "Search name, email or message...",
-    emptyTitle: "No messages found",
-    emptyDesc: "There are no contact messages matching your criteria.",
-    loadError: "Failed to load messages",
   },
 
   adminUsers: {
@@ -815,6 +810,10 @@ export const en = {
     reviewsReplyLabel: "Reply:",
     reviewsApprove: "Approve",
     reviewsReject: "Reject",
+    reviewsRejectTitle: "Reject review",
+    reviewsRejectDesc: "Optionally record why this review is being removed. The reason is stored with the review and visible to admins.",
+    reviewsRejectReasonPlaceholder: "Reason for removal (optional)",
+    reviewsRemovalReasonLabel: "Removal reason",
     reviewsEditReply: "Edit Reply",
     reviewsReply: "Reply",
     reviewsWriteReply: "Write your reply...",

@@ -7,6 +7,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { useReasonDialog } from "@/components/ui/reason-dialog";
 import { Star, Search, MessageSquare, Inbox, Loader2 } from "lucide-react";
 import { adminService } from "@/services/admin.service";
 import { useLanguage } from "@/context/LanguageContext";
@@ -94,6 +95,7 @@ export default function ReviewsContent({
   const [actionLoading, setActionLoading] = useState<string | null>(null);
   const searchTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const { t, dateLocale } = useLanguage();
+  const { promptReason, dialog: reasonDialog } = useReasonDialog();
 
   const fetchData = async (status?: string, searchTerm?: string, isInitial = false) => {
     try {
@@ -143,10 +145,14 @@ export default function ReviewsContent({
     }, 400);
   };
 
-  const handleStatusChange = async (id: string, status: string) => {
+  const handleStatusChange = async (
+    id: string,
+    status: string,
+    removalReason?: string
+  ) => {
     try {
       setActionLoading(id);
-      await adminService.updateReviewStatus(id, status);
+      await adminService.updateReviewStatus(id, status, removalReason);
       fetchData(activeFilter, search);
       toast.success(`Review ${status.toLowerCase()}`);
     } catch (error) {
@@ -154,6 +160,18 @@ export default function ReviewsContent({
     } finally {
       setActionLoading(null);
     }
+  };
+
+  /** Reject flow: collect an optional removal reason, then reject. */
+  const promptReject = (id: string) => {
+    promptReason({
+      title: t.adminReviews.rejectTitle,
+      description: t.adminReviews.rejectDesc,
+      placeholder: t.adminReviews.rejectReasonPlaceholder,
+      confirmLabel: t.adminReviews.reject,
+      cancelLabel: t.adminReviews.cancel,
+      onConfirm: (reason) => handleStatusChange(id, "REJECTED", reason),
+    });
   };
 
   const handleReply = async (id: string) => {
@@ -322,6 +340,14 @@ export default function ReviewsContent({
                     <p className="text-sm">{review.reply}</p>
                   </div>
                 )}
+                {review.removalReason && (
+                  <div className="mt-3 p-3 bg-muted rounded-lg">
+                    <p className="text-xs font-medium text-muted-foreground mb-1">
+                      {t.adminReviews.removalReasonLabel}
+                    </p>
+                    <p className="text-sm">{review.removalReason}</p>
+                  </div>
+                )}
                 <div className="flex gap-2 mt-4">
                   {review.status === "PENDING" && (
                     <>
@@ -340,9 +366,7 @@ export default function ReviewsContent({
                         variant="outline"
                         size="sm"
                         className="text-red-500 border-red-500"
-                        onClick={() =>
-                          handleStatusChange(review.id, "REJECTED")
-                        }
+                        onClick={() => promptReject(review.id)}
                         disabled={actionLoading === review.id}
                       >
                         {t.adminReviews.reject}
@@ -398,6 +422,8 @@ export default function ReviewsContent({
           ))}
         </div>
       )}
+
+      {reasonDialog}
     </div>
   );
 }

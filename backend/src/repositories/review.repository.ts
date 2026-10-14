@@ -1,8 +1,9 @@
 import { prisma } from "@/lib/prisma";
+import { ReviewStatus } from "@/generated/prisma/enums";
 import type { CreateReviewInput } from "@/schema/review";
 
 export class ReviewRepository {
-  public createReview = async (data: CreateReviewInput & { userId: string }) => {
+  public createReview = async (data: CreateReviewInput & { userId: string; status?: ReviewStatus }) => {
     return prisma.review.create({
       data,
       include: {

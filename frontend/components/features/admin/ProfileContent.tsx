@@ -4,6 +4,7 @@ import { useState, useRef } from "react";
 import { Controller, useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
+import { emailSchema } from "@/lib/email-validation";
 import { useAuth } from "@/context/AuthContext";
 import { authService } from "@/services/auth.service";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -21,7 +22,7 @@ import { downscaleImage } from "@/lib/image";
 const profileSchema = z.object({
   firstName: z.string().min(1, "First name is required").max(100, "First name must be at most 100 characters"),
   lastName: z.string().min(1, "Last name is required").max(100, "Last name must be at most 100 characters"),
-  email: z.string().email("Invalid email address"),
+  email: emailSchema,
   phone: z.string().optional(),
 });
 

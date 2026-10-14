@@ -133,14 +133,15 @@ model Registration {
 }
 
 model Review {
-  id        String       @id @default(uuid())
-  rating    Int
-  title     String?
-  comment   String       @db.Text
-  status    ReviewStatus @default(PENDING)
-  reply     String?      @db.Text
-  createdAt DateTime     @default(now())
-  updatedAt DateTime     @updatedAt
+  id            String       @id @default(uuid())
+  rating        Int
+  title         String?
+  comment       String       @db.Text
+  status        ReviewStatus @default(PENDING)
+  reply         String?      @db.Text
+  removalReason String?
+  createdAt     DateTime     @default(now())
+  updatedAt     DateTime     @updatedAt
 
   userId String
   user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)

@@ -66,7 +66,7 @@ export default function AdminEventsContent({ initialEvents = [] }: AdminEventsCo
   useEffect(() => {
     const fetchEvents = async () => {
       try {
-        const response = await eventService.getAll();
+        const response = await eventService.getAllForAdmin();
         if (response.code === 200 && response.data) {
           setEvents(response.data.events);
         }

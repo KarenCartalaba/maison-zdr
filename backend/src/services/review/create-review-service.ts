@@ -24,7 +24,10 @@ export async function CreateReviewService(userId: string, data: { eventId: strin
     const existing = await reviewRepo.findExistingReview(userId, data.eventId);
     if (existing) return { code: 409, status: "error", message: "You have already reviewed this event" };
 
-    const review = await reviewRepo.createReview({ ...data, userId });
+    // Reviews are auto-published: they go live immediately as APPROVED.
+    // Moderators can still reject them later via PUT /reviews/:id/status,
+    // which records the removalReason and takes them off the public page.
+    const review = await reviewRepo.createReview({ ...data, userId, status: "APPROVED" });
     await cacheInvalidatePattern("admin:*");
     await cacheInvalidate(`event:${data.eventId}`);
     await cacheInvalidatePattern(`event:${data.eventId}*`);

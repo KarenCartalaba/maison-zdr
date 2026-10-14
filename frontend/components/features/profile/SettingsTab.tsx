@@ -4,6 +4,7 @@ import { useState } from "react";
 import { Controller, useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
+import { emailSchema } from "@/lib/email-validation";
 import { useAuth } from "@/context/AuthContext";
 import { useLanguage } from "@/context/LanguageContext";
 import { authService } from "@/services/auth.service";
@@ -15,7 +16,7 @@ import { toast } from "sonner";
 
 const profileSchema = z.object({
   name: z.string().min(1, "Full name is required").max(100, "Full name must be at most 100 characters"),
-  email: z.string().email("Invalid email"),
+  email: emailSchema,
 });
 
 type ProfileValues = z.infer<typeof profileSchema>;

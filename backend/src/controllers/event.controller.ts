@@ -56,8 +56,15 @@ export class EventController {
     return res.status(result.code).json(result);
   };
 
+  /** Public catalogue (GET /events/v1/all): cancelled events excluded. */
   public getAllEvents = async (req: Request, res: Response) => {
-    const result = await GetAllEventsService();
+    const result = await GetAllEventsService({ excludeCancelled: true });
+    return res.status(result.code).json(result);
+  };
+
+  /** Admin/moderator list (GET /moderator/v1/events): keeps cancelled/past events. */
+  public getAllEventsAdmin = async (req: Request, res: Response) => {
+    const result = await GetAllEventsService({ excludeCancelled: false });
     return res.status(result.code).json(result);
   };
 

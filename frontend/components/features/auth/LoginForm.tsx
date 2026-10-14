@@ -5,6 +5,7 @@ import Link from "next/link";
 import { Controller, useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
+import { requiredEmailSchema } from "@/lib/email-validation";
 import { useAuth } from "@/context/AuthContext";
 import { useLanguage } from "@/context/LanguageContext";
 import { Button } from "@/components/ui/button";
@@ -14,7 +15,7 @@ import { Eye, EyeOff, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 
 const loginFormSchema = z.object({
-  email: z.string().min(1, "Email is required").email("Invalid email address"),
+  email: requiredEmailSchema,
   password: z.string().min(1, "Password is required"),
 });
 

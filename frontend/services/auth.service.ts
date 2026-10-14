@@ -1,16 +1,17 @@
 import axiosInstance from "@/services/axios";
 import { z } from "zod";
+import { emailSchema } from "@/lib/email-validation";
 import { API_ENDPOINTS } from "@/constants";
 import type { ApiResponse, LoginResponse, User } from "@/types";
 
 export const loginSchema = z.object({
-  email: z.string().email("Invalid email format"),
+  email: emailSchema,
   password: z.string().min(1, "Password is required"),
 });
 
 export const signupSchema = z.object({
   name: z.string().min(2, "Name must be at least 2 characters"),
-  email: z.string().email("Invalid email format"),
+  email: emailSchema,
   password: z
     .string()
     .min(8, "Password must be at least 8 characters")

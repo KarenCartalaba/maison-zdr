@@ -3,6 +3,8 @@ import { AdminController } from "@/controllers/admin.controller";
 import { EventController } from "@/controllers/event.controller";
 import { AuthMiddleware } from "@/middlewares/auth-middleware";
 import { permittedRole } from "@/middlewares/rbac-middleware";
+import { validateSchema } from "@/middlewares/validate-schema";
+import { updateReviewStatusSchema } from "@/schema/shared";
 import { Role } from "@/generated/prisma/enums";
 
 const router = Router();
@@ -14,7 +16,7 @@ const authMiddleware = new AuthMiddleware();
 router.get("/v1/dashboard/stats", authMiddleware.execute, permittedRole([Role.ADMIN, Role.MODERATOR]), adminController.getDashboardStats);
 
 // ==================== Events ====================
-router.get("/v1/events", authMiddleware.execute, permittedRole([Role.ADMIN, Role.MODERATOR]), eventController.getAllEvents);
+router.get("/v1/events", authMiddleware.execute, permittedRole([Role.ADMIN, Role.MODERATOR]), eventController.getAllEventsAdmin);
 router.get("/v1/events/:id/workspace", authMiddleware.execute, permittedRole([Role.ADMIN, Role.MODERATOR]), adminController.getEventWorkspace);
 router.get("/v1/events/:id/participants", authMiddleware.execute, permittedRole([Role.ADMIN, Role.MODERATOR]), adminController.getEventParticipants);
 router.get("/v1/events/:id/reviews", authMiddleware.execute, permittedRole([Role.ADMIN, Role.MODERATOR]), adminController.getEventReviews);
@@ -30,6 +32,6 @@ router.post("/v1/checkins/:id", authMiddleware.execute, permittedRole([Role.ADMI
 
 // ==================== Reviews ====================
 router.get("/v1/reviews", authMiddleware.execute, permittedRole([Role.ADMIN, Role.MODERATOR]), adminController.getAllReviews);
-router.put("/v1/reviews/:id/status", authMiddleware.execute, permittedRole([Role.ADMIN, Role.MODERATOR]), adminController.updateReviewStatus);
+router.put("/v1/reviews/:id/status", authMiddleware.execute, permittedRole([Role.ADMIN, Role.MODERATOR]), validateSchema(updateReviewStatusSchema), adminController.updateReviewStatus);
 
 export default router;

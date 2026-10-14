@@ -1,8 +1,11 @@
-import { ContactRepository } from "@/repositories/contact.repository";
 import { sendEmail } from "@/lib/email";
 import { ENV } from "@/config/env";
 
-const contactRepo = new ContactRepository();
+/**
+ * Venue inbox: every contact-form submission is delivered straight here.
+ * Submissions are intentionally NOT persisted — there is no DB write.
+ */
+const CONTACT_INBOX_EMAIL = "maisonzdr@gmail.com";
 
 /** Contact details are user input rendered into an HTML email — escape them. */
 function escapeHtml(value: string): string {
@@ -14,24 +17,17 @@ function escapeHtml(value: string): string {
     .replace(/'/g, "&#39;");
 }
 
+/** Warn at most once per process: missing Resend config is a deploy problem. */
+let warnedMissingEmailConfig = false;
+
 export async function SendContactMessageService(name: string, email: string, message: string) {
-  try {
-    // The DB write is the source of truth; email delivery is best-effort on top.
-    await contactRepo.createMessage({ name, email, message });
-  } catch (error) {
-    console.error("SendContactMessageService error", error);
-    return { code: 500, status: "error", message: "Unable to send message" };
-  }
-
-  // EMAIL_FROM is the verified sending address, not an inbox — submissions are
-  // delivered to EMAIL_TO. Falling back to EMAIL_FROM keeps older deployments
-  // working before EMAIL_TO is configured.
-  const recipient = ENV.EMAIL.TO || ENV.EMAIL.FROM;
-
-  if (!recipient) {
-    console.warn(
-      "Contact message saved but no email sent: set EMAIL_TO (recipient) and EMAIL_FROM (sender) to enable delivery.",
-    );
+  if (!ENV.EMAIL.RESEND_API_KEY || !ENV.EMAIL.FROM) {
+    if (!warnedMissingEmailConfig) {
+      warnedMissingEmailConfig = true;
+      console.warn(
+        `⚠️  CONTACT EMAIL NOT SENT: RESEND_API_KEY and/or EMAIL_FROM is not set, so the submission from ${email} was NOT delivered to ${CONTACT_INBOX_EMAIL}. Set both variables to enable contact delivery.`,
+      );
+    }
     return { code: 200, status: "success", message: "Message sent successfully. We'll get back to you soon!" };
   }
 
@@ -39,8 +35,9 @@ export async function SendContactMessageService(name: string, email: string, mes
   const safeEmail = escapeHtml(email);
   const safeMessage = escapeHtml(message).replace(/\n/g, "<br />");
 
+  // Best-effort delivery: the API already returned success to the visitor.
   sendEmail({
-    to: recipient,
+    to: CONTACT_INBOX_EMAIL,
     replyTo: email,
     subject: `Contact Form: ${name}`,
     html: `

@@ -5,6 +5,7 @@ import Link from "next/link";
 import { Controller, useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
+import { requiredEmailSchema } from "@/lib/email-validation";
 import { useAuth } from "@/context/AuthContext";
 import { useLanguage } from "@/context/LanguageContext";
 import { Button } from "@/components/ui/button";
@@ -15,7 +16,7 @@ import { toast } from "sonner";
 
 const signupFormSchema = z.object({
   name: z.string().min(2, "Name must be at least 2 characters").max(100, "Name must be at most 100 characters"),
-  email: z.string().min(1, "Email is required").email("Invalid email address"),
+  email: requiredEmailSchema,
   password: z
     .string()
     .min(8, "Password must be at least 8 characters")

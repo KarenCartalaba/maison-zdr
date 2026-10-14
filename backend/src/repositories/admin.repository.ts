@@ -248,6 +248,11 @@ export class AdminRepository {
 
   // ==================== Check-ins ====================
 
+  /**
+   * Roster for the check-in screen. Every row is returned (the UI shows
+   * cancelled ones too), but `_count` — the registration statistic — only
+   * counts non-cancelled registrations.
+   */
   public getEventForCheckIn = async (eventId: string) => {
     return prisma.event.findUnique({
       where: { id: eventId },
@@ -256,7 +261,9 @@ export class AdminRepository {
           include: { user: { select: { id: true, name: true, email: true } } },
           orderBy: { createdAt: "asc" },
         },
-        _count: { select: { registrations: true } },
+        _count: {
+          select: { registrations: { where: { status: { not: "CANCELLED" } } } },
+        },
       },
     });
   };
@@ -269,9 +276,20 @@ export class AdminRepository {
     });
   };
 
+  /**
+   * Atomic check-in guard. `updateMany` applies the whole WHERE clause in a
+   * single conditional UPDATE, so of N concurrent requests exactly one can
+   * match `checkedIn: false` — the losers get `count === 0` and cannot double
+   * check-in. Cancelled registrations are excluded by the same WHERE clause.
+   * Returns `{ count }` (0 or 1).
+   */
   public checkInRegistration = async (registrationId: string) => {
-    return prisma.registration.update({
-      where: { id: registrationId },
+    return prisma.registration.updateMany({
+      where: {
+        id: registrationId,
+        checkedIn: false,
+        status: { not: "CANCELLED" },
+      },
       data: { checkedIn: true, checkedInAt: new Date() },
     });
   };
@@ -308,8 +326,19 @@ export class AdminRepository {
     return { total, pending, approved, rejected, avgRating: Math.round(avgRating * 10) / 10 };
   };
 
-  public updateReviewStatus = async (id: string, status: ReviewStatus) => {
-    return prisma.review.update({ where: { id }, data: { status } });
+  /**
+   * Persist a review status change, recording the optional removalReason
+   * (present in admin review lists). `removalReason === undefined` leaves
+   * the column untouched; null clears it.
+   */
+  public updateReviewStatus = async (id: string, status: ReviewStatus, removalReason?: string | null) => {
+    return prisma.review.update({
+      where: { id },
+      data: {
+        status,
+        ...(removalReason !== undefined ? { removalReason } : {}),
+      },
+    });
   };
 
   public replyToReview = async (id: string, reply: string) => {

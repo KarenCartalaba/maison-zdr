@@ -8,7 +8,6 @@ export const ROUTES = {
   ADMIN_REGISTRATIONS: "/admin/registrations",
   ADMIN_CHECKINS: "/admin/check-ins",
   ADMIN_REVIEWS: "/admin/reviews",
-  ADMIN_CONTACT: "/admin/contact",
   ADMIN_NEWS: "/admin/news",
   ADMIN_USERS: "/admin/users",
   ADMIN_ANALYTICS: "/admin/analytics",
@@ -36,13 +35,15 @@ export const API_ENDPOINTS = {
   },
   CONTACT: {
     SEND: "/api/contact/v1/send",
-    ADMIN_LIST: "/api/contact/v1/admin/messages",
   },
   REVIEWS: {
     CREATE: "/api/reviews/v1/create",
   },
   EVENTS: {
     LIST: "/api/events/v1/all",
+    // Admin/moderator catalogue: same rows as LIST but keeps cancelled/past
+    // events (the public LIST now excludes cancelled events server-side).
+    ADMIN_LIST: "/api/moderator/v1/events",
     GET: (id: string) => `/api/events/v1/${id}`,
     REVIEWS: (id: string) => `/api/events/v1/${id}/reviews`,
     CREATE: "/api/events/v1/create",

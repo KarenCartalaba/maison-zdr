@@ -133,7 +133,7 @@ function FeaturedNewsCard({
         href={`/news/${item.id}`}
         className="group grid focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1a5c2a] focus-visible:ring-offset-2 md:grid-cols-2"
       >
-        <div className="relative h-56 overflow-hidden bg-muted sm:h-64 md:h-auto md:min-h-[320px]">
+        <div className="relative h-48 overflow-hidden bg-muted sm:h-56 md:h-auto md:min-h-[232px]">
           <Cover item={item} />
           <DateChip date={item.createdAt} dateLocale={dateLocale} />
           <Badge className="absolute right-3 top-3 bg-[#1a5c2a] text-white shadow-md hover:bg-[#144a22]">
@@ -141,17 +141,17 @@ function FeaturedNewsCard({
           </Badge>
         </div>
 
-        <CardContent className="flex flex-col justify-center gap-4 p-6 md:p-8">
+        <CardContent className="flex flex-col justify-center gap-3 p-5 md:p-6">
           <span className="inline-flex w-fit items-center gap-1.5 rounded-full border border-[#1a5c2a]/25 bg-[#1a5c2a]/5 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.15em] text-[#1a5c2a]">
             <Sparkles className="h-3 w-3" />
             {t.news.badge}
           </span>
 
-          <h3 className="text-2xl font-bold leading-tight tracking-tight transition-colors group-hover:text-[#1a5c2a] md:text-3xl">
+          <h3 className="text-2xl font-bold leading-tight tracking-tight transition-colors group-hover:text-[#1a5c2a]">
             {item.title}
           </h3>
 
-          <p className="line-clamp-3 text-base leading-relaxed text-muted-foreground">
+          <p className="line-clamp-2 text-sm leading-relaxed text-muted-foreground md:text-base">
             {excerptOf(item)}
           </p>
 
@@ -188,8 +188,8 @@ function NewsSkeletons() {
     <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
       <div className="overflow-hidden rounded-2xl border border-border/70 bg-card shadow-sm sm:col-span-2 lg:col-span-3">
         <div className="grid md:grid-cols-2">
-          <Skeleton className="h-56 w-full rounded-none sm:h-64 md:h-full md:min-h-[320px]" />
-          <div className="space-y-4 p-6 md:p-8">
+          <Skeleton className="h-48 w-full rounded-none sm:h-56 md:h-full md:min-h-[232px]" />
+          <div className="space-y-3 p-5 md:p-6">
             <Skeleton className="h-6 w-24 rounded-full" />
             <Skeleton className="h-8 w-4/5" />
             <Skeleton className="h-4 w-full" />

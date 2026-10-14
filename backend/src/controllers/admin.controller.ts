@@ -158,8 +158,8 @@ export class AdminController {
 
   public updateReviewStatus = async (req: Request, res: Response) => {
     const { id } = req.params as { id: string };
-    const { status } = req.body ?? {};
-    const result = await UpdateReviewStatusService(id, status);
+    const { status, removalReason } = req.body ?? {};
+    const result = await UpdateReviewStatusService(id, status, removalReason);
     return res.status(result.code).json(result);
   };
 

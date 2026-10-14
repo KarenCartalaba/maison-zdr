@@ -28,6 +28,18 @@ export const eventService = {
     return response.data;
   },
 
+  /**
+   * Full catalogue for admin/moderator screens. Uses the moderator endpoint,
+   * which (unlike EVENTS.LIST) still returns cancelled and past events —
+   * required by the admin list/tables (e.g. "Cancelled" tab, gallery).
+   */
+  getAllForAdmin: async () => {
+    const response = await axiosInstance.get<ApiResponse<{ events: Event[] }>>(
+      API_ENDPOINTS.EVENTS.ADMIN_LIST
+    );
+    return response.data;
+  },
+
   getById: async (id: string) => {
     const response = await axiosInstance.get<ApiResponse<{ event: Event }>>(
       API_ENDPOINTS.EVENTS.GET(id)

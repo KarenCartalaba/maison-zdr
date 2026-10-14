@@ -15,7 +15,6 @@ export const fr: AdminDict = {
     registrations: "Inscriptions",
     checkins: "Pointage",
     reviews: "Avis",
-    contactMessages: "Messages de contact",
     users: "Utilisateurs",
     analytics: "Analyses",
     settings: "Paramètres",
@@ -650,8 +649,9 @@ export const fr: AdminDict = {
 
   adminCheckins: {
     title: "Pointage des participants",
-    subtitle: "Scannez le QR code ou pointez manuellement les participants",
-    scanQr: "Scanner le QR Code",
+    subtitle: "Sélectionnez un événement, puis pointez les invités par nom ou référence",
+    eventSearchPlaceholder: "Rechercher des événements...",
+    eventNoResults: "Aucun événement ne correspond à votre recherche",
     colGuest: "INVITÉ",
     colStatus: "STATUT",
     colCheckinTime: "HEURE DE POINTAGE",
@@ -684,6 +684,10 @@ export const fr: AdminDict = {
     replyLabel: "Réponse :",
     approve: "Approuver",
     reject: "Rejeter",
+    rejectTitle: "Rejeter l'avis",
+    rejectDesc: "Indiquez le motif de retrait de cet avis (facultatif). Il est enregistré avec l'avis et visible par les administrateurs.",
+    rejectReasonPlaceholder: "Motif du rejet (facultatif)",
+    removalReasonLabel: "Motif du rejet",
     editReply: "Modifier la réponse",
     reply: "Répondre",
     writeReply: "Écrivez votre réponse...",
@@ -692,15 +696,6 @@ export const fr: AdminDict = {
     cancel: "Annuler",
     emptyTitle: "Aucun avis trouvé",
     emptyDesc: "Aucun avis ne correspond à vos critères.",
-  },
-
-  adminContact: {
-    title: "Messages de contact",
-    subtitle: "Messages envoyés via le formulaire de contact",
-    searchPlaceholder: "Rechercher un nom, un e-mail ou un message...",
-    emptyTitle: "Aucun message trouvé",
-    emptyDesc: "Aucun message de contact ne correspond à vos critères.",
-    loadError: "Échec du chargement des messages",
   },
 
   adminUsers: {
@@ -828,6 +823,10 @@ export const fr: AdminDict = {
     reviewsReplyLabel: "Réponse :",
     reviewsApprove: "Approuver",
     reviewsReject: "Rejeter",
+    reviewsRejectTitle: "Rejeter l'avis",
+    reviewsRejectDesc: "Indiquez le motif de retrait de cet avis (facultatif). Il est enregistré avec l'avis et visible par les administrateurs.",
+    reviewsRejectReasonPlaceholder: "Motif du rejet (facultatif)",
+    reviewsRemovalReasonLabel: "Motif du rejet",
     reviewsEditReply: "Modifier la réponse",
     reviewsReply: "Répondre",
     reviewsWriteReply: "Écrivez votre réponse...",

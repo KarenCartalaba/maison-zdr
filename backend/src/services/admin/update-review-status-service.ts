@@ -7,7 +7,11 @@ import { REVIEW_TRANSITIONS, isAllowedTransition } from "@/schema/shared";
 const adminRepo = new AdminRepository();
 const reviewRepo = new ReviewRepository();
 
-export async function UpdateReviewStatusService(id: string, status: ReviewStatus) {
+export async function UpdateReviewStatusService(
+  id: string,
+  status: ReviewStatus,
+  removalReason?: string | null,
+) {
   try {
     const review = await reviewRepo.findById(id);
     if (!review) return { code: 404, status: "error", message: "Review not found" };
@@ -22,7 +26,18 @@ export async function UpdateReviewStatusService(id: string, status: ReviewStatus
       };
     }
 
-    const updated = await adminRepo.updateReviewStatus(id, status);
+    // removalReason semantics:
+    //   undefined -> leave the stored reason untouched
+    //   null / "" -> clear it
+    //   text      -> record why the review was removed
+    let nextRemovalReason: string | null | undefined = removalReason;
+    if (typeof nextRemovalReason === "string") {
+      nextRemovalReason = nextRemovalReason.trim() || null;
+    }
+    // A published (approved) review has no removal reason to report.
+    if (status === ReviewStatus.APPROVED) nextRemovalReason = null;
+
+    const updated = await adminRepo.updateReviewStatus(id, status, nextRemovalReason);
     await cacheInvalidatePattern("admin:*");
     await cacheInvalidate(`event:${review.eventId}`);
     await cacheInvalidatePattern(`event:${review.eventId}*`);
