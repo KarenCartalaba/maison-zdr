@@ -22,10 +22,14 @@ export default function EventDetailContent({ eventId, initialEvent }: EventDetai
   const [error, setError] = useState(false);
   const { t, dateLocale } = useLanguage();
 
-  // Always reflect the latest server data (e.g. null after a delete → "Event not found")
+  // Reflect the latest server data; avoid locking into "Not Found" when
+  // initialEvent is null from a failed SSR fetch — give the client fetch
+  // a chance to populate data before committing to the error state.
   useEffect(() => {
-    setEvent(initialEvent || null);
-    setLoading(false);
+    if (initialEvent) {
+      setEvent(initialEvent);
+      setLoading(false);
+    }
   }, [initialEvent]);
 
   useEffect(() => {
@@ -37,7 +41,7 @@ export default function EventDetailContent({ eventId, initialEvent }: EventDetai
       })
       .catch(() => setError(true))
       .finally(() => setLoading(false));
-  }, [eventId, initialEvent]);
+  }, [eventId]);
 
   if (loading) {
     return (

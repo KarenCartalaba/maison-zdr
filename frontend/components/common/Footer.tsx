@@ -68,9 +68,6 @@ export default function Footer() {
         </div>
       </div>
 
-      {/* Divider above the copyright */}
-      <div className="h-px w-full bg-white/50" aria-hidden="true" />
-
       {/* Copyright */}
       <div className="container px-4 py-6 text-center text-sm text-white/60">
         {t.footer.copyright}

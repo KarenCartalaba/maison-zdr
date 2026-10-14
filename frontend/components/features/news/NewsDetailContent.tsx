@@ -22,17 +22,18 @@ export default function NewsDetailContent({ initialNews, newsId }: NewsDetailCon
   const [news, setNews] = useState<News | null>(initialNews);
   const [loading, setLoading] = useState(!initialNews);
 
-  // Reflect the latest server data, and retry once on the client when the
-  // server-side fetch returned nothing (404 or a transient API failure) so a
-  // brief backend hiccup does not permanently render the "not found" state.
-  useEffect(() => {
+// Reflect the latest server data, and retry once on the client when the
+// server-side fetch returned nothing (404 or a transient API failure) so a
+// brief backend hiccup does not permanently render the "not found" state.
+useEffect(() => {
     setNews(initialNews);
     if (initialNews) {
       setLoading(false);
       return;
     }
     if (!newsId) {
-      setLoading(false);
+      // Don't permanently lock into "Not Found" when initialNews is null;
+      // give the client fetch a chance to populate data.
       return;
     }
     let cancelled = false;

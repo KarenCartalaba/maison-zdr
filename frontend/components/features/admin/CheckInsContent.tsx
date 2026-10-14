@@ -496,17 +496,6 @@ export default function CheckInsContent({
         </div>
       )}
 
-      {/* Search */}
-      <div className="flex items-center gap-2 border rounded-lg px-3 py-2 mb-4 max-w-sm">
-        <Search className="h-4 w-4 text-muted-foreground" />
-        <Input
-          placeholder={t.adminCheckins.searchPlaceholder}
-          value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
-          className="border-0 bg-transparent outline-none w-full shadow-none focus-visible:ring-0"
-        />
-      </div>
-
       {/* Check-in List */}
       <Card>
         <CardHeader>
