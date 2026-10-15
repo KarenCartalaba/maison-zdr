@@ -11,13 +11,14 @@ import { Search } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Plus, Pencil, Trash2, Loader2, LayoutGrid, List } from "lucide-react";
+import { Plus, Pencil, Trash2, Ban, Loader2, LayoutGrid, List } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { DataTable, type DataTableColumn } from "@/components/ui/data-table";
 import { DataTableColumnHeader } from "@/components/ui/data-table-column-header";
 import { useLanguage } from "@/context/LanguageContext";
 import { formatDate } from "@/lib/format-date";
 import { getEventPhase } from "@/components/features/events/event-status";
+import { DEFAULT_EVENT_LOCATION } from "@/constants/event-location";
 import type { Event } from "@/types";
 
 interface AdminEventsContentProps {
@@ -85,15 +86,13 @@ export default function AdminEventsContent({ initialEvents = [] }: AdminEventsCo
     }
   });
 
+  // Canonical public categories — same five the Events page filters by.
   const eventTypeLabels: Record<string, string> = useMemo(() => ({
-    FORMAL: t.adminEvents.typeFormal,
-    CASUAL: t.adminEvents.typeCasual,
-    SOCIAL: t.adminEvents.typeSocial,
-    WORKSHOP: t.adminEvents.typeWorkshop,
-    LIVE_MUSIC: t.adminEvents.typeLiveMusic,
-    FOOD_AND_DRINK: t.adminEvents.typeFoodDrink,
-    TRIVIA: t.adminEvents.typeTrivia,
-    PRIVATE: t.adminEvents.typePrivate,
+    FOOD: t.adminEvents.typeFood,
+    ARTS: t.adminEvents.typeArts,
+    GAMES: t.adminEvents.typeGames,
+    MUSIC: t.adminEvents.typeMusic,
+    PERFORMANCE: t.adminEvents.typePerformance,
   }), [t]);
 
   useEffect(() => {
@@ -123,6 +122,28 @@ export default function AdminEventsContent({ initialEvents = [] }: AdminEventsCo
       }
     } catch (err) {
       toast.error(getErrorMessage(err, t.adminEvents.deleteError));
+    }
+  };
+
+  /**
+   * An event can only be cancelled before it starts (the backend returns 400
+   * once eventDate has passed), so the action is disabled for started or
+   * already-cancelled events instead of failing on click.
+   */
+  const canCancel = (event: Event) =>
+    !event.isCancelled && new Date(event.eventDate) > new Date();
+
+  const handleCancel = async (id: string) => {
+    try {
+      const response = await eventService.cancel(id);
+      if (response.code === 200) {
+        setEvents((prev) =>
+          prev.map((e) => (e.id === id ? { ...e, isCancelled: true } : e))
+        );
+        toast.success(t.adminEvents.cancelSuccess);
+      }
+    } catch (err) {
+      toast.error(getErrorMessage(err, t.adminEvents.cancelError));
     }
   };
 
@@ -179,7 +200,7 @@ export default function AdminEventsContent({ initialEvents = [] }: AdminEventsCo
       id: "type",
       header: t.adminEvents.colType,
       cell: ({ row }) => (
-        <Badge variant="secondary" className="bg-[#e8f5e9] text-[#1a5c2a]">{t.adminEvents.publicBadge} · {eventTypeLabels[row.original.eventType] || t.adminEvents.typeSocial}</Badge>
+        <Badge variant="secondary" className="bg-[#e8f5e9] text-[#1a5c2a]">{t.adminEvents.publicBadge} · {eventTypeLabels[row.original.eventType] || t.adminEvents.typeArts}</Badge>
       ),
     },
     {
@@ -204,6 +225,29 @@ export default function AdminEventsContent({ initialEvents = [] }: AdminEventsCo
               <Pencil className="h-3 w-3" />
             </Button>
           </Link>
+          {/* Cancel sits beside Edit/Delete; disabled once the event has
+              started or is already cancelled (matching the backend rule). */}
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-8 w-8"
+            disabled={!canCancel(row.original)}
+            title={
+              canCancel(row.original)
+                ? t.adminEvents.cancelAction
+                : t.adminEvents.cancelUnavailable
+            }
+            onClick={() =>
+              confirm({
+                title: t.adminEvents.cancelTitle,
+                description: t.adminEvents.cancelDesc.replace("{title}", row.original.title),
+                confirmLabel: t.adminEvents.cancelConfirm,
+                onConfirm: () => handleCancel(row.original.id),
+              })
+            }
+          >
+            <Ban className="h-3 w-3 text-orange-600" />
+          </Button>
           <Button
             variant="ghost"
             size="icon"
@@ -222,7 +266,7 @@ export default function AdminEventsContent({ initialEvents = [] }: AdminEventsCo
         </div>
       ),
     },
-  ], [t, dateLocale, eventTypeLabels, confirm]);
+  ], [t, dateLocale, eventTypeLabels, confirm, canCancel, handleCancel]);
 
   const tabs = useMemo(() => [
     { id: "all" as const, label: t.adminEvents.tabAll },
@@ -336,12 +380,13 @@ export default function AdminEventsContent({ initialEvents = [] }: AdminEventsCo
                 <CardContent className="p-4">
                   <div className="flex items-center justify-between mb-2">
                     <Badge variant="secondary" className="bg-[#e8f5e9] text-[#1a5c2a]">
-                      {t.adminEvents.publicBadge} · {eventTypeLabels[event.eventType] || t.adminEvents.typeSocial}
+                      {t.adminEvents.publicBadge} · {eventTypeLabels[event.eventType] || t.adminEvents.typeArts}
                     </Badge>
                   </div>
                   <h3 className="font-semibold text-lg mb-1">{event.title}</h3>
                   <p className="text-sm text-muted-foreground mb-3">
-                    {formatDate(event.eventDate, dateLocale, { month: "short", day: "numeric" })} · {event.location || "Bar & Lounge"}
+                    {formatDate(event.eventDate, dateLocale, { month: "short", day: "numeric" })} ·{" "}
+                    {event.location || DEFAULT_EVENT_LOCATION}
                   </p>
                   <div className="flex items-center justify-between text-sm text-muted-foreground mb-4">
                     <span>{event._count?.registrations || 0} / {event.maxParticipants} {t.adminEvents.registrations}</span>
@@ -358,6 +403,28 @@ export default function AdminEventsContent({ initialEvents = [] }: AdminEventsCo
                         <Pencil className="h-4 w-4" />
                       </Button>
                     </Link>
+                    {/* Cancel beside Edit/Delete — disabled once started/already
+                        cancelled, confirmed before it is sent. */}
+                    <Button
+                      variant="outline"
+                      size="icon"
+                      disabled={!canCancel(event)}
+                      title={
+                        canCancel(event)
+                          ? t.adminEvents.cancelAction
+                          : t.adminEvents.cancelUnavailable
+                      }
+                      onClick={() =>
+                        confirm({
+                          title: t.adminEvents.cancelTitle,
+                          description: t.adminEvents.cancelDesc.replace("{title}", event.title),
+                          confirmLabel: t.adminEvents.cancelConfirm,
+                          onConfirm: () => handleCancel(event.id),
+                        })
+                      }
+                    >
+                      <Ban className="h-4 w-4 text-orange-600" />
+                    </Button>
                     <Button
                       variant="outline"
                       size="icon"

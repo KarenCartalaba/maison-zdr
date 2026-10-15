@@ -27,15 +27,15 @@ enum RegistrationStatus {
   CANCELLED
 }
 
+// Canonical public categories — exactly the five filters on the Events page
+// (Food / Arts / Games / Music / Performance). Legacy values were remapped by
+// prisma/migrations/20261015080000_event_type_canonical_categories.
 enum EventType {
-  FORMAL
-  CASUAL
-  SOCIAL
-  WORKSHOP
-  LIVE_MUSIC
-  FOOD_AND_DRINK
-  TRIVIA
-  PRIVATE
+  FOOD
+  ARTS
+  GAMES
+  MUSIC
+  PERFORMANCE
 }
 
 enum ReviewStatus {
@@ -90,12 +90,15 @@ model Event {
   description     String    @db.Text
   location        String
   eventDate       DateTime  @map("event_date")
+  // When the event is over. Review availability is derived from this field
+  // alone (auto-opens at endDate, no manual override), and it drives the
+  // "event has ended" checks. Never null: the migration backfills every row.
+  endDate         DateTime  @map("end_date")
   deadline        DateTime
   minParticipants Int       @default(0) @map("min_participants")
   maxParticipants Int       @map("max_participants")
   isCancelled     Boolean   @default(false) @map("is_cancelled")
-  allowReviewsNow Boolean   @default(false) @map("allow_reviews_now")
-  eventType       EventType @default(SOCIAL) @map("event_type")
+  eventType       EventType @default(ARTS) @map("event_type")
   gallery         String[]
   createdAt       DateTime  @default(now())
   updatedAt       DateTime  @updatedAt

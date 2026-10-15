@@ -7,7 +7,6 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { useReasonDialog } from "@/components/ui/reason-dialog";
 import { Star, Search, MessageSquare, Inbox, Loader2 } from "lucide-react";
 import { adminService } from "@/services/admin.service";
 import { useLanguage } from "@/context/LanguageContext";
@@ -95,7 +94,6 @@ export default function ReviewsContent({
   const [actionLoading, setActionLoading] = useState<string | null>(null);
   const searchTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const { t, dateLocale } = useLanguage();
-  const { promptReason, dialog: reasonDialog } = useReasonDialog();
 
   const fetchData = async (status?: string, searchTerm?: string, isInitial = false) => {
     try {
@@ -145,14 +143,15 @@ export default function ReviewsContent({
     }, 400);
   };
 
-  const handleStatusChange = async (
-    id: string,
-    status: string,
-    removalReason?: string
-  ) => {
+  /**
+   * Publish a review (legacy PENDING rows only — reviews are auto-approved on
+   * submission). There is deliberately no Reject/takedown action: genuine
+   * negative feedback stays visible.
+   */
+  const handleStatusChange = async (id: string, status: string) => {
     try {
       setActionLoading(id);
-      await adminService.updateReviewStatus(id, status, removalReason);
+      await adminService.updateReviewStatus(id, status);
       fetchData(activeFilter, search);
       toast.success(`Review ${status.toLowerCase()}`);
     } catch (error) {
@@ -160,18 +159,6 @@ export default function ReviewsContent({
     } finally {
       setActionLoading(null);
     }
-  };
-
-  /** Reject flow: collect an optional removal reason, then reject. */
-  const promptReject = (id: string) => {
-    promptReason({
-      title: t.adminReviews.rejectTitle,
-      description: t.adminReviews.rejectDesc,
-      placeholder: t.adminReviews.rejectReasonPlaceholder,
-      confirmLabel: t.adminReviews.reject,
-      cancelLabel: t.adminReviews.cancel,
-      onConfirm: (reason) => handleStatusChange(id, "REJECTED", reason),
-    });
   };
 
   const handleReply = async (id: string) => {
@@ -349,43 +336,21 @@ export default function ReviewsContent({
                   </div>
                 )}
                 <div className="flex gap-2 mt-4">
+                  {/* Reviews are auto-published (created APPROVED) and are never
+                      taken down — there is no Reject control, so genuine
+                      negative feedback always stays visible. Approve only
+                      serves legacy PENDING rows. */}
                   {review.status === "PENDING" && (
-                    <>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        className="text-[#1a5c2a] border-[#1a5c2a]"
-                        onClick={() =>
-                          handleStatusChange(review.id, "APPROVED")
-                        }
-                        disabled={actionLoading === review.id}
-                      >
-                        {t.adminReviews.approve}
-                      </Button>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        className="text-red-500 border-red-500"
-                        onClick={() => promptReject(review.id)}
-                        disabled={actionLoading === review.id}
-                      >
-                        {t.adminReviews.reject}
-                      </Button>
-                    </>
-                  )}
-                  {/* Reviews are auto-published (created APPROVED), so the only
-                      moderation action a live review needs is a takedown:
-                      APPROVED → REJECTED with an optional removal reason.
-                      Publishing itself never requires manual approval. */}
-                  {review.status === "APPROVED" && (
                     <Button
                       variant="outline"
                       size="sm"
-                      className="text-red-500 border-red-500"
-                      onClick={() => promptReject(review.id)}
+                      className="text-[#1a5c2a] border-[#1a5c2a]"
+                      onClick={() =>
+                        handleStatusChange(review.id, "APPROVED")
+                      }
                       disabled={actionLoading === review.id}
                     >
-                      {t.adminReviews.reject}
+                      {t.adminReviews.approve}
                     </Button>
                   )}
                   <Button
@@ -437,8 +402,6 @@ export default function ReviewsContent({
           ))}
         </div>
       )}
-
-      {reasonDialog}
     </div>
   );
 }

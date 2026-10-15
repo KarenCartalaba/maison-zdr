@@ -3,6 +3,7 @@
 import Link from "next/link";
 import Logo from "@/components/common/Logo";
 import { useLanguage } from "@/context/LanguageContext";
+import { DEFAULT_EVENT_LOCATION_LINES } from "@/constants/event-location";
 
 export default function Footer() {
   const { t } = useLanguage();
@@ -68,8 +69,9 @@ export default function Footer() {
           <div>
             <h3 className="font-semibold mb-4">{t.footer.visitUs}</h3>
             <ul className="space-y-2 text-sm text-white/80">
-              <li>9 Rue du Commerce, 35140</li>
-              <li>Saint-Hilaire-des-Landes</li>
+              {DEFAULT_EVENT_LOCATION_LINES.map((line) => (
+                <li key={line}>{line}</li>
+              ))}
             </ul>
             {/* Contact details as their own group, so the gap that splits the
                 street address from the email is a set 16px rather than an

@@ -7,10 +7,13 @@ export const createEventSchema = z.object({
     description: z.string().min(10, "Description must be at least 10 characters").max(5000, "Description must be at most 5000 characters"),
     location: z.string().min(2, "Location is required").max(200, "Location must be at most 200 characters"),
     eventDate: z.string().datetime("Invalid event date"),
+    // Optional on input: the service derives start + 3h when it is omitted.
+    endDate: z.string().datetime("Invalid event end date").optional(),
     deadline: z.string().datetime("Invalid deadline"),
     minParticipants: z.number().int().min(0, "Minimum participants must be at least 0"),
     maxParticipants: z.number().int().min(1, "Maximum participants must be at least 1"),
-    eventType: z.nativeEnum(EventType).optional().default("SOCIAL"),
+    // Canonical public categories only: FOOD / ARTS / GAMES / MUSIC / PERFORMANCE.
+    eventType: z.nativeEnum(EventType).optional().default("ARTS"),
     gallery: z.array(z.string()).optional(),
   }),
 });

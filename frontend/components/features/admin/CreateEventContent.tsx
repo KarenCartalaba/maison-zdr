@@ -14,26 +14,22 @@ import { Loader2, ImagePlus } from "lucide-react";
 import { useLanguage } from "@/context/LanguageContext";
 import { toast } from "sonner";
 import { isValidImageFile } from "@/lib/utils";
+import { DEFAULT_EVENT_LOCATION } from "@/constants/event-location";
 
 const createEventSchema = z.object({
   title: z.string().min(3, "Title must be at least 3 characters").max(100, "Title must be at most 100 characters"),
   description: z.string().min(10, "Description must be at least 10 characters").max(5000, "Description must be at most 5000 characters"),
   location: z.string().min(2, "Location is required").max(200, "Location must be at most 200 characters"),
   eventDate: z.string().min(1, "Event date is required"),
+  endDate: z.string().min(1, "Event end date is required"),
   deadline: z.string().min(1, "Deadline is required"),
   minParticipants: z.number().min(0, "Must be at least 0"),
   maxParticipants: z.number().min(1, "Must be at least 1"),
-  eventType: z.enum(["FORMAL", "CASUAL", "SOCIAL", "WORKSHOP", "LIVE_MUSIC", "FOOD_AND_DRINK", "TRIVIA", "PRIVATE"]),
+  // Canonical public categories only (the same five the Events page filters by).
+  eventType: z.enum(["FOOD", "ARTS", "GAMES", "MUSIC", "PERFORMANCE"]),
 });
 
 type CreateEventInput = z.infer<typeof createEventSchema>;
-
-/**
- * Canonical venue of the bar (same address the contact page and footer show).
- * Used as the starting value for every admin event form that opens empty, so a
- * new event defaults to the bar's location instead of an empty field.
- */
-export const DEFAULT_EVENT_LOCATION = "9 Rue du Commerce, 35140 Saint-Hilaire-des-Landes, France";
 
 export default function CreateEventContent() {
   const [isLoading, setIsLoading] = useState(false);
@@ -53,7 +49,7 @@ export default function CreateEventContent() {
       location: DEFAULT_EVENT_LOCATION,
       minParticipants: 0,
       maxParticipants: 100,
-      eventType: "SOCIAL" as const,
+      eventType: "ARTS" as const,
     },
   });
 
@@ -98,6 +94,7 @@ export default function CreateEventContent() {
         ...data,
         gallery,
         eventDate: new Date(data.eventDate).toISOString(),
+        endDate: new Date(data.endDate).toISOString(),
         deadline: new Date(data.deadline).toISOString(),
       });
       if (response.code === 201) {
@@ -180,14 +177,11 @@ export default function CreateEventContent() {
                 className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
                 {...register("eventType")}
               >
-                <option value="FORMAL">{t.adminEventsForm.typeFormal}</option>
-                <option value="CASUAL">{t.adminEventsForm.typeCasual}</option>
-                <option value="SOCIAL">{t.adminEventsForm.typeSocial}</option>
-                <option value="WORKSHOP">{t.adminEventsForm.typeWorkshop}</option>
-                <option value="LIVE_MUSIC">{t.adminEventsForm.typeLiveMusic}</option>
-                <option value="FOOD_AND_DRINK">{t.adminEventsForm.typeFoodDrink}</option>
-                <option value="TRIVIA">{t.adminEventsForm.typeTrivia}</option>
-                <option value="PRIVATE">{t.adminEventsForm.typePrivate}</option>
+                <option value="FOOD">{t.adminEventsForm.typeFood}</option>
+                <option value="ARTS">{t.adminEventsForm.typeArts}</option>
+                <option value="GAMES">{t.adminEventsForm.typeGames}</option>
+                <option value="MUSIC">{t.adminEventsForm.typeMusic}</option>
+                <option value="PERFORMANCE">{t.adminEventsForm.typePerformance}</option>
               </select>
               {errors.eventType && (
                 <p className="text-sm text-red-500">{errors.eventType.message}</p>
@@ -204,7 +198,7 @@ export default function CreateEventContent() {
               )}
             </div>
 
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
               <div className="space-y-2">
                 <label htmlFor="eventDate" className="text-sm font-medium">
                   {t.adminEventsForm.labelEventDate}
@@ -212,6 +206,16 @@ export default function CreateEventContent() {
                 <Input id="eventDate" type="datetime-local" {...register("eventDate")} />
                 {errors.eventDate && (
                   <p className="text-sm text-red-500">{errors.eventDate.message}</p>
+                )}
+              </div>
+
+              <div className="space-y-2">
+                <label htmlFor="endDate" className="text-sm font-medium">
+                  {t.adminEventsForm.labelEndDate}
+                </label>
+                <Input id="endDate" type="datetime-local" {...register("endDate")} />
+                {errors.endDate && (
+                  <p className="text-sm text-red-500">{errors.endDate.message}</p>
                 )}
               </div>
 

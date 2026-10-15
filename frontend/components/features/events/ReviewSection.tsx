@@ -13,16 +13,15 @@ import { formatDate } from "@/lib/format-date";
 
 interface ReviewSectionProps {
   eventId?: string;
-  eventDate?: string;
-  allowReviewsNow?: boolean;
+  /** Reviews auto-open the moment this datetime passes. */
+  endDate?: string;
   averageRating?: number;
   totalReviews?: number;
 }
 
 export default function ReviewSection({
   eventId,
-  eventDate,
-  allowReviewsNow = false,
+  endDate,
   averageRating: propAvgRating = 0,
   totalReviews: propTotalReviews = 0,
 }: ReviewSectionProps) {
@@ -74,9 +73,9 @@ export default function ReviewSection({
     };
   }, [eventId, isAuthenticated]);
 
-  const canReview =
-    (eventDate ? new Date(eventDate) < new Date() : false) ||
-    allowReviewsNow === true;
+  // Reviews open automatically at the event's END datetime — the single gate
+  // (no manual override). A missing endDate fails closed.
+  const canReview = !!endDate && new Date(endDate) <= new Date();
 
   const reviewCta = alreadyReviewed ? (
     <p className="text-sm text-muted-foreground">{t.events.alreadyReviewed}</p>

@@ -2,15 +2,15 @@
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useLanguage } from "@/context/LanguageContext";
+import { DEFAULT_EVENT_LOCATION } from "@/constants/event-location";
 
 export default function FindUsCard() {
   const { t } = useLanguage();
-  // Keyless Google Maps embed for the venue address (9 Rue du Commerce,
-  // 35140 Saint-Hilaire-des-Landes) — replaces the static map.png screenshot.
-  const mapEmbedSrc =
-    "https://www.google.com/maps?q=9+Rue+du+Commerce,+35140+Saint-Hilaire-des-Landes,+France&z=15&output=embed";
-  const mapLink =
-    "https://www.google.com/maps/search/?api=1&query=9+Rue+du+Commerce,+35140+Saint-Hilaire-des-Landes,+France";
+  // Keyless Google Maps embed for the canonical venue address (see
+  // constants/event-location.ts) — replaces the static map.png screenshot.
+  const mapQuery = encodeURIComponent(DEFAULT_EVENT_LOCATION);
+  const mapEmbedSrc = `https://www.google.com/maps?q=${mapQuery}&z=15&output=embed`;
+  const mapLink = `https://www.google.com/maps/search/?api=1&query=${mapQuery}`;
 
   return (
     <Card className="border shadow-md">

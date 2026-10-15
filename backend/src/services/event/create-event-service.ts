@@ -1,5 +1,6 @@
 import { EventRepository } from "@/repositories/event.repository";
 import { generateSlug } from "@/utils/slug";
+import { deriveEndDate } from "@/utils/event-dates";
 import { cacheInvalidatePattern } from "@/lib/redis";
 import { EventType } from "@/generated/prisma/enums";
 
@@ -10,6 +11,7 @@ export async function CreateEventService(data: {
   description: string;
   location: string;
   eventDate: string;
+  endDate?: string;
   deadline: string;
   minParticipants: number;
   maxParticipants: number;
@@ -26,6 +28,13 @@ export async function CreateEventService(data: {
       return { code: 400, status: "error", message: "Deadline must be before the event date" };
     }
 
+    // The event must end after it starts — review availability is derived from
+    // endDate, so it can never be missing or before the start.
+    const endDate = data.endDate ? new Date(data.endDate) : deriveEndDate(data.eventDate);
+    if (endDate.getTime() <= new Date(data.eventDate).getTime()) {
+      return { code: 400, status: "error", message: "End date must be after the event date" };
+    }
+
     const slug = generateSlug(data.title);
 
     const existing = await eventRepo.findEventBySlug(slug);
@@ -33,7 +42,12 @@ export async function CreateEventService(data: {
       return { code: 409, status: "error", message: "An event with a similar title already exists" };
     }
 
-    const event = await eventRepo.createEvent({ ...data, eventType: data.eventType ?? "SOCIAL", slug });
+    const event = await eventRepo.createEvent({
+      ...data,
+      endDate: endDate.toISOString(),
+      eventType: data.eventType ?? "ARTS",
+      slug,
+    });
 
     // Invalidate events list cache
     await cacheInvalidatePattern("events:*");

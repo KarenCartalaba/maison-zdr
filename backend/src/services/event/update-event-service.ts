@@ -14,12 +14,12 @@ export async function UpdateEventService(data: {
   description?: string;
   location?: string;
   eventDate?: Date;
+  endDate?: Date;
   deadline?: Date;
   minParticipants?: number;
   maxParticipants?: number;
   eventType?: EventType;
   isCancelled?: boolean;
-  allowReviewsNow?: boolean;
   gallery?: string[];
 }) {
   try {
@@ -44,13 +44,23 @@ export async function UpdateEventService(data: {
       updateData.slug = generateSlug(data.title);
     }
 
-    // Merge supplied fields with existing to cross-validate min<=max and deadline<eventDate
+    // Merge supplied fields with existing to cross-validate min<=max and
+    // deadline<eventDate<endDate.
     const effectiveEventDate = data.eventDate ?? (existing.eventDate as Date);
     const effectiveDeadline = data.deadline ?? (existing.deadline as Date);
+    const effectiveEndDate = data.endDate ?? (existing.endDate as Date);
 
     if (data.eventDate || data.deadline) {
       if (new Date(effectiveDeadline) >= new Date(effectiveEventDate)) {
         return { code: 400, status: "error", message: "Deadline must be before the event date" };
+      }
+    }
+
+    // Review availability is derived from endDate, so it must always sit after
+    // the start (even when only one of the two dates is being moved).
+    if (data.endDate || data.eventDate) {
+      if (new Date(effectiveEndDate) <= new Date(effectiveEventDate)) {
+        return { code: 400, status: "error", message: "End date must be after the event date" };
       }
     }
 

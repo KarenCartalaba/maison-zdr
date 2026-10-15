@@ -2,7 +2,6 @@
 
 import { useEffect, useMemo, useRef, useState, useCallback } from "react";
 import { useConfirm } from "@/components/ui/confirm-dialog";
-import { useReasonDialog } from "@/components/ui/reason-dialog";
 import { useParams, useRouter } from "next/navigation";
 import { Controller, useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -23,7 +22,7 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { isValidImageFile } from "@/lib/utils";
-import { DEFAULT_EVENT_LOCATION } from "@/components/features/admin/CreateEventContent";
+import { DEFAULT_EVENT_LOCATION } from "@/constants/event-location";
 import { eventService } from "@/services/event.service";
 import { adminService } from "@/services/admin.service";
 import { galleryService } from "@/services/gallery.service";
@@ -621,7 +620,6 @@ function ReviewsTab({ eventId, t, dateLocale }: { eventId: string; t: any; dateL
   const [replyingId, setReplyingId] = useState<string | null>(null);
   const [replyText, setReplyText] = useState("");
   const [actionLoading, setActionLoading] = useState<string | null>(null);
-  const { promptReason, dialog: reasonDialog } = useReasonDialog();
 
   const fetchReviews = useCallback(async () => {
     try {
@@ -641,14 +639,10 @@ function ReviewsTab({ eventId, t, dateLocale }: { eventId: string; t: any; dateL
     fetchReviews();
   }, [fetchReviews]);
 
-  const handleStatusChange = async (
-    id: string,
-    status: string,
-    removalReason?: string
-  ) => {
+  const handleStatusChange = async (id: string, status: string) => {
     try {
       setActionLoading(id);
-      await adminService.updateReviewStatus(id, status, removalReason);
+      await adminService.updateReviewStatus(id, status);
       toast.success(`Review ${status.toLowerCase()}`);
       fetchReviews();
     } catch (err) {
@@ -657,18 +651,6 @@ function ReviewsTab({ eventId, t, dateLocale }: { eventId: string; t: any; dateL
     } finally {
       setActionLoading(null);
     }
-  };
-
-  /** Reject flow: collect an optional removal reason, then reject. */
-  const promptReject = (id: string) => {
-    promptReason({
-      title: t.adminWorkspace.reviewsRejectTitle,
-      description: t.adminWorkspace.reviewsRejectDesc,
-      placeholder: t.adminWorkspace.reviewsRejectReasonPlaceholder,
-      confirmLabel: t.adminWorkspace.reviewsReject,
-      cancelLabel: t.adminWorkspace.reviewsCancel,
-      onConfirm: (reason) => handleStatusChange(id, "REJECTED", reason),
-    });
   };
 
   const handleReply = async (id: string) => {
@@ -780,27 +762,20 @@ function ReviewsTab({ eventId, t, dateLocale }: { eventId: string; t: any; dateL
               )}
 
               <div className="flex gap-2 mt-4">
+                {/* Reviews are auto-published (created APPROVED) and are never
+                    taken down: no Reject control exists any more, so genuine
+                    negative feedback stays visible. The Approve button only
+                    serves legacy PENDING rows. */}
                 {review.status === "PENDING" && (
-                  <>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      className="text-[#1a5c2a] border-[#1a5c2a]"
-                      onClick={() => handleStatusChange(review.id, "APPROVED")}
-                      disabled={actionLoading === review.id}
-                    >
-                      {t.adminWorkspace.reviewsApprove}
-                    </Button>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      className="text-red-500 border-red-500"
-                      onClick={() => promptReject(review.id)}
-                      disabled={actionLoading === review.id}
-                    >
-                      {t.adminWorkspace.reviewsReject}
-                    </Button>
-                  </>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="text-[#1a5c2a] border-[#1a5c2a]"
+                    onClick={() => handleStatusChange(review.id, "APPROVED")}
+                    disabled={actionLoading === review.id}
+                  >
+                    {t.adminWorkspace.reviewsApprove}
+                  </Button>
                 )}
                 <Button
                   variant="ghost"
@@ -847,8 +822,6 @@ function ReviewsTab({ eventId, t, dateLocale }: { eventId: string; t: any; dateL
           </Card>
         ))
       )}
-
-      {reasonDialog}
     </div>
   );
 }
@@ -1028,8 +1001,8 @@ const eventSettingsSchema = z.object({
   description: z.string().min(1, "Description is required").max(5000, "Description must be at most 5000 characters"),
   location: z.string().min(1, "Location is required").max(200, "Location must be at most 200 characters"),
   maxParticipants: z.number().min(1, "Must be at least 1"),
+  endDate: z.string().min(1, "Event end date is required"),
   isCancelled: z.boolean(),
-  allowReviewsNow: z.boolean(),
 });
 
 type EventSettingsValues = z.infer<typeof eventSettingsSchema>;
@@ -1046,8 +1019,16 @@ function SettingsTab({ event, t, dateLocale, onUpdated }: { event: Event; t: any
       description: event.description,
       location: event.location || DEFAULT_EVENT_LOCATION,
       maxParticipants: event.maxParticipants,
+      // Reviews open at this datetime; fall back to start + 3h for payloads
+      // from before endDate existed (the DB backfilled every row).
+      endDate: (
+        event.endDate
+          ? new Date(event.endDate)
+          : new Date(new Date(event.eventDate).getTime() + 3 * 60 * 60 * 1000)
+      )
+        .toISOString()
+        .slice(0, 16),
       isCancelled: event.isCancelled,
-      allowReviewsNow: event.allowReviewsNow ?? false,
     },
     mode: "onBlur",
   });
@@ -1061,8 +1042,8 @@ function SettingsTab({ event, t, dateLocale, onUpdated }: { event: Event; t: any
         description: data.description,
         location: data.location,
         maxParticipants: data.maxParticipants,
+        endDate: new Date(data.endDate).toISOString(),
         isCancelled: data.isCancelled,
-        allowReviewsNow: data.allowReviewsNow,
       });
       if (response.code === 200 && response.data) {
         onUpdated(response.data.event);
@@ -1145,6 +1126,18 @@ function SettingsTab({ event, t, dateLocale, onUpdated }: { event: Event; t: any
               )}
             />
             <Controller
+              name="endDate"
+              control={form.control}
+              render={({ field, fieldState }) => (
+                <Field data-invalid={fieldState.invalid}>
+                  <FieldLabel htmlFor="event-endDate">{t.adminWorkspace.settingsLabelEndDate}</FieldLabel>
+                  <Input {...field} id="event-endDate" type="datetime-local" aria-invalid={fieldState.invalid} />
+                  <p className="text-xs text-muted-foreground">{t.adminWorkspace.settingsEndDateDesc}</p>
+                  {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
+                </Field>
+              )}
+            />
+            <Controller
               name="isCancelled"
               control={form.control}
               render={({ field, fieldState }) => (
@@ -1165,26 +1158,6 @@ function SettingsTab({ event, t, dateLocale, onUpdated }: { event: Event; t: any
                       {t.adminWorkspace.settingsCancelEnded}
                     </p>
                   )}
-                  {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
-                </Field>
-              )}
-            />
-            <Controller
-              name="allowReviewsNow"
-              control={form.control}
-              render={({ field, fieldState }) => (
-                <Field data-invalid={fieldState.invalid}>
-                  <label className="flex items-center gap-2 cursor-pointer">
-                    <input
-                      type="checkbox"
-                      checked={field.value}
-                      onChange={field.onChange}
-                      className="rounded"
-                      aria-invalid={fieldState.invalid}
-                    />
-                    <span className="text-sm">{t.adminWorkspace.settingsAllowReviews}</span>
-                  </label>
-                  <p className="text-xs text-muted-foreground">{t.adminWorkspace.settingsAllowReviewsDesc}</p>
                   {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
                 </Field>
               )}

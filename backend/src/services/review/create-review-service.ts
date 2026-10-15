@@ -1,5 +1,6 @@
 import { ReviewRepository } from "@/repositories/review.repository";
 import { RegistrationRepository } from "@/repositories/registration.repository";
+import { reviewsAreOpen } from "@/utils/event-dates";
 import { cacheInvalidate, cacheInvalidatePattern } from "@/lib/redis";
 
 const reviewRepo = new ReviewRepository();
@@ -17,7 +18,9 @@ export async function CreateReviewService(userId: string, data: { eventId: strin
       return { code: 403, status: "error", message: "only registered participants may review" };
     }
 
-    if (!(event.eventDate < new Date() || event.allowReviewsNow)) {
+    // Reviews auto-open at the event's END datetime — the single source of
+    // truth (there is no manual "allow reviews now" override any more).
+    if (!reviewsAreOpen(event)) {
       return { code: 403, status: "error", message: "reviews open after the event" };
     }
 
@@ -25,8 +28,9 @@ export async function CreateReviewService(userId: string, data: { eventId: strin
     if (existing) return { code: 409, status: "error", message: "You have already reviewed this event" };
 
     // Reviews are auto-published: they go live immediately as APPROVED.
-    // Moderators can still reject them later via PUT /reviews/:id/status,
-    // which records the removalReason and takes them off the public page.
+    // They are never taken down — there is no reject/takedown path any more
+    // (REVIEW_TRANSITIONS only allows publishing), so a genuine negative
+    // review always stays visible to other guests.
     const review = await reviewRepo.createReview({ ...data, userId, status: "APPROVED" });
     await cacheInvalidatePattern("admin:*");
     await cacheInvalidate(`event:${data.eventId}`);

@@ -7,6 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { Calendar, MapPin } from "lucide-react";
 import { formatDate } from "@/lib/format-date";
 import { getEventPhase } from "@/components/features/events/event-status";
+import { DEFAULT_EVENT_LOCATION } from "@/constants/event-location";
 import type { Event } from "@/types";
 
 interface EventCardProps {
@@ -81,7 +82,7 @@ export default function EventCard({ event }: EventCardProps) {
         </div>
         <div className="flex items-center gap-2 text-sm text-muted-foreground">
           <MapPin className="h-4 w-4" />
-          <span className="line-clamp-1">{event.location}</span>
+          <span className="line-clamp-1">{event.location || DEFAULT_EVENT_LOCATION}</span>
         </div>
         <div className="space-y-1">
           <div className="flex items-center justify-between text-sm">

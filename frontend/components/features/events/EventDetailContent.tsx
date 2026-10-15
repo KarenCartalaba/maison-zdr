@@ -11,6 +11,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { useLanguage } from "@/context/LanguageContext";
 import { formatDate } from "@/lib/format-date";
 import { fetchWithOneRetry } from "@/lib/retry-fetch";
+import { DEFAULT_EVENT_LOCATION } from "@/constants/event-location";
 import type { Event } from "@/types";
 
 interface EventDetailContentProps {
@@ -104,6 +105,11 @@ export default function EventDetailContent({ eventId, initialEvent }: EventDetai
 
   const isDeadlinePassed = new Date(event.deadline) < new Date();
   const registrationCount = event._count?.registrations || 0;
+  // Real end datetime when the payload has one; start + 3h only for payloads
+  // from before endDate existed (the DB backfilled every row).
+  const eventEndDate = event.endDate
+    ? new Date(event.endDate)
+    : new Date(new Date(event.eventDate).getTime() + 3 * 60 * 60 * 1000);
 
   return (
     <>
@@ -139,7 +145,7 @@ export default function EventDetailContent({ eventId, initialEvent }: EventDetai
                     minute: "2-digit",
                     hour12: dateLocale === "en-US",
                   })}{" "}–{" "}
-                  {new Date(new Date(event.eventDate).getTime() + 3 * 60 * 60 * 1000).toLocaleTimeString(dateLocale, {
+                  {eventEndDate.toLocaleTimeString(dateLocale, {
                     hour: "numeric",
                     minute: "2-digit",
                     hour12: dateLocale === "en-US",
@@ -148,7 +154,7 @@ export default function EventDetailContent({ eventId, initialEvent }: EventDetai
               </div>
               <div className="flex items-center gap-2 rounded-full border px-4 py-2 text-sm">
                 <span className="text-muted-foreground">{t.events.venue}</span>
-                <span className="font-medium">{event.location}</span>
+                <span className="font-medium">{event.location || DEFAULT_EVENT_LOCATION}</span>
               </div>
             </div>
 
@@ -181,11 +187,10 @@ export default function EventDetailContent({ eventId, initialEvent }: EventDetai
               <GalleryGrid images={event.gallery} />
             )}
 
-            {/* Reviews */}
+            {/* Reviews — auto-open once the event's END datetime passes */}
             <ReviewSection
               eventId={event.id}
-              eventDate={event.eventDate}
-              allowReviewsNow={event.allowReviewsNow ?? false}
+              endDate={event.endDate}
             />
           </div>
 

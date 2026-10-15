@@ -55,12 +55,14 @@ export default function EventsContent({ initialEvents = [] }: EventsContentProps
     })
     .filter((e) => {
       if (selectedCategory === t.events.allEvents) return true;
+      // Canonical categories: each chip maps 1:1 to the stored eventType, so
+      // no legacy value can end up orphaned (unreachable under every filter).
       const typeMap: Record<string, string[]> = {
-        [t.events.food]: ["FOOD_AND_DRINK"],
-        [t.events.arts]: ["WORKSHOP", "SOCIAL"],
-        [t.events.games]: ["TRIVIA"],
-        [t.events.music]: ["LIVE_MUSIC"],
-        [t.events.performance]: ["FORMAL", "CASUAL"],
+        [t.events.food]: ["FOOD"],
+        [t.events.arts]: ["ARTS"],
+        [t.events.games]: ["GAMES"],
+        [t.events.music]: ["MUSIC"],
+        [t.events.performance]: ["PERFORMANCE"],
       };
       const types = typeMap[selectedCategory] || [];
       return types.includes(e.eventType);

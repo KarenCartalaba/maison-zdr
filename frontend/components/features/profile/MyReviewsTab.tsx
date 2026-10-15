@@ -89,8 +89,8 @@ export default function MyReviewsTab({ highlightEventId = null }: MyReviewsTabPr
       (item: any) => item.id === highlightEventId || item.event?.id === highlightEventId
     );
     if (!match) return;
-    const isFuture = !!match.eventDate && new Date(match.eventDate) > new Date();
-    const eligible = !isFuture || match.allowReviewsNow === true;
+    // Reviews auto-open at the event's END datetime — the only gate.
+    const eligible = !!match.endDate && new Date(match.endDate) <= new Date();
     if (eligible) {
       handleWriteReview(match);
     } else {
@@ -189,40 +189,34 @@ export default function MyReviewsTab({ highlightEventId = null }: MyReviewsTabPr
           <h3 className="font-semibold text-[#1a5c2a] mb-1">{t.profile.waitingOnReview}</h3>
           <p className="text-sm text-muted-foreground mb-4">{t.profile.waitingOnReviewDesc}</p>
           <div className="flex gap-4 overflow-x-auto pb-2">
-            {pending.map((item: any) => (
-              <div
-                key={item.id}
-                id={`pending-${item.id}`}
-                className={`flex items-center gap-3 rounded-lg border bg-white p-3 min-w-[280px]${highlightedPendingId === item.id ? " ring-2 ring-[#1a5c2a] border-[#1a5c2a]" : ""}`}
-              >
-                <EventImage src={item.gallery?.[0]} title={item.title} className="h-12 w-12 rounded-lg shrink-0" />
-                <div className="flex-1 min-w-0">
-                  <p className="font-medium text-sm truncate">{item.title}</p>
-                  <p className="text-xs text-muted-foreground">
-                    {new Date(item.eventDate).toLocaleDateString(dateLocale, { weekday: "short", month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" })}
-                  </p>
-                </div>
-                <Button
-                  size="sm"
-                  className="bg-[#1a5c2a] hover:bg-[#144a22] shrink-0"
-                  onClick={() => handleWriteReview(item)}
-                  disabled={
-                    !!item.eventDate &&
-                    new Date(item.eventDate) > new Date() &&
-                    item.allowReviewsNow !== true
-                  }
-                  title={
-                    !!item.eventDate &&
-                    new Date(item.eventDate) > new Date() &&
-                    item.allowReviewsNow !== true
-                      ? t.profile.reviewsOpenAfter
-                      : undefined
-                  }
+            {pending.map((item: any) => {
+              // Reviews auto-open at the event's END datetime — the only gate.
+              const reviewsOpen = !!item.endDate && new Date(item.endDate) <= new Date();
+              return (
+                <div
+                  key={item.id}
+                  id={`pending-${item.id}`}
+                  className={`flex items-center gap-3 rounded-lg border bg-white p-3 min-w-[280px]${highlightedPendingId === item.id ? " ring-2 ring-[#1a5c2a] border-[#1a5c2a]" : ""}`}
                 >
-                  {t.profile.write}
-                </Button>
-              </div>
-            ))}
+                  <EventImage src={item.gallery?.[0]} title={item.title} className="h-12 w-12 rounded-lg shrink-0" />
+                  <div className="flex-1 min-w-0">
+                    <p className="font-medium text-sm truncate">{item.title}</p>
+                    <p className="text-xs text-muted-foreground">
+                      {new Date(item.eventDate).toLocaleDateString(dateLocale, { weekday: "short", month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" })}
+                    </p>
+                  </div>
+                  <Button
+                    size="sm"
+                    className="bg-[#1a5c2a] hover:bg-[#144a22] shrink-0"
+                    onClick={() => handleWriteReview(item)}
+                    disabled={!reviewsOpen}
+                    title={reviewsOpen ? undefined : t.profile.reviewsOpenAfter}
+                  >
+                    {t.profile.write}
+                  </Button>
+                </div>
+              );
+            })}
           </div>
         </div>
       )}

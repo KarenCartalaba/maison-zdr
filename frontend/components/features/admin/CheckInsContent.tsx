@@ -63,17 +63,25 @@ function registrationCode(registration: AdminRegistration): string {
   );
 }
 
-/** Guest headcount for an event — matches the "Expected Guests" stat. */
+/**
+ * Guest headcount for an event — the same figure as the "Expected Guests" stat.
+ * Only `expectedGuests` may be used: `_count.registrations` counts
+ * registrations, a different unit (a registration can cover several people),
+ * so falling back to it would silently understate the door's expected crowd.
+ */
 function eventGuestCount(event: CheckInEvent): number {
-  return event.expectedGuests ?? event._count.registrations;
+  return event.expectedGuests ?? 0;
 }
 
-/** Guests covered by a single registration: the registrant plus plus-ones. */
+/**
+ * Headcount covered by a single registration: the registrant plus their
+ * plus-ones — exactly the backend's `registrationHeadcount`
+ * (backend check-in-stats.ts: 1 + guestCount). The bare `guestCount` is the
+ * number of EXTRA guests, so it must never be reported as the total here or
+ * the row would disagree with the Expected Guests stat.
+ */
 function guestsCovered(registration: AdminRegistration): number {
-  if (registration.guestCount && registration.guestCount > 0) {
-    return registration.guestCount;
-  }
-  return registration.hasPlusOne ? 2 : 1;
+  return 1 + Math.max(0, registration.guestCount ?? 0);
 }
 
 /** Up to two letters for the guest avatar. */
@@ -112,12 +120,15 @@ function StatCard({
   value,
   tone,
   percent,
+  hint,
 }: {
   icon: LucideIcon;
   label: string;
   value: string;
   tone: "neutral" | "brand" | "waiting";
   percent?: number;
+  /** Optional second line clarifying what the number counts. */
+  hint?: string;
 }) {
   const tones = {
     neutral: {
@@ -164,6 +175,9 @@ function StatCard({
           <p className="mt-1.5 text-xs font-medium uppercase tracking-wide text-muted-foreground">
             {label}
           </p>
+          {hint && (
+            <p className="text-[11px] text-muted-foreground">{hint}</p>
+          )}
         </div>
         <div
           className="h-1.5 w-full overflow-hidden rounded-full bg-muted"
@@ -447,6 +461,11 @@ export default function CheckInsContent({
   const [expectedGuests, setExpectedGuests] = useState(
     initialCheckIn?.expectedGuests ?? initialCheckIn?.totalCount ?? 0
   );
+  // Registrations behind the guest total — shown alongside the guest counts so
+  // "people" and "sign-ups" can never be confused (CANCELLED excluded).
+  const [expectedRegistrations, setExpectedRegistrations] = useState(
+    initialCheckIn?.expectedRegistrations ?? 0
+  );
   const [loadingEvents, setLoadingEvents] = useState(!initialEvents);
   const [loadingCheckIn, setLoadingCheckIn] = useState(false);
   const [checkInLoadingId, setCheckInLoadingId] = useState<string | null>(null);
@@ -496,6 +515,7 @@ export default function CheckInsContent({
       setExpectedGuests(
         response.data.expectedGuests ?? response.data.totalCount ?? 0
       );
+      setExpectedRegistrations(response.data.expectedRegistrations ?? 0);
     }
   }, [selectedEventId]);
 
@@ -583,7 +603,7 @@ export default function CheckInsContent({
                 <span className="font-medium">{row.original.user.name}</span>
                 {extraGuests > 0 && (
                   <span
-                    title={`${guestsCovered(row.original)} ${t.adminCheckins.expectedGuests}`}
+                    title={`${guestsCovered(row.original)} ${t.adminCheckins.guestsCoveredBy}`}
                     className="inline-flex shrink-0 items-center gap-1 rounded-full bg-muted px-1.5 py-0.5 text-[10px] font-medium text-muted-foreground"
                   >
                     <Users className="h-2.5 w-2.5" />+{extraGuests}
@@ -731,6 +751,11 @@ export default function CheckInsContent({
                       {eventGuestCount(selectedEvent)} {t.adminCheckins.expectedGuests}
                     </span>
                   </Badge>
+                  {/* Registrations (sign-ups) named next to the guest total so
+                      the two units are never read as the same thing. */}
+                  <Badge variant="secondary" className="max-w-full">
+                    {selectedEvent._count.registrations} {t.adminCheckins.registrationsLabel}
+                  </Badge>
                 </div>
               </>
             ) : (
@@ -769,6 +794,9 @@ export default function CheckInsContent({
             <StatCard
               icon={Users}
               label={t.adminCheckins.expectedGuests}
+              // Guests (people) vs registrations (sign-ups) named together:
+              // 5 expected guests can come from 2 registrations.
+              hint={`${expectedRegistrations.toLocaleString(dateLocale)} ${t.adminCheckins.registrationsLabel}`}
               value={expectedGuests.toLocaleString(dateLocale)}
               tone="neutral"
             />
@@ -806,6 +834,8 @@ export default function CheckInsContent({
                 <p className="text-sm text-muted-foreground">
                   {hasSearch && `${filteredRegistrations.length} / ${registrations.length} \u00b7 `}
                   {expectedGuests.toLocaleString(dateLocale)} {t.adminCheckins.expectedGuests}
+                  {" \u00b7 "}
+                  {expectedRegistrations.toLocaleString(dateLocale)} {t.adminCheckins.registrationsLabel}
                 </p>
               )}
             </div>

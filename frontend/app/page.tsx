@@ -9,6 +9,7 @@ import OngoingEventsSection from "@/components/features/home/OngoingEventsSectio
 import UpcomingEventsSection from "@/components/features/home/UpcomingEventsSection";
 import NewsSection from "@/components/features/home/NewsSection";
 import { selectUpcomingEvents } from "@/lib/upcoming-events";
+import { isSameCalendarDay } from "@/components/features/events/event-status";
 import type { Event, News } from "@/types";
 
 /** Shape of a serverFetch answer (it never throws — errors come back as data). */
@@ -71,11 +72,9 @@ export default async function Page() {
   const now = new Date();
   // "Ongoing" = the event's day has started and is still today. The registration
   // deadline must NOT gate this section: a closed deadline only stops new
-  // sign-ups, it does not mean the event is no longer running.
-  const isSameCalendarDay = (a: Date, b: Date) =>
-    a.getFullYear() === b.getFullYear() &&
-    a.getMonth() === b.getMonth() &&
-    a.getDate() === b.getDate();
+  // sign-ups, it does not mean the event is no longer running. The calendar-day
+  // comparison comes from event-status.ts — the single source of truth shared
+  // with the EventCard badges and the admin tabs.
   const ongoing = events.filter((e) => {
     if (e.isCancelled) return false;
     const eventDate = new Date(e.eventDate);

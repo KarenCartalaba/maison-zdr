@@ -7,7 +7,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { eventService } from "@/services/event.service";
 import { galleryService } from "@/services/gallery.service";
-import { DEFAULT_EVENT_LOCATION } from "@/components/features/admin/CreateEventContent";
+import { DEFAULT_EVENT_LOCATION } from "@/constants/event-location";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
@@ -22,6 +22,7 @@ const updateEventSchema = z.object({
   description: z.string().min(10, "Description must be at least 10 characters").max(5000, "Description must be at most 5000 characters"),
   location: z.string().min(2, "Location is required").max(200, "Location must be at most 200 characters"),
   eventDate: z.string().min(1, "Event date is required"),
+  endDate: z.string().min(1, "Event end date is required"),
   deadline: z.string().min(1, "Deadline is required"),
   minParticipants: z.number().min(0, "Must be at least 0"),
   maxParticipants: z.number().min(1, "Must be at least 1"),
@@ -67,6 +68,15 @@ export default function EditEventContent({ initialEvent = null }: EditEventConte
       // never starts blank (no event location should ever be an empty string).
       location: ev.location || DEFAULT_EVENT_LOCATION,
       eventDate: new Date(ev.eventDate).toISOString().slice(0, 16),
+      // Reviews open at the end datetime; fall back to start + 3h only for
+      // payloads from before endDate existed (the DB backfilled every row).
+      endDate: (
+        ev.endDate
+          ? new Date(ev.endDate)
+          : new Date(new Date(ev.eventDate).getTime() + 3 * 60 * 60 * 1000)
+      )
+        .toISOString()
+        .slice(0, 16),
       deadline: new Date(ev.deadline).toISOString().slice(0, 16),
       minParticipants: ev.minParticipants,
       maxParticipants: ev.maxParticipants,
@@ -138,6 +148,7 @@ export default function EditEventContent({ initialEvent = null }: EditEventConte
         ...data,
         ...(gallery && { gallery }),
         eventDate: new Date(data.eventDate).toISOString(),
+        endDate: new Date(data.endDate).toISOString(),
         deadline: new Date(data.deadline).toISOString(),
       });
       if (response.code === 200) {
@@ -237,7 +248,7 @@ export default function EditEventContent({ initialEvent = null }: EditEventConte
               )}
             </div>
 
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
               <div className="space-y-2">
                 <label htmlFor="eventDate" className="text-sm font-medium">
                   {t.adminEventsForm.labelEventDate}
@@ -245,6 +256,16 @@ export default function EditEventContent({ initialEvent = null }: EditEventConte
                 <Input id="eventDate" type="datetime-local" {...register("eventDate")} />
                 {errors.eventDate && (
                   <p className="text-sm text-red-500">{errors.eventDate.message}</p>
+                )}
+              </div>
+
+              <div className="space-y-2">
+                <label htmlFor="endDate" className="text-sm font-medium">
+                  {t.adminEventsForm.labelEndDate}
+                </label>
+                <Input id="endDate" type="datetime-local" {...register("endDate")} />
+                {errors.endDate && (
+                  <p className="text-sm text-red-500">{errors.endDate.message}</p>
                 )}
               </div>
 

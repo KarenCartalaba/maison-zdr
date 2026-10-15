@@ -9,7 +9,8 @@ export interface User {
   createdAt?: string;
 }
 
-export type EventType = "FORMAL" | "CASUAL" | "SOCIAL" | "WORKSHOP" | "LIVE_MUSIC" | "FOOD_AND_DRINK" | "TRIVIA" | "PRIVATE";
+/** Canonical public event categories — exactly the five Events-page filters. */
+export type EventType = "FOOD" | "ARTS" | "GAMES" | "MUSIC" | "PERFORMANCE";
 
 export interface Event {
   id: string;
@@ -18,11 +19,15 @@ export interface Event {
   description: string;
   location: string;
   eventDate: string;
+  /**
+   * When the event ends. Reviews auto-open at this datetime (there is no
+   * manual "allow reviews now" override any more).
+   */
+  endDate: string;
   deadline: string;
   minParticipants: number;
   maxParticipants: number;
   isCancelled: boolean;
-  allowReviewsNow: boolean;
   eventType: EventType;
   gallery: string[];
   createdAt: string;

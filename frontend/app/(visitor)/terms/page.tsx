@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { DEFAULT_EVENT_LOCATION } from "@/constants/event-location";
 
 export const metadata: Metadata = {
   title: "Terms and Conditions",
@@ -89,7 +90,7 @@ export default function TermsPage() {
           <a href="tel:+3225550184" className="text-[#1a5c2a] hover:underline">
             +32 2 555 0184
           </a>
-          , or visit 9 Rue du Commerce, 35140 Saint-Hilaire-des-Landes.
+          , or visit {DEFAULT_EVENT_LOCATION}.
         </p>
       </div>
     </div>

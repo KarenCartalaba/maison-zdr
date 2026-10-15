@@ -28,8 +28,10 @@ export const updateReviewStatusSchema = z.object({
   body: z.object({
     status: reviewStatusEnum,
     /**
-     * Optional reason recorded when a review is removed (rejected).
-     * Omit to leave the stored reason untouched; null/empty clears it.
+     * Optional reason recorded for a removed review (legacy REJECTED rows).
+     * There is no takedown path any more, so this only ever clears/keeps the
+     * stored reason when a review is (re-)published: Omit to leave it
+     * untouched; null/empty clears it.
      */
     removalReason: z
       .string()
@@ -58,13 +60,16 @@ export const REGISTRATION_TRANSITIONS: Record<RegistrationStatus, readonly Regis
  * Allowed transitions for ReviewStatus.
  * Key = current status, Value = set of legal target statuses.
  *
- * Reviews are auto-published (created APPROVED), so APPROVED → REJECTED must
- * be legal: it is the path moderators use to take a live review down again.
+ * Reviews are auto-published (created APPROVED) and are NEVER taken down:
+ * genuine negative feedback stays visible, so APPROVED has no outgoing
+ * transition and there is no APPROVED → REJECTED path any more. The only
+ * remaining move is re-publishing a legacy REJECTED row (PENDING → APPROVED
+ * keeps legacy moderation queues working).
  */
 export const REVIEW_TRANSITIONS: Record<ReviewStatus, readonly ReviewStatus[]> = {
-  [ReviewStatus.PENDING]:  [ReviewStatus.APPROVED, ReviewStatus.REJECTED],
-  [ReviewStatus.APPROVED]: [ReviewStatus.PENDING, ReviewStatus.REJECTED],
-  [ReviewStatus.REJECTED]: [ReviewStatus.PENDING],
+  [ReviewStatus.PENDING]:  [ReviewStatus.APPROVED],
+  [ReviewStatus.APPROVED]: [],
+  [ReviewStatus.REJECTED]: [ReviewStatus.APPROVED],
 } as const;
 
 /**

@@ -272,8 +272,8 @@ export class RegistrationRepository {
 
   /**
    * Find registrations eligible for pending reviews.
-   * Non-cancelled registrations for non-cancelled events where the event date
-   * has passed or admin force-opened reviews.
+   * Non-cancelled registrations for non-cancelled events whose END datetime
+   * has passed (review availability is derived from endDate alone).
    * Matching pending-reviews-service.ts:9.
    */
   public findRegistrationsForPendingReviews = async (userId: string) => {
@@ -283,10 +283,7 @@ export class RegistrationRepository {
         status: { not: "CANCELLED" },
         event: {
           isCancelled: false,
-          OR: [
-            { eventDate: { lt: new Date() } },
-            { allowReviewsNow: true },
-          ],
+          endDate: { lte: new Date() },
         },
       },
       include: {
@@ -295,9 +292,9 @@ export class RegistrationRepository {
             id: true,
             title: true,
             eventDate: true,
+            endDate: true,
             location: true,
             gallery: true,
-            allowReviewsNow: true,
           },
         },
       },

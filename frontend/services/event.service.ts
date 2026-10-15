@@ -7,9 +7,12 @@ export interface CreateEventData {
   description: string;
   location: string;
   eventDate: string;
+  /** ISO datetime the event ends — review availability is derived from it. */
+  endDate: string;
   deadline: string;
   minParticipants: number;
   maxParticipants: number;
+  /** Canonical category: FOOD / ARTS / GAMES / MUSIC / PERFORMANCE. */
   eventType?: string;
   gallery?: string[];
 }
@@ -17,7 +20,6 @@ export interface CreateEventData {
 export interface UpdateEventData extends Partial<CreateEventData> {
   id: string;
   isCancelled?: boolean;
-  allowReviewsNow?: boolean;
 }
 
 export const eventService = {
@@ -59,6 +61,19 @@ export const eventService = {
     const response = await axiosInstance.post<ApiResponse<{ event: Event }>>(
       API_ENDPOINTS.EVENTS.UPDATE,
       data
+    );
+    return response.data;
+  },
+
+  /**
+   * Cancel an event (admin row/card action). Reuses the update endpoint with
+   * `isCancelled: true`; the backend refuses once the event has started, so
+   * callers should also disable the action for ended events.
+   */
+  cancel: async (id: string) => {
+    const response = await axiosInstance.post<ApiResponse<{ event: Event }>>(
+      API_ENDPOINTS.EVENTS.UPDATE,
+      { id, isCancelled: true }
     );
     return response.data;
   },

@@ -3,6 +3,7 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { MapPin, Phone, Mail, Clock } from "lucide-react";
 import { useLanguage } from "@/context/LanguageContext";
+import { DEFAULT_EVENT_LOCATION } from "@/constants/event-location";
 
 export default function ContactInfoCard() {
   const { t } = useLanguage();
@@ -21,7 +22,7 @@ export default function ContactInfoCard() {
           <div>
             <h4 className="font-medium text-sm">{t.contact.location}</h4>
             <p className="text-sm text-muted-foreground">
-              9 Rue du Commerce, 35140 Saint-Hilaire-des-Landes, France
+              {DEFAULT_EVENT_LOCATION}
             </p>
           </div>
         </div>

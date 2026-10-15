@@ -7,13 +7,14 @@ const reviewRepo = new ReviewRepository();
 export class EventController {
   public createEvent = async (req: Request, res: Response) => {
     const authorId = (req as any).user?.sub;
-    const { title, description, location, eventDate, deadline, minParticipants, maxParticipants, eventType, gallery } = req.body ?? {};
+    const { title, description, location, eventDate, endDate, deadline, minParticipants, maxParticipants, eventType, gallery } = req.body ?? {};
 
     const result = await CreateEventService({
       title,
       description,
       location,
       eventDate,
+      endDate,
       deadline,
       minParticipants,
       maxParticipants,
@@ -25,7 +26,7 @@ export class EventController {
   };
 
   public updateEvent = async (req: Request, res: Response) => {
-    const { id, title, description, location, eventDate, deadline, minParticipants, maxParticipants, eventType, isCancelled, allowReviewsNow, gallery } = req.body ?? {};
+    const { id, title, description, location, eventDate, endDate, deadline, minParticipants, maxParticipants, eventType, isCancelled, gallery } = req.body ?? {};
 
     const result = await UpdateEventService({
       id,
@@ -33,12 +34,12 @@ export class EventController {
       description,
       location,
       eventDate: eventDate ? new Date(eventDate) : undefined,
+      endDate: endDate ? new Date(endDate) : undefined,
       deadline: deadline ? new Date(deadline) : undefined,
       minParticipants,
       maxParticipants,
       eventType,
       isCancelled,
-      allowReviewsNow,
       gallery,
     });
     return res.status(result.code).json(result);

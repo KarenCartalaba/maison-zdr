@@ -9,7 +9,7 @@ export async function PendingReviewsService(userId: string) {
     // Find events the user registered for where:
     // - registration is not cancelled
     // - the event is not cancelled
-    // - either the event date has passed OR the admin force-opened reviews
+    // - the event's END datetime has passed (reviews auto-open then)
     const registrations = await registrationRepo.findRegistrationsForPendingReviews(userId);
 
     // Get event IDs the user already reviewed
