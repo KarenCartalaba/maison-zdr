@@ -4,7 +4,6 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 import { getErrorMessage } from "@/lib/server-error";
 import { Card, CardContent } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Star, Search, MessageSquare, Inbox, Loader2 } from "lucide-react";
@@ -277,25 +276,7 @@ export default function ReviewsContent({
               <CardContent className="p-6">
                 <div className="flex items-start justify-between mb-3">
                   <div>
-                    <div className="flex items-center gap-2">
-                      <p className="font-medium">{review.user.name}</p>
-                      <Badge
-                        variant={
-                          review.status === "APPROVED"
-                            ? "outline"
-                            : review.status === "REJECTED"
-                            ? "destructive"
-                            : "secondary"
-                        }
-                        className={
-                          review.status === "APPROVED"
-                            ? "text-[#1a5c2a] border-[#1a5c2a]"
-                            : ""
-                        }
-                      >
-                        {review.status}
-                      </Badge>
-                    </div>
+                    <p className="font-medium">{review.user.name}</p>
                     <p className="text-xs text-muted-foreground">
                       {review.event.title} · {formatDate(review.createdAt, dateLocale)}
                     </p>
