@@ -8,13 +8,17 @@ export default function Footer() {
   const { t } = useLanguage();
   return (
     <footer className="bg-[#1a5c2a] text-white">
-      {/* Top divider band — flush with the footer's top edge, full width.
-          Needed because the homepage About section directly above is the SAME
-          green, so a divider drawn only inside the footer would be invisible.
-          Keep AboutSection's bottom padding equal to the top padding below
-          (pb-12 / py-12) so the band reads as the boundary between the two
-          blocks, not as a stripe floating in a long stretch of green. */}
-      <div className="h-1.5 w-full bg-white" aria-hidden="true" />
+      {/* Hairline divider between the page content above and the columns below.
+          Kept to 1px so it reads as a rule, not as a band of empty space. The
+          homepage About section directly above is the SAME green, so a divider
+          drawn only inside the footer would be invisible. It sits in its own
+          container so it lines up with the column edges at every breakpoint
+          (the `container` class already applies the responsive side padding).
+          The green above it is AboutSection's pb-12 and the green below it is
+          the py-12 here — 48px each side, so it sits centred. */}
+      <div className="container px-4">
+        <div className="h-px w-full bg-white/70" aria-hidden="true" />
+      </div>
 
       <div className="container px-4 py-12">
         {/* Stacked on mobile the columns read as separate groups, so give them
