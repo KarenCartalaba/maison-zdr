@@ -21,15 +21,22 @@
 --                              venue functions centred on food & drink, so
 --                              they land under Food. Admins can reassign.)
 
+-- 0. Cleanup guard: a previous failed apply may have left the temporary
+--    type/column behind (DDL is not always transactional on pooled hosts).
+--    Both are unused by the app, so dropping them is safe.
+ALTER TABLE "Event" DROP COLUMN IF EXISTS "event_type_new";
+DROP TYPE IF EXISTS "EventType_new";
+
 -- 1. New enum type holding only the canonical categories.
 CREATE TYPE "EventType_new" AS ENUM ('FOOD', 'ARTS', 'GAMES', 'MUSIC', 'PERFORMANCE');
 
 -- 2. Temporary column typed with the new enum.
 ALTER TABLE "Event" ADD COLUMN "event_type_new" "EventType_new";
 
--- 3. Backfill every existing row through the remap above.
+-- 3. Backfill every existing row through the remap above. The CASE yields
+--    text, so it is cast to the new enum type explicitly.
 UPDATE "Event"
-SET "event_type_new" = CASE "event_type"
+SET "event_type_new" = (CASE "event_type"
     WHEN 'FORMAL'         THEN 'PERFORMANCE'
     WHEN 'CASUAL'         THEN 'PERFORMANCE'
     WHEN 'SOCIAL'         THEN 'ARTS'
@@ -39,7 +46,7 @@ SET "event_type_new" = CASE "event_type"
     WHEN 'TRIVIA'         THEN 'GAMES'
     WHEN 'PRIVATE'        THEN 'FOOD'
     ELSE 'ARTS'
-END;
+END)::"EventType_new";
 
 -- 4. Swap the column over and retire the old type. The rebuilt column must go
 --    back to NOT NULL exactly as the original one was (every row was backfilled
