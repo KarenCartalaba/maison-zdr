@@ -13,8 +13,6 @@ import { useLanguage } from "@/context/LanguageContext";
 import { formatDate } from "@/lib/format-date";
 import type { AdminReview, ReviewStats } from "@/types";
 
-const STATUS_FILTERS = ["ALL", "PENDING", "APPROVED", "REJECTED"];
-
 function StarRating({ rating }: { rating: number }) {
   return (
     <div className="flex gap-0.5">
@@ -88,14 +86,14 @@ export default function ReviewsContent({
   const [loading, setLoading] = useState(!initialReviews);
   const [searching, setSearching] = useState(false);
   const [search, setSearch] = useState("");
-  const [activeFilter, setActiveFilter] = useState("ALL");
+  const [eventFilter, setEventFilter] = useState("ALL");
   const [replyingId, setReplyingId] = useState<string | null>(null);
   const [replyText, setReplyText] = useState("");
   const [actionLoading, setActionLoading] = useState<string | null>(null);
   const searchTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const { t, dateLocale } = useLanguage();
 
-  const fetchData = async (status?: string, searchTerm?: string, isInitial = false) => {
+  const fetchData = async (searchTerm?: string, isInitial = false) => {
     try {
       if (isInitial) {
         setLoading(true);
@@ -103,7 +101,6 @@ export default function ReviewsContent({
         setSearching(true);
       }
       const response = await adminService.getReviews({
-        status: status !== "ALL" ? status : undefined,
         search: searchTerm || undefined,
       });
       if (response.data) {
@@ -124,41 +121,18 @@ export default function ReviewsContent({
       setLoading(false);
       return;
     }
-    fetchData(activeFilter, search, true);
+    fetchData(search, true);
     return () => {
       if (searchTimer.current) clearTimeout(searchTimer.current);
     };
   }, [initialReviews]);
 
-  const handleFilterChange = (filter: string) => {
-    setActiveFilter(filter);
-    fetchData(filter, search, true);
-  };
-
   const handleSearch = (value: string) => {
     setSearch(value);
     if (searchTimer.current) clearTimeout(searchTimer.current);
     searchTimer.current = setTimeout(() => {
-      fetchData(activeFilter, value);
+      fetchData(value);
     }, 400);
-  };
-
-  /**
-   * Publish a review (legacy PENDING rows only — reviews are auto-approved on
-   * submission). There is deliberately no Reject/takedown action: genuine
-   * negative feedback stays visible.
-   */
-  const handleStatusChange = async (id: string, status: string) => {
-    try {
-      setActionLoading(id);
-      await adminService.updateReviewStatus(id, status);
-      fetchData(activeFilter, search);
-      toast.success(`Review ${status.toLowerCase()}`);
-    } catch (error) {
-      toast.error(getErrorMessage(error, "Failed to update review status"));
-    } finally {
-      setActionLoading(null);
-    }
   };
 
   const handleReply = async (id: string) => {
@@ -168,7 +142,7 @@ export default function ReviewsContent({
       await adminService.replyToReview(id, replyText);
       setReplyingId(null);
       setReplyText("");
-      fetchData(activeFilter, search);
+      fetchData(search);
       toast.success("Reply sent");
     } catch (error) {
       toast.error(getErrorMessage(error, "Failed to send reply"));
@@ -176,6 +150,21 @@ export default function ReviewsContent({
       setActionLoading(null);
     }
   };
+
+  // Event filter list + narrowed rows: the admin review payload already
+  // carries event.id / event.title, so filtering needs no extra round trip.
+  const uniqueEvents = useMemo(
+    () =>
+      Array.from(
+        new Map(reviews.map((review) => [review.event.id, review.event])).values()
+      ),
+    [reviews]
+  );
+
+  const filteredReviews =
+    eventFilter === "ALL"
+      ? reviews
+      : reviews.filter((review) => review.event.id === eventFilter);
 
   if (loading && reviews.length === 0) return <LoadingSkeleton />;
 
@@ -246,7 +235,7 @@ export default function ReviewsContent({
       )}
 
       {/* Filters */}
-      <div className="flex items-center gap-4 mb-6">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:gap-4 mb-6">
         <div className="flex items-center gap-2 border rounded-lg px-3 py-2 flex-1 max-w-sm">
           <Search className="h-4 w-4 text-muted-foreground" />
           <Input
@@ -257,25 +246,25 @@ export default function ReviewsContent({
           />
           {searching && <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />}
         </div>
+        {/* Same event select pattern as the Registrations toolbar. */}
         <div className="flex gap-2">
-          {STATUS_FILTERS.map((filter) => (
-            <Button
-              key={filter}
-              variant={activeFilter === filter ? "default" : "outline"}
-              size="sm"
-              onClick={() => handleFilterChange(filter)}
-              className={
-                activeFilter === filter ? "bg-[#1a5c2a] hover:bg-[#144a22]" : ""
-              }
-            >
-              {filter.charAt(0) + filter.slice(1).toLowerCase()}
-            </Button>
-          ))}
+          <select
+            value={eventFilter}
+            onChange={(e) => setEventFilter(e.target.value)}
+            className="h-9 rounded-md border border-input bg-transparent px-3 text-sm"
+          >
+            <option value="ALL">{t.adminReviews.allEvents}</option>
+            {uniqueEvents.map((event) => (
+              <option key={event.id} value={event.id}>
+                {event.title}
+              </option>
+            ))}
+          </select>
         </div>
       </div>
 
       {/* Reviews List */}
-      {reviews.length === 0 ? (
+      {filteredReviews.length === 0 ? (
         <Card>
           <CardContent className="p-0">
             <EmptyState t={t} />
@@ -283,7 +272,7 @@ export default function ReviewsContent({
         </Card>
       ) : (
         <div className="space-y-4">
-          {reviews.map((review) => (
+          {filteredReviews.map((review) => (
             <Card key={review.id}>
               <CardContent className="p-6">
                 <div className="flex items-start justify-between mb-3">
@@ -335,24 +324,9 @@ export default function ReviewsContent({
                     <p className="text-sm">{review.removalReason}</p>
                   </div>
                 )}
-                <div className="flex gap-2 mt-4">
-                  {/* Reviews are auto-published (created APPROVED) and are never
-                      taken down — there is no Reject control, so genuine
-                      negative feedback always stays visible. Approve only
-                      serves legacy PENDING rows. */}
-                  {review.status === "PENDING" && (
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      className="text-[#1a5c2a] border-[#1a5c2a]"
-                      onClick={() =>
-                        handleStatusChange(review.id, "APPROVED")
-                      }
-                      disabled={actionLoading === review.id}
-                    >
-                      {t.adminReviews.approve}
-                    </Button>
-                  )}
+                {/* Reviews are published automatically on submission and are never taken
+                    down — genuine negative feedback always stays visible. */}
+                <div className="mt-4">
                   <Button
                     variant="ghost"
                     size="sm"
