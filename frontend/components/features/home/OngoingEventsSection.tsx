@@ -1,12 +1,16 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Skeleton } from "@/components/ui/skeleton";
 import { Calendar, MapPin, ChevronLeft, ChevronRight } from "lucide-react";
 import EventImage from "@/components/ui/event-image";
+import { eventService } from "@/services/event.service";
+import { fetchWithOneRetry } from "@/lib/retry-fetch";
+import { isSameCalendarDay } from "@/components/features/events/event-status";
 import { useLanguage } from "@/context/LanguageContext";
 import { formatDate } from "@/lib/format-date";
 import { DEFAULT_EVENT_LOCATION } from "@/constants/event-location";
@@ -21,6 +25,45 @@ export default function OngoingEventsSection({ events = [] }: OngoingEventsSecti
   const trackRef = useRef<HTMLDivElement>(null);
   const [canScrollPrev, setCanScrollPrev] = useState(false);
   const [canScrollNext, setCanScrollNext] = useState(false);
+  // Client-side recovery (mirrors UpcomingEventsSection): the SSR ongoing list
+  // is filtered with the SERVER clock, which can disagree with the browser
+  // clock (timezone/skew near midnight), emptying this section while the
+  // Events page and admin tabs — both browser-local — still show the event as
+  // ongoing. When the server delivered nothing, refetch real DB records and
+  // re-apply the same rule with the browser clock.
+  const [fallbackEvents, setFallbackEvents] = useState<Event[] | null>(null);
+  const [isFetchingFallback, setIsFetchingFallback] = useState(events.length === 0);
+
+  const ongoingEvents = useMemo(() => {
+    if (events.length > 0) return events;
+    if (!fallbackEvents) return [];
+    const now = new Date();
+    return fallbackEvents.filter((e) => {
+      if (e.isCancelled) return false;
+      const eventDate = new Date(e.eventDate);
+      return eventDate <= now && isSameCalendarDay(eventDate, now);
+    });
+  }, [events, fallbackEvents]);
+
+  useEffect(() => {
+    if (events.length > 0) return; // SSR data is enough
+    let active = true;
+    fetchWithOneRetry(() => eventService.getAll())
+      .then((res) => {
+        if (active && Array.isArray(res.data?.events)) {
+          setFallbackEvents(res.data.events);
+        }
+      })
+      .catch(() => {
+        // Settled failure: show the normal empty state below.
+      })
+      .finally(() => {
+        if (active) setIsFetchingFallback(false);
+      });
+    return () => {
+      active = false;
+    };
+  }, [events.length]);
 
   const updateScrollState = useCallback(() => {
     const el = trackRef.current;
@@ -40,7 +83,7 @@ export default function OngoingEventsSection({ events = [] }: OngoingEventsSecti
       el.removeEventListener("scroll", updateScrollState);
       window.removeEventListener("resize", updateScrollState);
     };
-  }, [events.length, updateScrollState]);
+  }, [ongoingEvents.length, updateScrollState]);
 
   const scrollByCard = (dir: 1 | -1) => {
     const el = trackRef.current;
@@ -64,7 +107,27 @@ export default function OngoingEventsSection({ events = [] }: OngoingEventsSecti
         </Link>
       </div>
 
-      {events.length === 0 ? (
+      {isFetchingFallback && ongoingEvents.length === 0 ? (
+        // The server delivered nothing — hold the layout with card skeletons
+        // while the client refetch runs, instead of flashing the "no events"
+        // empty state before real DB records arrive.
+        <div className="flex gap-6 overflow-hidden pb-2">
+          {Array.from({ length: 3 }).map((_, i) => (
+            <div
+              key={i}
+              className="shrink-0 w-[85vw] sm:w-[360px] rounded-lg border shadow-md overflow-hidden"
+            >
+              <Skeleton className="h-48 w-full" />
+              <div className="p-5 space-y-3">
+                <Skeleton className="h-5 w-3/4" />
+                <Skeleton className="h-4 w-1/2" />
+                <Skeleton className="h-4 w-2/3" />
+                <Skeleton className="h-10 w-full" />
+              </div>
+            </div>
+          ))}
+        </div>
+      ) : ongoingEvents.length === 0 ? (
         <div className="rounded-lg border border-dashed p-10 text-center">
           <p className="text-muted-foreground">{t.home.emptyEvents}</p>
         </div>
@@ -87,7 +150,7 @@ export default function OngoingEventsSection({ events = [] }: OngoingEventsSecti
             }}
             className="flex gap-6 overflow-x-auto scroll-smooth snap-x snap-mandatory pb-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1a5c2a] focus-visible:ring-offset-2 rounded-lg"
           >
-            {events.slice(0, 8).map((event) => {
+            {ongoingEvents.slice(0, 8).map((event) => {
               const regCount = event._count?.registrations || 0;
               return (
                 <Card
