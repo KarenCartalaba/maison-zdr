@@ -480,6 +480,17 @@ export const fr: AdminDict = {
       "Merci d\u2019avoir partagé votre expérience avec nous.",
     failedSubmitReview:
       "Échec de la publication de l\u2019avis",
+    editReview: "Modifier l\u2019avis",
+    updateReview: "Mettre \u00e0 jour l\u2019avis",
+    reviewUpdated: "Avis mis \u00e0 jour",
+    failedUpdateReview: "Échec de la mise \u00e0 jour de l\u2019avis",
+    deleteReview: "Supprimer l\u2019avis",
+    confirmDeleteReviewTitle: "Supprimer votre avis ?",
+    confirmDeleteReviewDescription:
+      "Votre avis sur «\u00a0{title}\u00a0» sera supprimé. Vous pourrez en \u00e9crire un nouveau à tout moment.",
+    confirmYesDelete: "Oui, supprimer",
+    reviewDeleted: "Avis supprimé",
+    failedDeleteReview: "Échec de la suppression de l\u2019avis",
 
     // SettingsTab
     accountSettings: "Paramètres du compte",

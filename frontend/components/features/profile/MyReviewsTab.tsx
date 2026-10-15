@@ -1,19 +1,24 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { Controller, useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { authService } from "@/services/auth.service";
 import { reviewService } from "@/services/review.service";
-import { Button } from "@/components/ui/button";
+import { getErrorMessage } from "@/lib/server-error";
+import { useConfirm } from "@/components/ui/confirm-dialog";
+import { Button, buttonVariants } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Field, FieldError, FieldGroup, FieldLabel } from "@/components/ui/field";
-import { Star, Loader2 } from "lucide-react";
+import { Star, Loader2, Pencil, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import EventImage from "@/components/ui/event-image";
+import { cn } from "@/lib/utils";
 import { useLanguage } from "@/context/LanguageContext";
 
 const reviewSchema = z.object({
@@ -32,15 +37,21 @@ interface MyReviewsTabProps {
 // remounts this tab via tabKey, which would reset a plain ref).
 const consumedHighlightEventIds = new Set<string>();
 
+const eventDateFormat = { weekday: "short", month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" } as const;
+
 export default function MyReviewsTab({ highlightEventId = null }: MyReviewsTabProps) {
   const { t, dateLocale } = useLanguage();
+  const router = useRouter();
   const [activeFilter, setActiveFilter] = useState<"all" | "5stars">("all");
-  const [showWriteModal, setShowWriteModal] = useState(false);
+  const [showModal, setShowModal] = useState(false);
   const [selectedPending, setSelectedPending] = useState<any | null>(null);
+  const [editingReview, setEditingReview] = useState<any | null>(null);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
   const [showSuccessAlert, setShowSuccessAlert] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [highlightedPendingId, setHighlightedPendingId] = useState<string | null>(null);
   const highlightConsumedRef = useRef(false);
+  const { confirm, dialog } = useConfirm();
 
   // Real data state
   const [reviews, setReviews] = useState<any[]>([]);
@@ -72,10 +83,42 @@ export default function MyReviewsTab({ highlightEventId = null }: MyReviewsTabPr
     ? reviews.filter((r: any) => r.rating === 5)
     : reviews;
 
+  const isEditing = editingReview !== null;
+
+  // The modal serves both "write" (pending item) and "edit" (own review);
+  // both render the same header image/title/date.
+  const modalEvent = editingReview
+    ? {
+        id: editingReview.event?.id,
+        title: editingReview.event?.title,
+        eventDate: editingReview.event?.eventDate,
+        gallery: editingReview.event?.gallery,
+      }
+    : selectedPending;
+
+  const closeModal = () => {
+    setShowModal(false);
+    setSelectedPending(null);
+    setEditingReview(null);
+  };
+
   const handleWriteReview = (pendingItem: any) => {
+    setEditingReview(null);
     setSelectedPending(pendingItem);
     form.reset({ rating: 0, title: "", comment: "" });
-    setShowWriteModal(true);
+    setShowModal(true);
+  };
+
+  // Edit opens the same form prefilled with what the guest already wrote.
+  const handleEditReview = (review: any) => {
+    setSelectedPending(null);
+    setEditingReview(review);
+    form.reset({
+      rating: review.rating ?? 0,
+      title: review.title ?? "",
+      comment: review.comment ?? "",
+    });
+    setShowModal(true);
   };
 
   // Deep-link consume-once: auto-open the Write modal for the linked event.
@@ -102,7 +145,47 @@ export default function MyReviewsTab({ highlightEventId = null }: MyReviewsTabPr
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [highlightEventId, loading, pending]);
 
+  // Backend validation errors land on the matching field; anything else is a toast.
+  const surfaceSubmitError = (error: any, fallback: string) => {
+    if (error?.errors) {
+      error.errors.forEach((err: { path: string; message: string }) => {
+        const fieldName = err.path.replace("body.", "") as keyof ReviewValues;
+        if (fieldName in form.getValues()) {
+          form.setError(fieldName, { type: "server", message: err.message });
+        }
+      });
+    } else {
+      toast.error(getErrorMessage(error, fallback));
+    }
+  };
+
   const handleSubmitReview = async (data: ReviewValues) => {
+    if (editingReview) {
+      setIsSubmitting(true);
+      const title = data.title?.trim() ? data.title.trim() : null;
+      try {
+        await reviewService.update(editingReview.id, {
+          rating: data.rating,
+          title,
+          comment: data.comment,
+        });
+        setReviews((prev) =>
+          prev.map((r: any) =>
+            r.id === editingReview.id
+              ? { ...r, rating: data.rating, title, comment: data.comment }
+              : r
+          )
+        );
+        closeModal();
+        toast.success(t.profile.reviewUpdated);
+      } catch (error: any) {
+        surfaceSubmitError(error, t.profile.failedUpdateReview);
+      } finally {
+        setIsSubmitting(false);
+      }
+      return;
+    }
+
     if (!selectedPending) return;
     setIsSubmitting(true);
     try {
@@ -112,8 +195,7 @@ export default function MyReviewsTab({ highlightEventId = null }: MyReviewsTabPr
         title: data.title,
         comment: data.comment,
       });
-      setShowWriteModal(false);
-      setSelectedPending(null);
+      closeModal();
 
       // Refresh data
       const [reviewsRes, pendingRes] = await Promise.all([
@@ -127,18 +209,37 @@ export default function MyReviewsTab({ highlightEventId = null }: MyReviewsTabPr
       setTimeout(() => setShowSuccessAlert(false), 3000);
       toast.success(t.profile.reviewSubmitted);
     } catch (error: any) {
-      if (error.errors) {
-        error.errors.forEach((err: { path: string; message: string }) => {
-          const fieldName = err.path.replace("body.", "") as keyof ReviewValues;
-          if (fieldName in form.getValues()) {
-            form.setError(fieldName, { type: "server", message: err.message });
-          }
-        });
-      } else {
-        toast.error(error.message || t.profile.failedSubmitReview);
-      }
+      surfaceSubmitError(error, t.profile.failedSubmitReview);
     } finally {
       setIsSubmitting(false);
+    }
+  };
+
+  // Optimistic delete: the card leaves the list immediately and is put back
+  // at its old position if the server refuses.
+  const handleDeleteReview = async (review: any) => {
+    const index = reviews.findIndex((r: any) => r.id === review.id);
+    setDeletingId(review.id);
+    setReviews((prev) => prev.filter((r: any) => r.id !== review.id));
+    try {
+      await reviewService.remove(review.id);
+      // The freed (userId, eventId) slot makes the event reviewable again.
+      authService
+        .getPendingReviews()
+        .then((res) => setPending(res.data?.pending ?? []))
+        .catch(() => {});
+      // Refresh server-side profile stats so "Reviews Written" follows the delete.
+      router.refresh();
+      toast.success(t.profile.reviewDeleted);
+    } catch (error: any) {
+      setReviews((prev) => {
+        const next = [...prev];
+        next.splice(index < 0 ? next.length : index, 0, review);
+        return next;
+      });
+      toast.error(getErrorMessage(error, t.profile.failedDeleteReview));
+    } finally {
+      setDeletingId(null);
     }
   };
 
@@ -176,6 +277,7 @@ export default function MyReviewsTab({ highlightEventId = null }: MyReviewsTabPr
 
   return (
     <div>
+      {dialog}
       <div className="mb-6">
         <h2 className="text-2xl font-bold">{t.profile.myReviewsHeading}</h2>
         <p className="text-sm text-muted-foreground mt-1">
@@ -202,7 +304,7 @@ export default function MyReviewsTab({ highlightEventId = null }: MyReviewsTabPr
                   <div className="flex-1 min-w-0">
                     <p className="font-medium text-sm truncate">{item.title}</p>
                     <p className="text-xs text-muted-foreground">
-                      {new Date(item.eventDate).toLocaleDateString(dateLocale, { weekday: "short", month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" })}
+                      {new Date(item.eventDate).toLocaleDateString(dateLocale, eventDateFormat)}
                     </p>
                   </div>
                   <Button
@@ -255,20 +357,72 @@ export default function MyReviewsTab({ highlightEventId = null }: MyReviewsTabPr
       ) : (
         <div className="space-y-4">
           {filteredReviews.map((review: any) => (
-            <Card key={review.id}>
+            <Card
+              key={review.id}
+              className="group relative overflow-hidden transition-all duration-300 hover:border-[#1a5c2a]/40 hover:shadow-md"
+            >
+              {/* Maison green rail — draws itself down the card edge on hover */}
+              <span
+                aria-hidden="true"
+                className="pointer-events-none absolute inset-y-0 left-0 w-1 origin-top scale-y-0 bg-gradient-to-b from-[#1a5c2a] to-[#144a22] transition-transform duration-300 ease-out group-hover:scale-y-100"
+              />
               <CardContent className="p-6">
-                <div className="flex items-center gap-4 mb-4">
-                  <EventImage src={review.event?.gallery?.[0]} title={review.event?.title} className="h-14 w-14 rounded-lg shrink-0" />
-                  <div className="flex-1">
-                    <p className="font-semibold">{review.event?.title}</p>
-                    <p className="text-sm text-muted-foreground">
-                      {review.event?.eventDate ? new Date(review.event.eventDate).toLocaleDateString(dateLocale, { weekday: "short", month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" }) : ""}
-                    </p>
+                <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+                  <div className="flex min-w-0 flex-1 items-center gap-4">
+                    <EventImage src={review.event?.gallery?.[0]} title={review.event?.title} className="h-14 w-14 rounded-lg shrink-0" />
+                    <div className="min-w-0">
+                      <p className="font-semibold truncate">{review.event?.title}</p>
+                      <p className="text-sm text-muted-foreground">
+                        {review.event?.eventDate ? new Date(review.event.eventDate).toLocaleDateString(dateLocale, eventDateFormat) : ""}
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* Actions sit right of the content on desktop, below it on mobile */}
+                  <div className="flex shrink-0 items-center justify-end gap-1">
+                    <Link
+                      href={`/events/${review.event?.id}`}
+                      className={cn(
+                        buttonVariants({ variant: "outline", size: "sm" }),
+                        "mr-1 flex-1 border-[#1a5c2a]/30 text-[#1a5c2a] transition-colors hover:border-[#1a5c2a] hover:bg-[#1a5c2a] hover:text-white sm:flex-none"
+                      )}
+                    >
+                      {t.profile.viewDetails}
+                    </Link>
+                    <span aria-hidden="true" className="hidden h-5 w-px bg-border sm:block" />
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="text-muted-foreground transition-colors hover:bg-[#1a5c2a]/10 hover:text-[#1a5c2a]"
+                      aria-label={t.profile.editReview}
+                      title={t.profile.editReview}
+                      onClick={() => handleEditReview(review)}
+                    >
+                      <Pencil aria-hidden="true" />
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="text-muted-foreground transition-colors hover:bg-destructive/10 hover:text-destructive"
+                      aria-label={t.profile.deleteReview}
+                      title={t.profile.deleteReview}
+                      disabled={deletingId === review.id}
+                      onClick={() =>
+                        confirm({
+                          title: t.profile.confirmDeleteReviewTitle,
+                          description: t.profile.confirmDeleteReviewDescription.replace("{title}", review.event?.title ?? ""),
+                          confirmLabel: t.profile.confirmYesDelete,
+                          onConfirm: () => handleDeleteReview(review),
+                        })
+                      }
+                    >
+                      {deletingId === review.id ? <Loader2 aria-hidden="true" className="animate-spin" /> : <Trash2 aria-hidden="true" />}
+                    </Button>
                   </div>
                 </div>
-                <div className="space-y-2">
+                <div className="mt-4 space-y-2">
                   <div className="flex items-center gap-2">
-                    <div className="flex gap-0.5">
+                    <div className="flex gap-0.5" role="img" aria-label={`${review.rating}/5`}>
                       {Array.from({ length: 5 }).map((_, i) => (
                         <Star
                           key={i}
@@ -291,20 +445,20 @@ export default function MyReviewsTab({ highlightEventId = null }: MyReviewsTabPr
         </div>
       )}
 
-      {/* Write Review Modal */}
-      {showWriteModal && selectedPending && (
+      {/* Write / Edit Review Modal */}
+      {showModal && modalEvent && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
           <Card className="max-w-lg w-full">
             <CardContent className="p-8 space-y-6">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
-                  <EventImage src={selectedPending.gallery?.[0]} title={selectedPending.title} className="h-12 w-12 rounded-lg" />
+                  <EventImage src={modalEvent.gallery?.[0]} title={modalEvent.title} className="h-12 w-12 rounded-lg" />
                   <div>
-                    <h3 className="text-lg font-bold">{t.profile.writeReview}</h3>
-                    <p className="text-sm text-muted-foreground">{selectedPending.title} - {new Date(selectedPending.eventDate).toLocaleDateString(dateLocale, { weekday: "short", month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" })}</p>
+                    <h3 className="text-lg font-bold">{isEditing ? t.profile.editReview : t.profile.writeReview}</h3>
+                    <p className="text-sm text-muted-foreground">{modalEvent.title} - {modalEvent.eventDate ? new Date(modalEvent.eventDate).toLocaleDateString(dateLocale, eventDateFormat) : ""}</p>
                   </div>
                 </div>
-                <Button variant="ghost" size="icon" onClick={() => setShowWriteModal(false)}>
+                <Button variant="ghost" size="icon" onClick={closeModal}>
                   ✕
                 </Button>
               </div>
@@ -325,6 +479,8 @@ export default function MyReviewsTab({ highlightEventId = null }: MyReviewsTabPr
                                 key={star}
                                 type="button"
                                 onClick={() => field.onChange(star)}
+                                aria-label={`${star}/5`}
+                                aria-pressed={field.value === star}
                                 className={`hover:text-yellow-500 ${
                                   star <= field.value ? "text-yellow-400" : "text-muted"
                                 }`}
@@ -380,12 +536,12 @@ export default function MyReviewsTab({ highlightEventId = null }: MyReviewsTabPr
                 </FieldGroup>
 
                 <div className="flex justify-end gap-4 mt-6">
-                  <Button type="button" variant="outline" onClick={() => setShowWriteModal(false)}>{t.profile.back}</Button>
+                  <Button type="button" variant="outline" onClick={closeModal}>{t.profile.back}</Button>
                   <Button type="submit" className="bg-[#1a5c2a] hover:bg-[#144a22]" disabled={isSubmitting}>
                     {isSubmitting ? (
                       <><Loader2 className="mr-2 h-4 w-4 animate-spin" />{t.profile.submitting}</>
                     ) : (
-                      t.profile.postReview
+                      isEditing ? t.profile.updateReview : t.profile.postReview
                     )}
                   </Button>
                 </div>

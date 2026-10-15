@@ -21,6 +21,28 @@ export class ReviewRepository {
     return prisma.event.findUnique({ where: { id } });
   };
 
+  /**
+   * Update the guest-editable fields of a review.
+   * createdAt is left untouched so the original "Posted" date survives an edit.
+   */
+  public updateById = async (
+    id: string,
+    data: { rating: number; title?: string | null; comment: string },
+  ) => {
+    return prisma.review.update({
+      where: { id },
+      data,
+      include: {
+        user: { select: { id: true, name: true, email: true } },
+        event: { select: { id: true, title: true } },
+      },
+    });
+  };
+
+  public deleteById = async (id: string) => {
+    return prisma.review.delete({ where: { id } });
+  };
+
   // ==================== Finders ====================
 
   /**

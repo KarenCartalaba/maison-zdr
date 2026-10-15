@@ -471,6 +471,17 @@ export const en = {
     reviewPosted: "Review Posted",
     thankYouReview: "Thank you for sharing your experience with us.",
     failedSubmitReview: "Failed to submit review",
+    editReview: "Edit review",
+    updateReview: "Update Review",
+    reviewUpdated: "Review updated",
+    failedUpdateReview: "Failed to update review",
+    deleteReview: "Delete review",
+    confirmDeleteReviewTitle: "Delete your review?",
+    confirmDeleteReviewDescription:
+      "Your review of “{title}” will be removed. You can write a new one any time.",
+    confirmYesDelete: "Yes, delete",
+    reviewDeleted: "Review deleted",
+    failedDeleteReview: "Failed to delete review",
 
     // SettingsTab
     accountSettings: "Account Settings",
