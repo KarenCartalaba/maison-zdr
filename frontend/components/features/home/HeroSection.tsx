@@ -45,24 +45,23 @@ export default function HeroSection() {
 
         {/* Image Collage */}
         <div className="relative h-[400px] md:h-[500px]">
-          {/* TODO: Replace placeholder images with actual bar/venue photos */}
           <div className="absolute top-0 left-0 w-[60%] h-[65%] rounded-2xl overflow-hidden bg-muted">
             <img
-              src="/images/hero-1.jpg"
+              src="/images/home1.jpg"
               alt="Bar interior"
               className="w-full h-full object-cover"
             />
           </div>
           <div className="absolute top-0 right-0 w-[35%] h-[45%] rounded-2xl overflow-hidden bg-muted">
             <img
-              src="/images/hero-2.jpg"
+              src="/images/home2.jpg"
               alt="Dart board"
               className="w-full h-full object-cover"
             />
           </div>
           <div className="absolute bottom-0 right-0 w-[45%] h-[50%] rounded-2xl overflow-hidden bg-muted">
             <img
-              src="/images/hero-3.jpg"
+              src="/images/home3.jpg"
               alt="Venue exterior"
               className="w-full h-full object-cover"
             />
