@@ -10,9 +10,8 @@ export default function EventHeroBanner() {
   return (
     <div className="container px-4 pt-6 md:pt-8">
       <section className="relative h-[300px] md:h-[400px] overflow-hidden rounded-2xl">
-      {/* TODO: Replace with actual venue exterior image */}
       <img
-        src="/images/events-hero.jpg"
+        src="/images/herobanner.jpg"
         alt="Zone de Rassemblement venue"
         className="w-full h-full object-cover"
       />
