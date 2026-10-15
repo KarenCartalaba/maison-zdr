@@ -10,38 +10,59 @@ import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useLanguage } from "@/context/LanguageContext";
 import { formatDate } from "@/lib/format-date";
+import { fetchWithOneRetry } from "@/lib/retry-fetch";
+import type { Event } from "@/types";
 
 interface EventDetailContentProps {
   eventId: string;
-  initialEvent?: any;
+  initialEvent?: Event | null;
+}
+
+/** Settled result of the client fallback fetch, keyed by the id it was for. */
+interface FetchedEvent {
+  id: string;
+  event: Event | null;
 }
 
 export default function EventDetailContent({ eventId, initialEvent }: EventDetailContentProps) {
-  const [event, setEvent] = useState<any>(initialEvent || null);
-  const [loading, setLoading] = useState(!initialEvent);
-  const [error, setError] = useState(false);
   const { t, dateLocale } = useLanguage();
+  const [fetched, setFetched] = useState<FetchedEvent | null>(null);
 
-  // Reflect the latest server data; avoid locking into "Not Found" when
-  // initialEvent is null from a failed SSR fetch — give the client fetch
-  // a chance to populate data before committing to the error state.
+  // Client fallback when the SSR fetch returned nothing (404 or a transient
+  // API failure): fetch here before deciding anything. `initialEvent` and
+  // `eventId` are deps so a later SSR payload or a route change cancels this
+  // request instead of racing it.
   useEffect(() => {
-    if (initialEvent) {
-      setEvent(initialEvent);
-      setLoading(false);
-    }
-  }, [initialEvent]);
+    if (initialEvent || !eventId) return; // Already have SSR data / nothing to fetch with
+    let active = true;
 
-  useEffect(() => {
-    if (initialEvent) return; // Already have SSR data
-    eventService.getById(eventId)
+    // One automatic retry for transient failures (network blip or a single
+    // rejection from the shared 401-refresh queue in services/axios.ts). The
+    // promise settles only after the retry, so nothing is written between the
+    // first rejection and a successful replay — no "Not Found" flash.
+    fetchWithOneRetry(() => eventService.getById(eventId))
       .then((res) => {
-        if (res.data) setEvent(res.data.event);
-        else setError(true);
+        if (!active) return;
+        setFetched({ id: eventId, event: res.data?.event ?? null });
       })
-      .catch(() => setError(true))
-      .finally(() => setLoading(false));
-  }, [eventId]);
+      .catch(() => {
+        if (!active) return;
+        setFetched({ id: eventId, event: null });
+      });
+
+    return () => {
+      active = false;
+    };
+  }, [eventId, initialEvent]);
+
+  // Derived, never stored: the view is always in exactly one of three states —
+  // fresh SSR data, in-flight skeleton, or a settled fetch result for THIS id.
+  // Therefore "Not Found" requires a settled fetch with nothing to show; it
+  // cannot appear while a request is in flight, and a retry (new id / new SSR
+  // payload) resets it automatically.
+  const settled = fetched?.id === eventId ? fetched : null;
+  const event = initialEvent ?? settled?.event ?? null;
+  const loading = !initialEvent && !!eventId && !settled;
 
   if (loading) {
     return (
@@ -69,7 +90,10 @@ export default function EventDetailContent({ eventId, initialEvent }: EventDetai
     );
   }
 
-  if (error || !event) {
+  // Reached only when loading === false (the branch above returned while any
+  // request was in flight) — a settled fetch with nothing to show, i.e. a real
+  // "not found", never a transient one.
+  if (!event) {
     return (
       <div className="container px-4 py-24 text-center">
         <h1 className="text-2xl font-bold mb-2">{t.events.eventNotFound}</h1>

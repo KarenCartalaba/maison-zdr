@@ -563,8 +563,10 @@ export const en = {
   adminNews: {
     title: "News Management",
     subtitle: "Create and manage news articles",
+    searchPlaceholder: "Search articles...",
     createNew: "CREATE NEW ARTICLE",
     noNews: "No news articles yet. Create your first article!",
+    noMatches: "No articles match your search",
     colTitle: "TITLE",
     colAuthor: "AUTHOR",
     colCreated: "CREATED",
@@ -647,13 +649,14 @@ export const en = {
     colActions: "ACTIONS",
     checkedIn: "Checked In",
     pending: "Pending",
+    cancelled: "Cancelled",
     checkingIn: "Checking in...",
     checkIn: "Check In",
     checkInList: "Check-in List",
     expectedGuests: "Expected Guests",
     checkedInLabel: "Checked In",
     pendingLabel: "Pending",
-    searchPlaceholder: "Search by name or email...",
+    searchPlaceholder: "Search by name, email or reference...",
     emptyTitle: "No registrations for this event",
     emptyDesc: "There are no registrations to check in.",
     selectEventHint: "Select an event above to view check-in details.",
@@ -741,6 +744,7 @@ export const en = {
   adminAnalytics: {
     title: "Analytics",
     subtitle: "Event performance and insights",
+    searchPlaceholder: "Search events...",
     statRegistrations: "Total Registrations",
     statUsers: "Total Users",
     statAvgRating: "Avg. Rating",
@@ -759,6 +763,7 @@ export const en = {
     emptyDesc: "Analytics will appear once you have events and registrations.",
     noTrendData: "No trend data available",
     noPerfData: "No performance data available",
+    noMatches: "No events match your search",
   },
 
   adminWorkspace: {

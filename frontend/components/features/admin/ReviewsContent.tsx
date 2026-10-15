@@ -373,6 +373,21 @@ export default function ReviewsContent({
                       </Button>
                     </>
                   )}
+                  {/* Reviews are auto-published (created APPROVED), so the only
+                      moderation action a live review needs is a takedown:
+                      APPROVED → REJECTED with an optional removal reason.
+                      Publishing itself never requires manual approval. */}
+                  {review.status === "APPROVED" && (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="text-red-500 border-red-500"
+                      onClick={() => promptReject(review.id)}
+                      disabled={actionLoading === review.id}
+                    >
+                      {t.adminReviews.reject}
+                    </Button>
+                  )}
                   <Button
                     variant="ghost"
                     size="sm"

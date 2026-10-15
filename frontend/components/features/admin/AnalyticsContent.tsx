@@ -1,9 +1,9 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Input } from "@/components/ui/input";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { TrendingUp, Users, Calendar, Star, Inbox } from "lucide-react";
+import { Card, CardAction, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { TrendingUp, Users, Calendar, Star, Inbox, Search, Loader2 } from "lucide-react";
 import {
   ChartContainer,
   ChartTooltip,
@@ -89,6 +89,38 @@ export default function AnalyticsContent({ initialData = null }: AnalyticsConten
   const [data, setData] = useState<AnalyticsOverview | null>(initialData);
   const [loading, setLoading] = useState(!initialData);
   const { t, dateLocale } = useLanguage();
+
+  // Debounced search over the event-performance table rows.
+  const [searchTerm, setSearchTerm] = useState("");
+  const [appliedSearch, setAppliedSearch] = useState("");
+  const [isSearching, setIsSearching] = useState(false);
+  const searchTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const handleSearchInput = (value: string) => {
+    setSearchTerm(value);
+    setIsSearching(true);
+    if (searchTimer.current) clearTimeout(searchTimer.current);
+    searchTimer.current = setTimeout(() => {
+      setAppliedSearch(value);
+      setIsSearching(false);
+      searchTimer.current = null;
+    }, 400);
+  };
+
+  // Drop the pending debounce tick on unmount.
+  useEffect(() => {
+    return () => {
+      if (searchTimer.current) clearTimeout(searchTimer.current);
+    };
+  }, []);
+
+  // Client-side filter: match the event title (case-insensitive).
+  const filteredPerformance = useMemo(() => {
+    const rows = data?.eventPerformance ?? [];
+    const term = appliedSearch.trim().toLowerCase();
+    if (!term) return rows;
+    return rows.filter((row) => row.title.toLowerCase().includes(term));
+  }, [data?.eventPerformance, appliedSearch]);
 
   const performanceColumns: DataTableColumn[] = useMemo(() => [
     {
@@ -334,9 +366,33 @@ export default function AnalyticsContent({ initialData = null }: AnalyticsConten
         <Card>
           <CardHeader>
             <CardTitle className="text-base">{t.adminAnalytics.chartEventPerf}</CardTitle>
+            {/* Client-side search over the table rows */}
+            <CardAction>
+              <div className="flex w-72 items-center gap-2 rounded-lg border px-3 py-2">
+                <Search className="h-4 w-4 shrink-0 text-muted-foreground" />
+                <Input
+                  placeholder={t.adminAnalytics.searchPlaceholder}
+                  value={searchTerm}
+                  onChange={(e) => handleSearchInput(e.target.value)}
+                  className="border-0 bg-transparent outline-none w-full shadow-none focus-visible:ring-0"
+                />
+                {isSearching && <Loader2 className="h-4 w-4 shrink-0 animate-spin text-muted-foreground" />}
+              </div>
+            </CardAction>
           </CardHeader>
           <CardContent className="p-0">
-            <DataTable columns={performanceColumns} data={data.eventPerformance ?? []} enablePagination enableSorting pageSize={10} />
+            <DataTable
+              columns={performanceColumns}
+              data={filteredPerformance}
+              emptyContent={
+                <div className="px-6 py-8 text-center text-sm text-muted-foreground">
+                  {t.adminAnalytics.noMatches}
+                </div>
+              }
+              enablePagination
+              enableSorting
+              pageSize={10}
+            />
           </CardContent>
         </Card>
       )}

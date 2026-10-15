@@ -2,7 +2,7 @@
 
 import { useAuth } from "@/context/AuthContext";
 import { useLanguage, type Locale } from "@/context/LanguageContext";
-import { Search, Check, User } from "lucide-react";
+import { Check, User } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -36,12 +36,6 @@ export default function AdminHeader() {
   return (
     <header className="sticky top-0 z-40 border-b bg-white px-8 py-3">
       <div className="flex items-center justify-between">
-        {/* Search Bar */}
-        <div className="flex items-center gap-2  px-4 py-2 w-80">
-          
-          
-        </div>
-
         {/* Right Side */}
         <div className="flex items-center gap-4">
           {/* Language Selector (per-browser only — stored in localStorage) */}

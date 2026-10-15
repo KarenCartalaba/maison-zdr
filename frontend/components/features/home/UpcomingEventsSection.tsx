@@ -1,14 +1,18 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Skeleton } from "@/components/ui/skeleton";
 import { Calendar, MapPin, ChevronLeft, ChevronRight } from "lucide-react";
 import EventImage from "@/components/ui/event-image";
+import { eventService } from "@/services/event.service";
 import { useLanguage } from "@/context/LanguageContext";
 import { formatDate } from "@/lib/format-date";
+import { selectUpcomingEvents } from "@/lib/upcoming-events";
+import { fetchWithOneRetry } from "@/lib/retry-fetch";
 import type { Event } from "@/types";
 
 interface UpcomingEventsSectionProps {
@@ -20,6 +24,13 @@ export default function UpcomingEventsSection({ events = [] }: UpcomingEventsSec
   const trackRef = useRef<HTMLDivElement>(null);
   const [canScrollPrev, setCanScrollPrev] = useState(false);
   const [canScrollNext, setCanScrollNext] = useState(false);
+  // Client-side fallback: the SSR fetch on the home page can fail (the server
+  // helper answers with an empty list instead of throwing). Mirrors
+  // EventsContent: when the server gave us nothing, refetch from the browser
+  // so published upcoming events still appear (real DB records, not a stale
+  // empty state).
+  const [fallbackEvents, setFallbackEvents] = useState<Event[] | null>(null);
+  const [isFetchingFallback, setIsFetchingFallback] = useState(events.length === 0);
 
   const updateScrollState = useCallback(() => {
     const el = trackRef.current;
@@ -28,6 +39,15 @@ export default function UpcomingEventsSection({ events = [] }: UpcomingEventsSec
     setCanScrollPrev(el.scrollLeft > 1);
     setCanScrollNext(el.scrollLeft < maxScroll - 1);
   }, []);
+
+  // Single source of truth for what renders: cancelled/past excluded, soonest
+  // first. Selection runs here too so the ordering is guaranteed immediately
+  // before slice(0, 8), regardless of whether data came from SSR or the
+  // client refetch.
+  const upcomingEvents = useMemo(
+    () => selectUpcomingEvents(events.length > 0 ? events : fallbackEvents),
+    [events, fallbackEvents]
+  );
 
   useEffect(() => {
     updateScrollState();
@@ -39,7 +59,33 @@ export default function UpcomingEventsSection({ events = [] }: UpcomingEventsSec
       el.removeEventListener("scroll", updateScrollState);
       window.removeEventListener("resize", updateScrollState);
     };
-  }, [events.length, updateScrollState]);
+  }, [upcomingEvents.length, updateScrollState]);
+
+  // Refetch only when the server delivered nothing (SSR failure or empty
+  // first paint). The skeleton stays up until the request settles (initial
+  // state is `events.length === 0`), so the "no events" empty state never
+  // flashes before real data arrives.
+  useEffect(() => {
+    if (events.length > 0) return; // SSR data is enough
+    let active = true;
+    // One retry for transient failures so a single blip (e.g. a rejection from
+    // the shared 401-refresh queue) doesn't leave the section empty.
+    fetchWithOneRetry(() => eventService.getAll())
+      .then((res) => {
+        if (active && Array.isArray(res.data?.events)) {
+          setFallbackEvents(res.data.events);
+        }
+      })
+      .catch(() => {
+        // Settled failure: show the normal empty state below.
+      })
+      .finally(() => {
+        if (active) setIsFetchingFallback(false);
+      });
+    return () => {
+      active = false;
+    };
+  }, [events.length]);
 
   const scrollByCard = (dir: 1 | -1) => {
     const el = trackRef.current;
@@ -63,7 +109,28 @@ export default function UpcomingEventsSection({ events = [] }: UpcomingEventsSec
         </Link>
       </div>
 
-      {events.length === 0 ? (
+      {isFetchingFallback && upcomingEvents.length === 0 ? (
+        // The server delivered nothing — hold the layout with card skeletons
+        // while the client refetch runs, instead of flashing the "no events"
+        // empty state before real DB records arrive.
+        <div className="flex gap-6 overflow-hidden pb-2">
+          {Array.from({ length: 3 }).map((_, i) => (
+            <div
+              key={i}
+              className="shrink-0 w-[85vw] sm:w-[360px] rounded-lg border shadow-md overflow-hidden"
+            >
+              <Skeleton className="h-48 w-full" />
+              <div className="p-5 space-y-3">
+                <Skeleton className="h-5 w-3/4" />
+                <Skeleton className="h-4 w-1/2" />
+                <Skeleton className="h-4 w-2/3" />
+                <Skeleton className="h-2 w-full" />
+                <Skeleton className="h-10 w-full" />
+              </div>
+            </div>
+          ))}
+        </div>
+      ) : upcomingEvents.length === 0 ? (
         <div className="rounded-lg border border-dashed p-10 text-center">
           <p className="text-muted-foreground">{t.home.emptyEvents}</p>
         </div>
@@ -86,7 +153,7 @@ export default function UpcomingEventsSection({ events = [] }: UpcomingEventsSec
             }}
             className="flex gap-6 overflow-x-auto scroll-smooth snap-x snap-mandatory pb-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1a5c2a] focus-visible:ring-offset-2 rounded-lg"
           >
-            {events.slice(0, 8).map((event) => {
+            {upcomingEvents.slice(0, 8).map((event) => {
               const regCount = event._count?.registrations || 0;
               return (
                 <Card

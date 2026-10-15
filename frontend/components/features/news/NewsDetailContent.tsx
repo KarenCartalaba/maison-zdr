@@ -9,6 +9,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { ArrowLeft, Calendar, Newspaper, Quote } from "lucide-react";
 import { useLanguage } from "@/context/LanguageContext";
 import { formatDate } from "@/lib/format-date";
+import { fetchWithOneRetry } from "@/lib/retry-fetch";
 import { AuthorAvatar } from "@/components/features/news/author-avatar";
 import type { News } from "@/types";
 
@@ -17,42 +18,52 @@ interface NewsDetailContentProps {
   newsId?: string;
 }
 
+/** Settled result of the client fallback fetch, keyed by the id it was for. */
+interface FetchedNews {
+  id: string;
+  news: News | null;
+}
+
 export default function NewsDetailContent({ initialNews, newsId }: NewsDetailContentProps) {
   const { t, dateLocale } = useLanguage();
-  const [news, setNews] = useState<News | null>(initialNews);
-  const [loading, setLoading] = useState(!initialNews);
+  const [fetched, setFetched] = useState<FetchedNews | null>(null);
 
-// Reflect the latest server data, and retry once on the client when the
-// server-side fetch returned nothing (404 or a transient API failure) so a
-// brief backend hiccup does not permanently render the "not found" state.
-useEffect(() => {
-    setNews(initialNews);
-    if (initialNews) {
-      setLoading(false);
-      return;
-    }
-    if (!newsId) {
-      // Don't permanently lock into "Not Found" when initialNews is null;
-      // give the client fetch a chance to populate data.
-      return;
-    }
-    let cancelled = false;
-    setLoading(true);
-    newsService
-      .getById(newsId)
+  // Client fallback when the server-side fetch returned nothing (404 or a
+  // transient API failure) so a brief backend hiccup does not permanently
+  // render "not found". `initialNews` and `newsId` are deps so a later SSR
+  // payload or a route change cancels this request instead of racing it.
+  useEffect(() => {
+    if (initialNews || !newsId) return; // Already have SSR data / nothing to fetch with
+    let active = true;
+
+    // One automatic retry for transient failures (network blip or a single
+    // rejection from the shared 401-refresh queue in services/axios.ts). The
+    // promise settles only after the retry, so nothing is written between the
+    // first rejection and a successful replay — no "Not Found" flash.
+    fetchWithOneRetry(() => newsService.getById(newsId))
       .then((res) => {
-        if (!cancelled) setNews(res.data?.news ?? null);
+        if (!active) return;
+        setFetched({ id: newsId, news: res.data?.news ?? null });
       })
       .catch(() => {
-        if (!cancelled) setNews(null);
-      })
-      .finally(() => {
-        if (!cancelled) setLoading(false);
+        if (!active) return;
+        setFetched({ id: newsId, news: null });
       });
+
     return () => {
-      cancelled = true;
+      active = false;
     };
   }, [initialNews, newsId]);
+
+  // Derived, never stored: the view is always in exactly one of three states —
+  // fresh SSR data, in-flight skeleton, or a settled fetch result for THIS id.
+  // Therefore "Not Found" requires a settled fetch with nothing to show; it
+  // cannot appear while a request is in flight (a null SSR payload never
+  // clears an already-rendered article either), and a retry resets it
+  // automatically.
+  const settled = fetched && newsId && fetched.id === newsId ? fetched : null;
+  const news = initialNews ?? settled?.news ?? null;
+  const loading = !initialNews && !!newsId && !settled;
 
   if (loading) {
     return (
@@ -70,6 +81,9 @@ useEffect(() => {
     );
   }
 
+  // Reached only when loading === false (the branch above returned while any
+  // request was in flight) — a settled fetch with nothing to show, i.e. a real
+  // "not found", never a transient one.
   if (!news) {
     return (
       <div className="container max-w-4xl mx-auto px-4 py-16">

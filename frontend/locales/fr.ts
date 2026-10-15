@@ -576,8 +576,10 @@ export const fr: AdminDict = {
   adminNews: {
     title: "Gestion des actualités",
     subtitle: "Créer et gérer les articles d'actualité",
+    searchPlaceholder: "Rechercher des articles...",
     createNew: "CRÉER UN ARTICLE",
     noNews: "Pas encore d'articles. Créez votre premier article !",
+    noMatches: "Aucun article ne correspond à votre recherche",
     colTitle: "TITRE",
     colAuthor: "AUTEUR",
     colCreated: "CRÉÉ LE",
@@ -660,13 +662,14 @@ export const fr: AdminDict = {
     colActions: "ACTIONS",
     checkedIn: "Pointé",
     pending: "En attente",
+    cancelled: "Annulé",
     checkingIn: "Pointage en cours...",
     checkIn: "Pointer",
     checkInList: "Liste de pointage",
     expectedGuests: "Invités attendus",
     checkedInLabel: "Pointés",
     pendingLabel: "En attente",
-    searchPlaceholder: "Rechercher par nom ou e-mail...",
+    searchPlaceholder: "Rechercher par nom, e-mail ou référence...",
     emptyTitle: "Aucune inscription pour cet événement",
     emptyDesc: "Il n'y a pas d'inscriptions à pointer.",
     selectEventHint: "Sélectionnez un événement ci-dessus pour voir les détails de pointage.",
@@ -754,6 +757,7 @@ export const fr: AdminDict = {
   adminAnalytics: {
     title: "Analyses",
     subtitle: "Performance des événements et insights",
+    searchPlaceholder: "Rechercher des événements...",
     statRegistrations: "Inscriptions totales",
     statUsers: "Utilisateurs totaux",
     statAvgRating: "Note moy.",
@@ -772,6 +776,7 @@ export const fr: AdminDict = {
     emptyDesc: "Les analyses apparaîtront une fois que vous aurez des événements et des inscriptions.",
     noTrendData: "Aucune donnée de tendance disponible",
     noPerfData: "Aucune donnée de performance disponible",
+    noMatches: "Aucun événement ne correspond à votre recherche",
   },
 
   adminWorkspace: {

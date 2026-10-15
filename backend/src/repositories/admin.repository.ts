@@ -268,10 +268,24 @@ export class AdminRepository {
     });
   };
 
+  /**
+   * Events offered on the check-in desk. `_count` only counts ACTIVE
+   * registrations (CANCELLED excluded) and each event carries its active
+   * registrations so the service can expose `expectedGuests` — the same
+   * registrants-plus-plus-ones definition the roster stats use.
+   */
   public getAllCheckInEvents = async () => {
     return prisma.event.findMany({
       where: { isCancelled: false },
-      include: { _count: { select: { registrations: true } } },
+      include: {
+        registrations: {
+          where: { status: { not: "CANCELLED" } },
+          select: { status: true, checkedIn: true, guestCount: true },
+        },
+        _count: {
+          select: { registrations: { where: { status: { not: "CANCELLED" } } } },
+        },
+      },
       orderBy: { eventDate: "desc" },
     });
   };

@@ -9,9 +9,10 @@ import { downscaleImage } from "@/lib/image";
 import { isValidImageFile } from "@/lib/utils";
 import { getErrorMessage, getFieldErrors } from "@/lib/server-error";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Plus, Pencil, Trash2, Loader2, X, Save, ImagePlus } from "lucide-react";
+import { Plus, Pencil, Trash2, Loader2, X, Save, ImagePlus, Search } from "lucide-react";
 import { DataTable, type DataTableColumn } from "@/components/ui/data-table";
 import { DataTableColumnHeader } from "@/components/ui/data-table-column-header";
 import { useLanguage } from "@/context/LanguageContext";
@@ -35,7 +36,32 @@ export default function AdminNewsContent({ initialNews = [] }: AdminNewsContentP
   const [editingId, setEditingId] = useState<string | null>(null);
   const { t, dateLocale } = useLanguage();
   const [searchTerm, setSearchTerm] = useState("");
+  const [appliedSearch, setAppliedSearch] = useState("");
+  const [isSearching, setIsSearching] = useState(false);
   const searchTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // Debounce the raw input into `appliedSearch`, the value the table filter reads.
+  const handleSearchInput = (value: string) => {
+    setSearchTerm(value);
+    setIsSearching(true);
+    if (searchTimer.current) clearTimeout(searchTimer.current);
+    searchTimer.current = setTimeout(() => {
+      setAppliedSearch(value);
+      setIsSearching(false);
+      searchTimer.current = null;
+    }, 400);
+  };
+
+  // Client-side filter: title, excerpt (summary) or body content.
+  const filteredNews = useMemo(() => {
+    const term = appliedSearch.trim().toLowerCase();
+    if (!term) return news;
+    return news.filter((item) =>
+      [item.title, item.summary ?? "", item.content ?? ""].some((field) =>
+        field.toLowerCase().includes(term)
+      )
+    );
+  }, [news, appliedSearch]);
 
   // Form state
   const [formData, setFormData] = useState<CreateNewsData>({
@@ -134,6 +160,13 @@ export default function AdminNewsContent({ initialNews = [] }: AdminNewsContentP
       })
       .catch(() => {})
       .finally(() => setIsLoading(false));
+  }, []);
+
+  // Drop the pending debounce tick on unmount.
+  useEffect(() => {
+    return () => {
+      if (searchTimer.current) clearTimeout(searchTimer.current);
+    };
   }, []);
 
   const resetForm = () => {
@@ -357,6 +390,18 @@ export default function AdminNewsContent({ initialNews = [] }: AdminNewsContentP
         )}
       </div>
 
+      {/* Search — client-side filter over the article table below */}
+      <div className="flex items-center gap-2 border rounded-lg px-3 py-2 mb-6 max-w-sm">
+        <Search className="h-4 w-4 shrink-0 text-muted-foreground" />
+        <Input
+          placeholder={t.adminNews.searchPlaceholder}
+          value={searchTerm}
+          onChange={(e) => handleSearchInput(e.target.value)}
+          className="border-0 bg-transparent outline-none w-full shadow-none focus-visible:ring-0"
+        />
+        {isSearching && <Loader2 className="h-4 w-4 shrink-0 animate-spin text-muted-foreground" />}
+      </div>
+
       {/* Create / Edit Form */}
       {(isCreating || editingId) && (
         <Card className="mb-6">
@@ -519,7 +564,18 @@ export default function AdminNewsContent({ initialNews = [] }: AdminNewsContentP
               {t.adminNews.noNews}
             </div>
           ) : (
-            <DataTable columns={newsColumns} data={news} enablePagination enableSorting pageSize={10} />
+            <DataTable
+              columns={newsColumns}
+              data={filteredNews}
+              emptyContent={
+                <div className="px-6 py-8 text-center text-sm text-muted-foreground">
+                  {t.adminNews.noMatches}
+                </div>
+              }
+              enablePagination
+              enableSorting
+              pageSize={10}
+            />
           )}
         </CardContent>
       </Card>

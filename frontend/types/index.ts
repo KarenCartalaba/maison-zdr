@@ -190,7 +190,13 @@ export interface CheckInEvent {
   id: string;
   title: string;
   eventDate: string;
+  /** Active registrations (CANCELLED excluded). */
   _count: { registrations: number };
+  /**
+   * Guest headcount this event expects — registrants + plus-ones, CANCELLED
+   * excluded — matching the "Expected Guests" stat on the check-in desk.
+   */
+  expectedGuests?: number;
 }
 
 export interface News {

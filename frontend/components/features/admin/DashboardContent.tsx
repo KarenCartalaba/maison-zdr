@@ -234,8 +234,48 @@ export default function DashboardContent({
     !initialStats
   );
 const { t, dateLocale } = useLanguage();
+  // Raw input (`searchTerm`) is debounced into `appliedSearch`, which is the
+  // only value the Recent Registrations filter reads — so typing stays snappy
+  // while the table re-renders once per pause instead of per keystroke.
   const [searchTerm, setSearchTerm] = useState("");
+  const [appliedSearch, setAppliedSearch] = useState("");
+  const [isSearching, setIsSearching] = useState(false);
   const searchTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const handleSearchInput = (value: string) => {
+    setSearchTerm(value);
+    setIsSearching(true);
+    if (searchTimer.current) clearTimeout(searchTimer.current);
+    searchTimer.current = setTimeout(() => {
+      setAppliedSearch(value);
+      setIsSearching(false);
+      searchTimer.current = null;
+    }, 400);
+  };
+
+  // Drop the pending debounce tick on unmount.
+  useEffect(() => {
+    return () => {
+      if (searchTimer.current) clearTimeout(searchTimer.current);
+    };
+  }, []);
+
+  // Client-side filter for Recent Registrations: participant name, e-mail or
+  // event title (case-insensitive).
+  const filteredRecentRegistrations = useMemo(() => {
+    const term = appliedSearch.trim().toLowerCase();
+    if (!term) return recentRegistrations;
+    return recentRegistrations.filter((reg) => {
+      const name = reg.user?.name ?? "";
+      const email = reg.user?.email ?? "";
+      const eventTitle = reg.event?.title ?? "";
+      return (
+        name.toLowerCase().includes(term) ||
+        email.toLowerCase().includes(term) ||
+        eventTitle.toLowerCase().includes(term)
+      );
+    });
+  }, [recentRegistrations, appliedSearch]);
 
 // Localized chart configs + table columns (rebuilt on locale switch)
   const registrationChartConfig = useMemo(() => ({
@@ -385,23 +425,16 @@ const { t, dateLocale } = useLanguage();
       {/* Venue Operations Live Feed */}
       <h2 className="text-lg font-semibold mb-4">{t.dashboard.liveFeed}</h2>
 
-      {/* Search */}
+      {/* Search — filters the Recent Registrations table below */}
       <div className="flex items-center gap-2 border rounded-lg px-3 py-2 mb-4 max-w-sm">
         <Search className="h-4 w-4 text-muted-foreground" />
         <Input
           placeholder={t.adminRegs.searchPlaceholder}
           value={searchTerm}
-          onChange={(e) => {
-            setSearchTerm(e.target.value);
-            if (searchTimer.current) clearTimeout(searchTimer.current);
-            searchTimer.current = setTimeout(() => {
-              // Debounced search - send to admin service to filter data
-              // TODO: implement adminService search filter when available
-            }, 400);
-          }}
+          onChange={(e) => handleSearchInput(e.target.value)}
           className="border-0 bg-transparent outline-none w-full shadow-none focus-visible:ring-0"
         />
-        {searchTimer.current && <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />}
+        {isSearching && <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />}
       </div>
 
       {/* Stat Cards */}
@@ -634,7 +667,18 @@ const { t, dateLocale } = useLanguage();
           <CardTitle className="text-base">{t.dashboard.recentRegs}</CardTitle>
         </CardHeader>
         <CardContent className="p-0">
-          <DataTable columns={recentColumns} data={recentRegistrations} enablePagination enableSorting pageSize={5} />
+          <DataTable
+            columns={recentColumns}
+            data={filteredRecentRegistrations}
+            emptyContent={
+              <div className="px-6 py-8 text-center text-sm text-muted-foreground">
+                {appliedSearch.trim() ? t.adminRegs.emptyDesc : t.adminRegs.emptyTitle}
+              </div>
+            }
+            enablePagination
+            enableSorting
+            pageSize={5}
+          />
         </CardContent>
       </Card>
 

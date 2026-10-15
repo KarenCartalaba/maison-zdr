@@ -32,16 +32,44 @@ export default function AdminEventsContent({ initialEvents = [] }: AdminEventsCo
   const [activeTab, setActiveTab] = useState<"all" | "ongoing" | "upcoming" | "past" | "cancelled">("all");
   const { t, dateLocale } = useLanguage();
   const [searchTerm, setSearchTerm] = useState("");
+  // Raw input is debounced into `appliedSearch`, the value the filter reads.
+  const [appliedSearch, setAppliedSearch] = useState("");
+  const [isSearching, setIsSearching] = useState(false);
   const searchTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const handleSearchInput = (value: string) => {
+    setSearchTerm(value);
+    setIsSearching(true);
+    if (searchTimer.current) clearTimeout(searchTimer.current);
+    searchTimer.current = setTimeout(() => {
+      setAppliedSearch(value);
+      setIsSearching(false);
+      searchTimer.current = null;
+    }, 400);
+  };
+
+  // Drop the pending debounce tick on unmount.
+  useEffect(() => {
+    return () => {
+      if (searchTimer.current) clearTimeout(searchTimer.current);
+    };
+  }, []);
 
   const now = new Date();
 
   // Tabs use the SAME classification rule as the public event cards
   // (components/features/events/event-status.ts), so an event that is
   // "Ongoing" for users can never land in the admin "Past" bucket.
+  // Search matches title, venue (location) or description — and is always
+  // AND-ed with the active tab's phase rule.
   const filteredEvents = events.filter((event) => {
     const phase = getEventPhase(event.eventDate, now);
-    const matchesSearch = event.title.toLowerCase().includes(searchTerm.toLowerCase());
+    const term = appliedSearch.trim().toLowerCase();
+    const matchesSearch =
+      !term ||
+      [event.title, event.location, event.description].some((field) =>
+        (field ?? "").toLowerCase().includes(term)
+      );
 
     switch (activeTab) {
       case "ongoing":
@@ -221,22 +249,16 @@ export default function AdminEventsContent({ initialEvents = [] }: AdminEventsCo
           <h1 className="text-2xl font-bold">{t.adminEvents.title}</h1>
           <p className="text-sm text-muted-foreground">{t.adminEvents.subtitle}</p>
         </div>
-        {/* Search */}
+        {/* Search — title, venue or description (client-side, debounced) */}
         <div className="flex items-center gap-2 border rounded-lg px-3 py-2 mb-4 max-w-sm">
           <Search className="h-4 w-4 text-muted-foreground" />
           <Input
             placeholder={t.adminEvents.searchPlaceholder}
             value={searchTerm}
-            onChange={(e) => {
-              setSearchTerm(e.target.value);
-              if (searchTimer.current) clearTimeout(searchTimer.current);
-              searchTimer.current = setTimeout(() => {
-                // Debounced search - filter events by title
-              }, 400);
-            }}
+            onChange={(e) => handleSearchInput(e.target.value)}
             className="border-0 bg-transparent outline-none w-full shadow-none focus-visible:ring-0"
           />
-          {searchTimer.current && <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />}
+          {isSearching && <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />}
         </div>
 
         <div className="flex items-center gap-3">

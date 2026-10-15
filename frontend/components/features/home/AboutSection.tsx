@@ -8,7 +8,11 @@ export default function AboutSection() {
   const features = t.home.about.features;
 
   return (
-    <section className="bg-[#1a5c2a] text-white py-16">
+    <section className="bg-[#1a5c2a] text-white pt-14 pb-12 md:pt-16">
+      {/* Same green as the footer right below it. pb-12 matches the footer's
+          py-12 so the white divider band between the two sits centred and reads
+          as the boundary between the blocks, not as a scratch on one long
+          stretch of green. pt tightens slightly on small screens. */}
       <div className="container px-4">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
           {/* Text Content */}

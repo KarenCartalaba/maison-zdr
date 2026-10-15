@@ -8,7 +8,16 @@ import HowItWorksSection from "@/components/features/home/HowItWorksSection";
 import OngoingEventsSection from "@/components/features/home/OngoingEventsSection";
 import UpcomingEventsSection from "@/components/features/home/UpcomingEventsSection";
 import NewsSection from "@/components/features/home/NewsSection";
+import { selectUpcomingEvents } from "@/lib/upcoming-events";
 import type { Event, News } from "@/types";
+
+/** Shape of a serverFetch answer (it never throws — errors come back as data). */
+interface SsrListResponse<T> {
+  code?: number;
+  status?: "success" | "error";
+  message?: string;
+  data?: T | null;
+}
 
 export const metadata: Metadata = {
   title: "Zone de Rassemblement | Maison ZDR",
@@ -25,12 +34,39 @@ export default async function Page() {
   let news: News[] = [];
   try {
     const [eventsRes, newsRes] = await Promise.all([
-      serverFetch<{ data: { events: Event[] } }>("/api/events/v1/all"),
-      serverFetch<{ data: { news: News[] } }>("/api/news/v1/all"),
+      serverFetch<SsrListResponse<{ events: Event[] }>>("/api/events/v1/all"),
+      serverFetch<SsrListResponse<{ news: News[] }>>("/api/news/v1/all"),
     ]);
-    events = eventsRes.data?.events ?? [];
-    news = newsRes.data?.news ?? [];
-  } catch {}
+
+    // serverFetch never throws: failures come back as { status: "error",
+    // data: null }. Don't swallow them silently — log what happened and leave
+    // the list empty; UpcomingEventsSection then recovers with a client-side
+    // refetch of the same real DB records.
+    if (Array.isArray(eventsRes.data?.events)) {
+      events = eventsRes.data.events;
+    } else {
+      console.error(
+        `Home SSR: events unavailable (code=${eventsRes.code}):`,
+        eventsRes.message ?? "no data"
+      );
+    }
+    if (Array.isArray(newsRes.data?.news)) {
+      news = newsRes.data.news;
+    } else {
+      console.error(
+        `Home SSR: news unavailable (code=${newsRes.code}):`,
+        newsRes.message ?? "no data"
+      );
+    }
+  } catch (error) {
+    // Next's static-render probe: cookies() throws while prerendering to
+    // mark the route dynamic. Rethrow it — swallowing it would hide the
+    // signal — and only log genuine failures.
+    if ((error as { digest?: string })?.digest === "DYNAMIC_SERVER_USAGE") {
+      throw error;
+    }
+    console.error("Home SSR: failed to fetch events/news", error);
+  }
 
   const now = new Date();
   // "Ongoing" = the event's day has started and is still today. The registration
@@ -45,9 +81,10 @@ export default async function Page() {
     const eventDate = new Date(e.eventDate);
     return eventDate <= now && isSameCalendarDay(eventDate, now);
   });
-  const upcoming = events.filter(
-    (e) => !e.isCancelled && new Date(e.eventDate) > now
-  );
+  // "Upcoming" = not cancelled + strictly in the future, ordered by eventDate
+  // ascending (soonest first) — the API returns newest-created first, which is
+  // wrong for this section. slice(0, 8) happens inside the section, after this.
+  const upcoming = selectUpcomingEvents(events, now);
 
   return (
     <>
