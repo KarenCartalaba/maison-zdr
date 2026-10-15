@@ -36,6 +36,20 @@ const SEARCH_FIELD_INPUT =
   "h-8 w-full border-0 bg-transparent shadow-none outline-none focus-visible:ring-0";
 
 /**
+ * Shell for the event selector, matching <Card> visually but deliberately not
+ * using it: Card sets `overflow-hidden`, which clipped the open dropdown
+ * against the card's bottom edge. This shell keeps the same surface, ring and
+ * tone while letting the overlay escape, and the roomier padding stops the
+ * date/guests chips from crowding the edge.
+ */
+const EVENT_CARD_SHELL =
+  "rounded-xl bg-card py-5 text-sm text-card-foreground ring-1 ring-foreground/10 sm:py-6";
+
+/** One row on desktop (title + badges + picker), stacked on small screens. */
+const EVENT_CARD_ROW =
+  "flex flex-col gap-4 px-4 sm:px-6 lg:flex-row lg:items-center lg:justify-between";
+
+/**
  * Registration/reference code shown for a guest in the check-in roster.
  * The check-in API returns the full registration row, so the server-issued
  * `referenceNumber` (e.g. ZDR-B12-411122) is shown whenever it exists. Rows
@@ -191,15 +205,19 @@ function LoadingSkeleton() {
         <div className="h-7 w-48 rounded-lg bg-muted" />
         <div className="h-4 w-64 rounded-lg bg-muted" />
       </div>
-      <Card>
-        <CardContent className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
-          <div className="space-y-2">
+      <div className={EVENT_CARD_SHELL}>
+        <div className={EVENT_CARD_ROW}>
+          <div className="min-w-0 space-y-1.5">
             <div className="h-3 w-20 rounded bg-muted" />
-            <div className="h-6 w-56 rounded-lg bg-muted" />
+            <div className="h-6 w-56 max-w-full rounded-lg bg-muted" />
+            <div className="flex flex-wrap items-center gap-2">
+              <div className="h-5 w-28 rounded-4xl bg-muted" />
+              <div className="h-5 w-36 rounded-4xl bg-muted" />
+            </div>
           </div>
-          <div className="h-11 w-full rounded-lg bg-muted lg:w-80" />
-        </CardContent>
-      </Card>
+          <div className="h-11 w-full shrink-0 rounded-lg bg-muted lg:w-80" />
+        </div>
+      </div>
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
         {[1, 2, 3].map((i) => (
           <StatCardSkeleton key={i} />
@@ -334,7 +352,7 @@ function EventPicker({
           id="checkin-event-listbox"
           role="listbox"
           aria-label={searchPlaceholder}
-          className="absolute z-20 mt-2 max-h-72 w-full overflow-auto rounded-lg border bg-popover p-1.5 shadow-lg shadow-foreground/5"
+          className="absolute z-30 mt-2 max-h-[min(20rem,60vh)] w-full overflow-y-auto overscroll-contain rounded-lg border bg-popover p-1.5 shadow-lg shadow-foreground/5"
         >
           {filtered.length === 0 ? (
             <li
@@ -686,20 +704,32 @@ export default function CheckInsContent({
       {/* 1. Event selector — searchable combobox (replaces the old card grid);
           picking an event loads that event's roster (stats, search and table
           below are all scoped to it). */}
-      <Card className="animate-in fade-in slide-in-from-bottom-1 fill-mode-forwards duration-500">
-        <CardContent className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+      <div
+        className={cn(
+          EVENT_CARD_SHELL,
+          "animate-in fade-in slide-in-from-bottom-1 fill-mode-forwards duration-500"
+        )}
+      >
+        <div className={EVENT_CARD_ROW}>
           <div className="min-w-0 space-y-1.5">
             <SectionLabel icon={CalendarDays}>{t.sidebar.events}</SectionLabel>
             {selectedEvent ? (
               <>
-                <p className="truncate text-lg font-semibold">{selectedEvent.title}</p>
+                <p className="truncate text-lg font-semibold" title={selectedEvent.title}>
+                  {selectedEvent.title}
+                </p>
                 <div className="flex flex-wrap items-center gap-2">
-                  <Badge variant="secondary">
+                  <Badge variant="secondary" className="max-w-full">
                     {formatDate(selectedEvent.eventDate, dateLocale)}
                   </Badge>
-                  <Badge variant="outline" className="border-[#1a5c2a]/40 text-[#1a5c2a]">
-                    <Users className="h-3 w-3" />
-                    {eventGuestCount(selectedEvent)} {t.adminCheckins.expectedGuests}
+                  <Badge
+                    variant="outline"
+                    className="max-w-full border-[#1a5c2a]/40 text-[#1a5c2a]"
+                  >
+                    <Users className="h-3 w-3 shrink-0" />
+                    <span className="min-w-0 truncate">
+                      {eventGuestCount(selectedEvent)} {t.adminCheckins.expectedGuests}
+                    </span>
                   </Badge>
                 </div>
               </>
@@ -722,8 +752,8 @@ export default function CheckInsContent({
               />
             </div>
           )}
-        </CardContent>
-      </Card>
+        </div>
+      </div>
 
       {/* 2. Attendance statistics — backend-driven guest counts, refreshed
           after every check-in. */}
