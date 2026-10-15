@@ -44,27 +44,30 @@ export default function HeroSection() {
         </div>
 
         {/* Image Collage */}
-        <div className="relative h-[400px] md:h-[500px]">
-          <div className="absolute top-0 left-0 w-[60%] h-[65%] rounded-2xl overflow-hidden bg-muted">
+        <div className="mx-auto grid w-full max-w-[520px] grid-cols-2 items-center gap-4 md:gap-5">
+          <div className="group aspect-[2/3] overflow-hidden rounded-2xl bg-muted">
             <img
               src="/images/home1.jpg"
               alt="Bar interior"
-              className="w-full h-full object-cover"
+              className="w-full h-full object-cover transition-transform duration-500 ease-out group-hover:scale-[1.03]"
             />
           </div>
-          <div className="absolute top-0 right-0 w-[35%] h-[45%] rounded-2xl overflow-hidden bg-muted">
-            <img
-              src="/images/home2.jpg"
-              alt="Dart board"
-              className="w-full h-full object-cover"
-            />
-          </div>
-          <div className="absolute bottom-0 right-0 w-[45%] h-[50%] rounded-2xl overflow-hidden bg-muted">
-            <img
-              src="/images/home3.jpg"
-              alt="Venue exterior"
-              className="w-full h-full object-cover"
-            />
+
+          <div className="grid gap-4 md:gap-5">
+            <div className="group aspect-square overflow-hidden rounded-2xl bg-muted">
+              <img
+                src="/images/home2.jpg"
+                alt="Dart board"
+                className="w-full h-full object-cover transition-transform duration-500 ease-out group-hover:scale-[1.03]"
+              />
+            </div>
+            <div className="group aspect-[11/10] overflow-hidden rounded-2xl bg-muted">
+              <img
+                src="/images/home3.jpg"
+                alt="Venue exterior"
+                className="w-full h-full object-cover transition-transform duration-500 ease-out group-hover:scale-[1.03]"
+              />
+            </div>
           </div>
         </div>
       </div>
