@@ -34,10 +34,10 @@ export default function AdminHeader() {
           : "";
 
   return (
-    <header className="sticky top-0 z-40 border-b bg-white px-8 py-3">
+    <header className="sticky top-0 z-40 border-b bg-white px-8 py-3 justify-end">
       <div className="flex items-center justify-end">
         {/* Right Side — ml-auto pins the whole cluster to the right edge */}
-        <div className="ml-auto flex min-w-0 items-center gap-4">
+        <div className="ml-auto flex min-w-0 items-center gap-4 ">
           {/* Language Selector (per-browser only — stored in localStorage) */}
           <DropdownMenu>
             <DropdownMenuTrigger
