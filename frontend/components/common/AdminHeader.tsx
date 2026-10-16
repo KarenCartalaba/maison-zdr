@@ -35,13 +35,13 @@ export default function AdminHeader() {
 
   return (
     <header className="sticky top-0 z-40 border-b bg-white px-8 py-3">
-      <div className="flex items-center justify-between">
-        {/* Right Side */}
-        <div className="flex items-center gap-4">
+      <div className="flex items-center justify-end">
+        {/* Right Side — ml-auto pins the whole cluster to the right edge */}
+        <div className="ml-auto flex min-w-0 items-center gap-4">
           {/* Language Selector (per-browser only — stored in localStorage) */}
           <DropdownMenu>
             <DropdownMenuTrigger
-              className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground outline-none"
+              className="flex shrink-0 items-center gap-2 text-sm text-muted-foreground hover:text-foreground outline-none"
               aria-label={t.header.language}
             >
               <span className="text-base">{active.flag}</span>
@@ -64,12 +64,12 @@ export default function AdminHeader() {
           </DropdownMenu>
 
           {/* User Info */}
-          <div className="flex items-center gap-3">
-            <div className="text-right">
-              <p className="text-sm font-bold uppercase tracking-wide">{user?.name || "AUREL BAZ"}</p>
+          <div className="flex min-w-0 items-center gap-3">
+            <div className="min-w-0 text-right">
+              <p className="truncate text-sm font-bold uppercase tracking-wide">{user?.name || "AUREL BAZ"}</p>
               <p className="text-xs text-muted-foreground uppercase">{roleLabel}</p>
             </div>
-            <div className="h-10 w-10 rounded-full bg-muted overflow-hidden flex items-center justify-center">
+            <div className="h-10 w-10 shrink-0 rounded-full bg-muted overflow-hidden flex items-center justify-center">
               {user?.profilePic ? (
                 <img
                   src={user.profilePic}
